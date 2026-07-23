@@ -31,6 +31,9 @@ public interface WordDao {
     @Query("SELECT * FROM Word WHERE wordId = :word_id")
     LiveData<WordEntity> getWordByWordId(String word_id);
 
+    @Query("SELECT * FROM Word WHERE wordId = :word_id")
+    WordEntity getWordByWordIdSync(String word_id);
+
     // 批量查询
     @Query("SELECT * FROM WORD WHERE wordId IN (:idList)")
     LiveData<List<WordEntity>> getWordsByIdList(List<String> idList);

@@ -51,7 +51,7 @@ View层级树（从外到内）：
 
 1. [✓] 修复 NestedScrollableHostBetween3Layers.findAllChildViewPagers() 返回值被丢弃 — 删除3个冗余方法，替换为canAnyChildScroll()，修复canDeepChildScroll NPE，移除调试日志
 2. [✓] 修复 ViewPager2Navigation 无限递归post — 改为事件驱动(pendingPosition+onMeaningVp2Ready回调)，重命名字段消除歧义(outer→overviewDetail, middle→meaning)，添加clearPendingNavigation防止过期意图，Fragment销毁时清理引用和pending
-3. [ ] 修复 LearnPageViewModel.observeForever 内存泄漏（回调未触发时observer永不移除，removeObserver可能移除错误实例）
+3. [✓] 修复 LearnPageViewModel.observeForever 内存泄漏 — 改为同步查询(方案C)：Dao添加getWordByWordIdSync，Repository添加getWordByIdSync，checkAndNavigate改为databaseExecutor+postValue，消除observeForever和匿名Observer泄漏
 4. [ ] ViewPager2Navigation/NestedScrollableHostBetween3LayersManager 中ViewPager2强引用改为WeakReference
 5. [ ] 修复 WordConverter/BasicWordConverter 中用字符串"null"作为无效ID的反模式，改为返回null或Optional
 6. [ ] 实现数据导入管道（Python处理后的JSON/Excel → Room数据库），替换FirstPage中880行硬编码测试数据

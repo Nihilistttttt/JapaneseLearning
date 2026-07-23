@@ -11,6 +11,7 @@ import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Transformations;
 
+import com.Nihilisttt.LearnWord.Database.Database.WordDatabase;
 import com.Nihilisttt.LearnWord.Database.Repository.WordRepository;
 import com.Nihilisttt.LearnWord.JavaBean.AntonymWord;
 import com.Nihilisttt.LearnWord.JavaBean.BasicWord;
@@ -140,30 +141,13 @@ public class LearnPageViewModel extends AndroidViewModel {
     }
 
     private void checkAndNavigate(int targetId) {
-        repository.getWordById(String.valueOf(targetId)).observeForever(new androidx.lifecycle.Observer<Word>() {
-            @Override
-            public void onChanged(Word word) {
-                if (isValidWord(word)) {
-                    currentWordId.setValue(targetId);
-                    saveCurrentId(targetId);
-                } else {
-                    handleInvalidWord(targetId);
-                }
-                removeSelfObserver();
-            }
-
-            private void removeSelfObserver() {
-                repository.getWordById(String.valueOf(targetId)).removeObserver(this);
-            }
-
-            private boolean isValidWord(Word word) {
-                return word != null && !"null".equals(word.getWordId());
-            }
-
-            private void handleInvalidWord(int attemptedId) {
-                if (attemptedId > DEFAULT_WORD_ID) {
-                    toastMessage.setValue("已达词库末尾");
-                }
+        WordDatabase.databaseExecutor.execute(() -> {
+            Word word = repository.getWordByIdSync(String.valueOf(targetId));
+            if (word != null && !"null".equals(word.getWordId())) {
+                currentWordId.postValue(targetId);
+                saveCurrentId(targetId);
+            } else if (targetId > DEFAULT_WORD_ID) {
+                toastMessage.postValue("已达词库末尾");
             }
         });
     }

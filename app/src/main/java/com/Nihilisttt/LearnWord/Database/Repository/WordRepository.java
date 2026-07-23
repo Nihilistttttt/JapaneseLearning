@@ -288,6 +288,11 @@ public class WordRepository {
         );
     }
 
+    public Word getWordByIdSync(String wordId) {
+        WordEntity entity = wordDao.getWordByWordIdSync(wordId);
+        return WordConverter.WordEntityToWord(entity);
+    }
+
     public LiveData<List<Word>> getAllWords() {
         return Transformations.map(wordDao.getAllWords(), entities ->
                 entities.stream()
