@@ -1,0 +1,61 @@
+LearnWord 项目优化清单
+========================
+
+【P0 — 不修就不能用】
+
+1. [✓] 修复 NestedScrollableHostBetween3Layers.findAllChildViewPagers() 返回值被丢弃 — 删除3个冗余方法，替换为canAnyChildScroll()，修复canDeepChildScroll NPE，移除调试日志
+2. [ ] 修复 ViewPager2Navigation 无限递归post（middleViewPage2为null时Runnable无限投递自身）
+3. [ ] 修复 LearnPageViewModel.observeForever 内存泄漏（回调未触发时observer永不移除，removeObserver可能移除错误实例）
+4. [ ] ViewPager2Navigation/NestedScrollableHostBetween3LayersManager 中ViewPager2强引用改为WeakReference
+5. [ ] 修复 WordConverter/BasicWordConverter 中用字符串"null"作为无效ID的反模式，改为返回null或Optional
+6. [ ] 实现数据导入管道（Python处理后的JSON/Excel → Room数据库），替换FirstPage中880行硬编码测试数据
+7. [ ] 修复 分词工具mecab.py 第155-158行 kana变量未赋值就使用的Bug
+8. [ ] 修复 匹配字典.py 第29行 for title, link in matches1 解包数量不匹配的Bug
+
+【P1 — 不修就不好用】
+
+9. [ ] 实现学习进度持久化（已学/未学/复习状态，不仅保存wordId）
+10. [ ] 实现间隔重复算法（艾宾浩斯/SM-2复习调度）
+11. [ ] 实现练习/测试模块（当前addPracticePage()空实现）
+12. [ ] 完善搜索功能（SearchPageFragment功能不完整）
+13. [ ] MainLearnPageFragment改为更新现有View数据而非每次重建View树
+14. [ ] 移除所有调试日志（Log.d遍布WordComponentView、NestedScrollableHost、BasicWordView、Constants等）
+15. [ ] 硬编码颜色/尺寸提取到资源文件（WordComponentView中setRadius(16)、setPadding(32,32,32,32)、parseColor("#2196F3")等）
+16. [ ] Room改用WRITE_AHEAD_LOGGING模式（当前TRUNCATE模式并发性能差）
+17. [ ] Room实现正式Migration策略（当前fallbackToDestructiveMigration升级会丢数据）
+18. [ ] WordDatabase.databaseExecutor改为private，提供execute方法封装（当前public暴露可被误调shutdown）
+19. [ ] WordRepository.deleteAll()和批量插入添加事务支持（中途失败会导致数据不一致）
+20. [ ] WordRepository构造函数参数从Context改为Application（防止传入Activity Context）
+21. [ ] JavaBean（Word/BasicWord等）添加equals/hashCode方法
+22. [ ] 替换废弃API getUserVisibleHint()（LearnPageFragment第38行）
+23. [ ] 修复LearnPageAdapter.PageTransformer透明度计算（1-3*position导致滑动1/3就全透明）
+24. [ ] Python脚本提取公共模块（词转化为字/获取音便汉字/新时代获取音便字中重复的字典构建和回溯算法）
+25. [ ] Python脚本统一路径配置（10个文件全部硬编码D:\Libraries\Documents\绝对路径）
+26. [ ] Python脚本添加if __name__保护（8/10个文件导入即执行）
+27. [ ] 词转化为字.py 返回值类型不一致问题（成功返回元组，失败返回字符串）
+28. [ ] 升级compileSdk/targetSdk从28到34+（Google Play要求≥33）
+29. [ ] 升级Room从2.2.5到2.6+
+30. [ ] 升级AppCompat/Material/ConstraintLayout/Gson等依赖到最新稳定版
+31. [ ] 移除多余的multidex依赖（minSdk 28不需要）
+
+【P2 — 不修就不专业】
+
+32. [ ] 引入依赖注入框架（Hilt/Dagger），使ViewModel可单元测试
+33. [ ] 添加Android单元测试和集成测试
+34. [ ] 启用release构建ProGuard/R8混淆（当前minifyEnabled false）
+35. [ ] AndroidManifest.xml中allowBackup设为false（当前true，adb可提取数据库）
+36. [ ] 数据库加密（SQLCipher），防止root设备直接读取
+37. [ ] 添加自定义Application类初始化全局单例（当前懒初始化导致首次使用延迟）
+38. [ ] Activity添加screenOrientation配置（横竖屏切换状态恢复问题）
+39. [ ] AudioManager添加音频焦点管理（与后台音乐冲突）
+40. [ ] AudioManager线程安全（pendingAudioUrl/currentAudioUrl/isPreparing无同步保护）
+41. [ ] WordComponentView三个构造函数改为工厂方法或Builder（当前通过参数数量区分，可读性差）
+42. [ ] Constants中布局类型从int常量改为enum（SMALL/NORMAL/LARGE）
+43. [ ] Select.layoutParams类名改为大写开头，selectLayout添加default分支
+44. [ ] FirstPage修复intiViews拼写错误和按钮重复初始化
+45. [ ] Python脚本添加requirements.txt
+46. [ ] Python脚本添加logging模块替换print
+47. [ ] Python脚本添加pytest单元测试
+48. [ ] Python脚本添加输入验证和异常处理
+49. [ ] 回溯算法添加最大递归深度限制和预排序（防止指数级爆炸）
+50. [ ] 获取音便汉字.py中copy.deepcopy改为手动浅拷贝（高频回溯中开销巨大）
