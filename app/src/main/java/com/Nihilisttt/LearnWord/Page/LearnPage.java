@@ -11,7 +11,7 @@ import androidx.viewpager2.widget.ViewPager2;
 
 import com.Nihilisttt.LearnWord.Adapter.LearnPageAdapter;
 import com.Nihilisttt.LearnWord.R;
-import com.Nihilisttt.LearnWord.ViewPager2.ViewPager2Navigation;
+
 import com.Nihilisttt.LearnWord.ViewPager2.ViewPager2ScrollController;
 
 public class LearnPage extends AppCompatActivity {
@@ -47,7 +47,6 @@ public class LearnPage extends AppCompatActivity {
         if (childAt instanceof RecyclerView) {
             childAt.setOverScrollMode(View.OVER_SCROLL_NEVER);
         } // 取消滑动到边缘的阴影效果
-        ViewPager2Navigation.getInstance().setOuterViewPager2(viewPager2);
 
     }
 

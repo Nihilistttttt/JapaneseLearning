@@ -76,7 +76,7 @@ public class LearnPageFragment extends Fragment {
         }
 
         // 设置导航管理器
-        ViewPager2Navigation.getInstance().setOuterViewPager2(viewPager2);
+        ViewPager2Navigation.getInstance().setOverviewDetailVp2(viewPager2);
 
         // 初始化按钮
         Button preButton = rootView.findViewById(R.id.pre_word);
@@ -102,10 +102,12 @@ public class LearnPageFragment extends Fragment {
         preButton.setOnClickListener(v -> {
             viewModel.navigatePrevious();
             viewPager2.setCurrentItem(0, false);
+            ViewPager2Navigation.getInstance().clearPendingNavigation();
         });
         nextButton.setOnClickListener(v -> {
             viewModel.navigateNext();
             viewPager2.setCurrentItem(0, false);
+            ViewPager2Navigation.getInstance().clearPendingNavigation();
         });
     }
 

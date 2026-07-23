@@ -87,8 +87,9 @@ public class ExtendedLearnPageFragment extends Fragment {
             // 创建ViewPager2所使用的适配器，FragmentStateAdapter抽象类的实现类对象
             ExtendedLearnPageAdapter adapter = new ExtendedLearnPageAdapter(requireActivity(), fragmentList);
 
-            viewPager2.setAdapter(adapter); // 给ViewPager2设置适配器
-            ViewPager2Navigation.getInstance().setMiddleViewPage2(viewPager2);
+            viewPager2.setAdapter(adapter);
+            ViewPager2Navigation.getInstance().setMeaningVp2(viewPager2);
+            ViewPager2Navigation.getInstance().onMeaningVp2Ready();
 
             vp2IndicatorView.attachToViewPager2(viewPager2);
         });
@@ -105,7 +106,8 @@ public class ExtendedLearnPageFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        // 清除所有观察者
+        ViewPager2Navigation.getInstance().setMeaningVp2(null);
+        ViewPager2Navigation.getInstance().clearPendingNavigation();
         viewModel.getWordMeaningListLiveData().removeObservers(getViewLifecycleOwner());
         viewModel.getWordCollocationListLiveData().removeObservers(getViewLifecycleOwner());
         viewModel.getToastMessage().removeObservers(getViewLifecycleOwner());
