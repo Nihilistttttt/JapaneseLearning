@@ -1,0 +1,7 @@
+<resources>
+    <string name="learn_button_name">Learn</string>
+    <string name="review_button_name">Review</string>
+    <string name="sign_in">签到</string>
+    <string name="previous_word">←</string>
+    <string name="next_value">→</string>
+</resources>

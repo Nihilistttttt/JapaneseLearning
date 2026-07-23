@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DesignSurface">
+    <option name="filePathToZoomLevelMap">
+      <map>
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/Fragment/layout/before_sign_in_fragment.xml" value="0.11197916666666667" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/Page/layout/review_page.xml" value="0.11197916666666667" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/Word/layout/normal_small_char.xml" value="0.11197916666666667" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Fragment/layout/after_sign_in_fragment.xml" value="0.14583333333333334" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Fragment/layout/before_sign_in_fragment.xml" value="0.14583333333333334" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Fragment/layout/fragment_after_sign_in.xml" value="0.14322916666666666" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Fragment/layout/fragment_blank.xml" value="0.1109375" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Fragment/layout/fragment_detailed_learn_page.xml" value="0.14583333333333334" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Fragment/layout/fragment_detailed_meaning.xml" value="0.14945652173913043" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Fragment/layout/fragment_detailed_sentence.xml" value="0.14945652173913043" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Fragment/layout/fragment_dictionary.xml" value="0.2" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Fragment/layout/fragment_extended_learn_page.xml" value="0.1" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Fragment/layout/fragment_integrated_part.xml" value="0.1109375" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Fragment/layout/fragment_learn_page.xml" value="0.264" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Fragment/layout/fragment_main_learn_page.xml" value="0.13632246376811594" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Fragment/layout/fragment_search_page.xml" value="0.4" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Fragment/layout/test.xml" value="0.1109375" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Fragment/layout/word_fragment.xml" value="0.1" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Page/layout/activity_first_page.xml" value="0.13043478260869565" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Page/layout/activity_learn_page.xml" value="0.2" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Page/layout/activity_review_page.xml" value="0.1" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Page/layout/activity_user_page.xml" value="0.13043478260869565" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Page/layout/after_sign_in_fragment.xml" value="0.1109375" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Page/layout/before_sign_in_fragment.xml" value="0.1109375" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Page/layout/first_page.xml" value="0.14583333333333334" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Page/layout/fragment_detailed_learn_page.xml" value="0.10400000000000001" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Page/layout/fragment_learn_page.xml" value="0.13043478260869565" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Page/layout/learn_page.xml" value="0.2" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Page/layout/review_page.xml" value="0.14583333333333334" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Page/layout/user_page.xml" value="0.14583333333333334" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/RecyclerView/layout/word_list_item.xml" value="0.14583333333333334" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/ToolBar/layout/learn_word_tool_bar.xml" value="0.264" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Word/drawable/circle_indicator.xml" value="0.2453125" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Word/layout/basicword_container.xml" value="0.14583333333333334" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Word/layout/collocation_column.xml" value="0.14583333333333334" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Word/layout/fragment_detailed_meaning.xml" value="0.14583333333333334" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Word/layout/fragment_detailed_meaning_part.xml" value="0.176" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Word/layout/fragment_detailed_sentence.xml" value="0.13020833333333334" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Word/layout/fragment_integrated_part.xml" value="0.1109375" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Word/layout/large_char.xml" value="0.14583333333333334" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Word/layout/large_small_char.xml" value="0.14583333333333334" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Word/layout/normal_char.xml" value="0.14583333333333334" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Word/layout/normal_small_char.xml" value="0.14583333333333334" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Word/layout/sentence_column.xml" value="0.14583333333333334" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Word/layout/small_char.xml" value="0.14583333333333334" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Word/layout/small_small_char.xml" value="0.14583333333333334" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Word/layout/view_.xml" value="0.14945652173913043" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Word/layout/view_detailed_meaning.xml" value="0.1109375" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Word/layout/view_detailed_sentence.xml" value="0.14855072463768115" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Word/layout/view_detailed_sentence_tablayout.xml" value="0.14855072463768115" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Word/layout/view_indicator.xml" value="0.14855072463768115" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/child-directory/Word/layout/view_large_char.xml" value="0.1109375" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/drawable-v24/ic_launcher_foreground.xml" value="0.12708333333333333" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/drawable/button_press.xml" value="0.12708333333333333" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/drawable/button_style.xml" value="0.11822916666666666" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/drawable/button_unpress.xml" value="0.12708333333333333" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/drawable/ic_baseline_arrow_back_ios_24.xml" value="0.121875" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/drawable/ic_launcher_background.xml" value="0.12708333333333333" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/drawable/sign_in_press.xml" value="0.12708333333333333" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/drawable/sign_in_style.xml" value="0.12708333333333333" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/drawable/sign_in_unpress.xml" value="0.12708333333333333" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layout/word.xml" value="0.11231884057971014" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/Fragment/layout/before_sign_in_fragment.xml" value="0.1" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/Page/drawable/ic_baseline_arrow_circle_up_24.xml" value="0.12708333333333333" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/Page/drawable/ic_baseline_arrow_forward_24.xml" value="0.10400000000000001" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/Page/drawable/word_layout_selector.xml" value="0.1203125" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/Page/layout/cell_normal.xml" value="0.13360507246376813" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/Page/layout/first_page.xml" value="0.1" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/Page/layout/learn_page.xml" value="0.2" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/Page/layout/review_page.xml" value="0.2" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/Page/layout/word_list_item.xml" value="0.13360507246376813" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/Page/layout/word_list_page.xml" value="0.13360507246376813" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/RecyclerView/drawable/bolder.xml" value="0.1" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/RecyclerView/layout/word_list_item.xml" value="0.1" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/ToolBar/drawable/ic_baseline_arrow_back_24.xml" value="0.12708333333333333" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/ToolBar/layout/learn_word_tool_bar.xml" value="0.264" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/Word/drawable/word_layout_selector.xml" value="0.24055158324821246" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/Word/layout/char_2.xml" value="0.1539855072463768" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/Word/layout/char_6.xml" value="0.1539855072463768" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/Word/layout/collocation_column.xml" value="0.264" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/Word/layout/collocation_layout.xml" value="0.264" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/Word/layout/large_char.xml" value="0.1539855072463768" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/Word/layout/large_char_2.xml" value="0.10721493440968718" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/Word/layout/large_char_3.xml" value="0.14719202898550723" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/Word/layout/large_small_char.xml" value="0.1539855072463768" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/Word/layout/lowercase_char.xml" value="0.1539855072463768" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/Word/layout/normal_char.xml" value="0.8" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/Word/layout/normal_char_2.xml" value="0.1539855072463768" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/Word/layout/normal_small_char.xml" value="0.1539855072463768" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/Word/layout/sentence_char_2.xml" value="0.103125" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/Word/layout/sentence_column.xml" value="0.151268115942029" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/Word/layout/six_word.xml" value="3.2" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/Word/layout/small_char.xml" value="0.103125" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/Word/layout/small_char_2.xml" value="0.14719202898550723" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/Word/layout/small_small_char.xml" value="0.1539855072463768" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/Word/layout/small_word.xml" value="0.1015625" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/Word/layout/smallword.xml" value="0.1015625" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/Word/layout/two_word.xml" value="2.4" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/Word/layout/word.xml" value="2.4" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/Word/layout/word_char_2.xml" value="0.103125" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/Word/layout/word_component_layout.xml" value="0.10416666666666667" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/fragment/drawable/ic_baseline_arrow_back_ios_24.xml" value="0.24166666666666667" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/fragment/layout/after_sign_in_fragment.xml" value="0.11231884057971014" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/fragment/layout/before_sign_in_fragment.xml" value="0.11231884057971014" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/page/layout/activity_learn_word.xml" value="0.11231884057971014" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/page/layout/first_page.xml" value="0.11231884057971014" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/page/layout/review_word.xml" value="0.11231884057971014" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/page/layout/user_place.xml" value="0.11231884057971014" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/word/layout/first_page.xml" value="0.11231884057971014" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/layouts/word/layout/six_word.xml" value="0.11231884057971014" />
+        <entry key="..\:/Libraries/Projects/AndroidStudioProjects/Learn/app/src/main/res/menu/menu_main.xml" value="0.2" />
+      </map>
+    </option>
+  </component>
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="Android Studio default JDK" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/build/classes" />
+  </component>
+  <component name="ProjectType">
+    <option name="id" value="Android" />
+  </component>
+</project>

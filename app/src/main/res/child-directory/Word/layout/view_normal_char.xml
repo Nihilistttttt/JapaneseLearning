@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+    android:id="@+id/normal_char"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:gravity="center_horizontal"
+    android:layout_marginStart="@dimen/normal_margin_start"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/normal_kana_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="あげあげ"
+        android:includeFontPadding="false"
+        android:textColor="@color/black"
+        android:textSize="@dimen/normal_kana_size"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/normal_kanji_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:text="げ"
+        android:textColor="@color/black"
+        android:textSize="@dimen/normal_kanji_size"
+        android:textStyle="bold" />
+
+</LinearLayout>

@@ -1,0 +1,85 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    compileSdk 28
+
+    defaultConfig {
+        applicationId "com.Nihilisttt.learn"
+        minSdk 28
+        targetSdk 28
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments += [
+                        "room.schemaLocation"  : "$projectDir/schemas".toString(),
+                        "room.incremental"     : "true",
+                        "room.expandProjection": "true"]
+                /*
+                Room 具有以下注释处理器选项：
+                room.schemaLocation：配置并启用将数据库架构导出到给定目录中的 JSON 文件的功能。
+                                    [创建好表和数据库后编译，会在 app/schemas 目录下生成这个 JSON 文件]
+                room.incremental：启用 Gradle 增量注释处理器。
+                room.expandProjection：配置 Room 以重写查询，使其顶部星形投影在展开后仅包含 DAO 方法返回类型中定义的列。
+                */
+            }
+        }
+    }
+    packagingOptions
+            {
+                exclude'META-INF/DEPENDENCIES'
+            }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    dataBinding {
+        enabled = true
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    sourceSets {
+        main {
+            res {
+                srcDirs 'src\\main\\res',
+                        'src\\main\\res\\child-directory\\Fragment',
+                        'src\\main\\res\\child-directory\\Word',
+                        'src\\main\\res\\child-directory\\Page',
+                        'src\\main\\res\\child-directory\\ToolBar',
+                        'src\\main\\res\\child-directory\\RecyclerView'
+            }
+        }
+    }
+}
+
+dependencies {
+    implementation 'com.android.support:multidex:1.0.3'
+    implementation 'androidx.appcompat:appcompat:1.2.0'
+    implementation 'com.google.android.material:material:1.3.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
+    implementation 'org.jetbrains:annotations:15.0'
+    implementation 'com.google.firebase:firebase-crashlytics-buildtools:2.5.2'
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'androidx.fragment:fragment:1.3.2'
+    implementation 'androidx.navigation:navigation-fragment:2.3.5'
+    implementation 'androidx.navigation:navigation-ui:2.3.5'
+    implementation 'androidx.cardview:cardview:1.0.0'
+    testImplementation 'junit:junit:4.+'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+    // room
+    def room_version = "2.2.5"
+    implementation "androidx.room:room-runtime:$room_version"
+    annotationProcessor "androidx.room:room-compiler:$room_version"
+    // gson
+    implementation 'com.google.code.gson:gson:2.8.5'
+
+}
