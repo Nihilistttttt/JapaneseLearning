@@ -508,4 +508,22 @@ public class WordRepository {
     }
 
     // endregion
+
+    // region 导航查询
+    public String getFirstWordId() {
+        return wordDao.getFirstWordId();
+    }
+
+    public String getLastWordId() {
+        return wordDao.getLastWordId();
+    }
+
+    public String getNextWordId(String currentId) {
+        return wordDao.getNextWordId(currentId);
+    }
+
+    public String getPreviousWordId(String currentId) {
+        return wordDao.getPreviousWordId(currentId);
+    }
+    // endregion
 }

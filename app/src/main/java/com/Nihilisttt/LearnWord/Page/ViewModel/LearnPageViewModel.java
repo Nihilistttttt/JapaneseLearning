@@ -23,19 +23,20 @@ import com.Nihilisttt.LearnWord.JavaBean.WordSentence;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Future;
 
 public class LearnPageViewModel extends AndroidViewModel {
     // 配置常量
     private static final String PREFS_NAME = "WordProgressPrefs";
     private static final String KEY_CURRENT_ID = "current_word_id";
-    private static final int DEFAULT_WORD_ID = 1;
+    private static final String DEFAULT_WORD_ID = "";
 
     // 数据存储
     private final SharedPreferences prefs;
     private final WordRepository repository;
 
     // LiveData控制
-    private final MutableLiveData<Integer> currentWordId = new MutableLiveData<>();
+    private final MutableLiveData<String> currentWordId = new MutableLiveData<>();
     private final MutableLiveData<String> toastMessage = new MutableLiveData<>();
 
     // 数据转换链
@@ -56,12 +57,27 @@ public class LearnPageViewModel extends AndroidViewModel {
         repository = WordRepository.getInstance(application);
 
         // 加载保存的ID或使用默认值
-        int initialId = prefs.getInt(KEY_CURRENT_ID, DEFAULT_WORD_ID);
-        currentWordId.setValue(initialId);
+        String savedId;
+        try {
+            savedId = prefs.getString(KEY_CURRENT_ID, DEFAULT_WORD_ID);
+        } catch (ClassCastException e) {
+            savedId = DEFAULT_WORD_ID;
+            prefs.edit().remove(KEY_CURRENT_ID).apply();
+        }
+        if (savedId.isEmpty()) {
+            try {
+                String firstId = WordDatabase.databaseExecutor.submit(
+                        () -> repository.getFirstWordId()).get();
+                savedId = firstId != null ? firstId : "0";
+            } catch (Exception e) {
+                savedId = "0";
+            }
+        }
+        currentWordId.setValue(savedId);
 
         // 构建数据管道
         currentWord = Transformations.switchMap(currentWordId, id ->
-                repository.getWordById(String.valueOf(id)));
+                repository.getWordById(id));
 
         basicWordLiveData = Transformations.switchMap(currentWord, word ->
                 repository.getBasicWordById(word.getWordId()));
@@ -125,28 +141,38 @@ public class LearnPageViewModel extends AndroidViewModel {
 
     // region 导航控制
     public void navigatePrevious() {
-        Integer currentId = currentWordId.getValue();
-        if (currentId != null && currentId > 1) {
-            checkAndNavigate(currentId - 1);
-        } else {
-            toastMessage.setValue("已经是第一个单词");
+        String currentId = currentWordId.getValue();
+        if (currentId != null) {
+            checkAndNavigatePrevious(currentId);
         }
     }
 
     public void navigateNext() {
-        Integer currentId = currentWordId.getValue();
+        String currentId = currentWordId.getValue();
         if (currentId != null) {
-            checkAndNavigate(currentId + 1);
+            checkAndNavigateNext(currentId);
         }
     }
 
-    private void checkAndNavigate(int targetId) {
+    private void checkAndNavigatePrevious(String currentId) {
         WordDatabase.databaseExecutor.execute(() -> {
-            Word word = repository.getWordByIdSync(String.valueOf(targetId));
-            if (word != null && !"null".equals(word.getWordId())) {
-                currentWordId.postValue(targetId);
-                saveCurrentId(targetId);
-            } else if (targetId > DEFAULT_WORD_ID) {
+            String prevId = repository.getPreviousWordId(currentId);
+            if (prevId != null) {
+                currentWordId.postValue(prevId);
+                saveCurrentId(prevId);
+            } else {
+                toastMessage.postValue("已经是第一个单词");
+            }
+        });
+    }
+
+    private void checkAndNavigateNext(String currentId) {
+        WordDatabase.databaseExecutor.execute(() -> {
+            String nextId = repository.getNextWordId(currentId);
+            if (nextId != null) {
+                currentWordId.postValue(nextId);
+                saveCurrentId(nextId);
+            } else {
                 toastMessage.postValue("已达词库末尾");
             }
         });
@@ -226,9 +252,9 @@ public class LearnPageViewModel extends AndroidViewModel {
     // endregion
 
     // region 持久化方法
-    private void saveCurrentId(int id) {
+    private void saveCurrentId(String id) {
         prefs.edit()
-                .putInt(KEY_CURRENT_ID, id)
+                .putString(KEY_CURRENT_ID, id)
                 .apply();
     }
     // endregion

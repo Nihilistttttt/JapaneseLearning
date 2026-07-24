@@ -37,4 +37,16 @@ public interface WordDao {
     // 批量查询
     @Query("SELECT * FROM WORD WHERE wordId IN (:idList)")
     LiveData<List<WordEntity>> getWordsByIdList(List<String> idList);
+
+    @Query("SELECT wordId FROM Word ORDER BY wordId LIMIT 1")
+    String getFirstWordId();
+
+    @Query("SELECT wordId FROM Word ORDER BY wordId DESC LIMIT 1")
+    String getLastWordId();
+
+    @Query("SELECT wordId FROM Word WHERE wordId > :currentId ORDER BY wordId LIMIT 1")
+    String getNextWordId(String currentId);
+
+    @Query("SELECT wordId FROM Word WHERE wordId < :currentId ORDER BY wordId DESC LIMIT 1")
+    String getPreviousWordId(String currentId);
 }
