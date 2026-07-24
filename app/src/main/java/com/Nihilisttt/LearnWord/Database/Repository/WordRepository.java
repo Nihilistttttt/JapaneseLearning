@@ -3,6 +3,7 @@ package com.Nihilisttt.LearnWord.Database.Repository;
 import android.content.Context;
 
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Transformations;
 
 import com.Nihilisttt.LearnWord.Database.Converter.AntonymWordConverter;
@@ -35,6 +36,7 @@ import com.Nihilisttt.LearnWord.JavaBean.WordCollocation;
 import com.Nihilisttt.LearnWord.JavaBean.WordMeaning;
 import com.Nihilisttt.LearnWord.JavaBean.WordSentence;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -302,6 +304,11 @@ public class WordRepository {
     }
 
     public LiveData<List<Word>> getWordsByIdList(List<String> idList) {
+        if (idList == null || idList.isEmpty()) {
+            MutableLiveData<List<Word>> result = new MutableLiveData<>();
+            result.setValue(Collections.emptyList());
+            return result;
+        }
         return Transformations.map(wordDao.getWordsByIdList(idList),
                 entities -> entities.stream()
                         .map(WordConverter::WordEntityToWord)
@@ -341,6 +348,11 @@ public class WordRepository {
     }
 
     public LiveData<List<WordMeaning>> getWordMeaningsByWordMeaningIdList(List<String> meaningIdList) {
+        if (meaningIdList == null || meaningIdList.isEmpty()) {
+            MutableLiveData<List<WordMeaning>> result = new MutableLiveData<>();
+            result.setValue(Collections.emptyList());
+            return result;
+        }
         return Transformations.map(wordMeaningDao.getWordMeaningsByWordMeaningIdList(meaningIdList),
                 entities -> entities.stream()
                         .map(WordMeaningConverter::WordMeaningEntityToWordMeaning)
@@ -381,6 +393,11 @@ public class WordRepository {
     }
 
     public LiveData<List<WordSentence>> getWordSentencesBySentencesIdList(List<String> sentenceIds) {
+        if (sentenceIds == null || sentenceIds.isEmpty()) {
+            MutableLiveData<List<WordSentence>> result = new MutableLiveData<>();
+            result.setValue(Collections.emptyList());
+            return result;
+        }
         return Transformations.map(wordSentenceDao.getWordSentencesByWordSentenceIdList(sentenceIds),
                 entities -> entities.stream()
                         .map(WordSentenceConverter::WordSentenceEntityToWordSentence)
@@ -406,6 +423,11 @@ public class WordRepository {
     }
 
     public LiveData<List<WordCollocation>> getWordCollocationsByWordCollocationIdList(List<String> collocationIds) {
+        if (collocationIds == null || collocationIds.isEmpty()) {
+            MutableLiveData<List<WordCollocation>> result = new MutableLiveData<>();
+            result.setValue(Collections.emptyList());
+            return result;
+        }
         return Transformations.map(wordCollocationDao.getWordCollocationsByWordCollocationIdList(collocationIds),
                 entities -> entities.stream()
                         .map(WordCollocationConverter::WordCollocationEntityToWordCollocation)
@@ -433,6 +455,11 @@ public class WordRepository {
     }
 
     public LiveData<List<AntonymWord>> getAntonymWordsByAntonymWordsIdList(List<String> antonymIdList) {
+        if (antonymIdList == null || antonymIdList.isEmpty()) {
+            MutableLiveData<List<AntonymWord>> result = new MutableLiveData<>();
+            result.setValue(Collections.emptyList());
+            return result;
+        }
         return Transformations.map(antonymWordDao.getAntonymWordsByAntonymIdList(antonymIdList),
                 entities -> entities.stream()
                         .map(AntonymWordConverter::AntonymWordEntityToAntonymWord)
@@ -460,6 +487,11 @@ public class WordRepository {
     }
 
     public LiveData<List<SynonymWord>> getSynonymWordsBySynonymWordsIdList(List<String> synonymIdList) {
+        if (synonymIdList == null || synonymIdList.isEmpty()) {
+            MutableLiveData<List<SynonymWord>> result = new MutableLiveData<>();
+            result.setValue(Collections.emptyList());
+            return result;
+        }
         return Transformations.map(synonymWordDao.getSynonymWordsBySynonymIdList(synonymIdList),
                 entities -> entities.stream()
                         .map(SynonymWordConverter::SynonymWordEntityToSynonymWord)

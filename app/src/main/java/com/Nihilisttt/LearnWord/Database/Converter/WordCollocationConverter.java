@@ -78,9 +78,9 @@ public class WordCollocationConverter {
                 .wordCollocationId("null")
                 .wordId("null")
                 .kanjiComponents(Collections.singletonList(Collections.singletonList("null")))
-                .kanaComponents(Collections.singletonList(Collections.singletonList("")))
+                .kanaComponents(Collections.singletonList(Collections.singletonList("null")))
                 .wordIdList(Collections.singletonList("null"))
-                .collocationAudioUrl("")
+                .collocationAudioUrl("null")
                 .translation("null")
                 .source("null")
                 .build();

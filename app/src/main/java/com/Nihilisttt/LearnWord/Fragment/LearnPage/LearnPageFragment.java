@@ -111,8 +111,13 @@ public class LearnPageFragment extends Fragment {
         });
     }
 
-    // 未来扩展方法
     private void addPracticePage() {
-        // 实现添加练习页面的逻辑
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        ViewPager2Navigation.getInstance().setOverviewDetailVp2(null);
+        NestedScrollableHostBetween3LayersManager.getInstance().setOuterViewPager2(null);
     }
 }

@@ -73,10 +73,10 @@ public class BasicWordConverter {
         return new BasicWord.Builder()
                 .wordId("null")
                 .kanjiComponents(Collections.singletonList("null"))
-                .kanaComponents(Collections.singletonList(""))
-                .audioUrl("")
-                .accentMark("")
-                .mnemonic("")
+                .kanaComponents(Collections.singletonList("null"))
+                .audioUrl("null")
+                .accentMark("null")
+                .mnemonic("null")
                 .build();
     }
     // endregion

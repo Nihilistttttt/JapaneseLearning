@@ -12,18 +12,15 @@ public class AntonymWordConverter {
     private static final Gson gson = new Gson();
     private static final String TAG = "AntonymWordConverter"; // 统一日志标签
 
-    // 缓存默认对象减少GC压力
-//    private static final AntonymWord DEFAULT_ANTONYM_WORD = createDefaultAntonymWord();
+    private static final AntonymWord DEFAULT_ANTONYM_WORD = createDefaultAntonymWord();
 
     private AntonymWordConverter() {
-        // 防止实例化
     }
 
     public static AntonymWord AntonymWordEntityToAntonymWord(AntonymWordEntity entity) {
         if (entity == null) {
             Log.d(TAG, "输入AntonymWordEntity为null，返回默认AntonymWord");
-            return null;
-//            return DEFAULT_ANTONYM_WORD;
+            return DEFAULT_ANTONYM_WORD;
         }
 
         try {
@@ -38,9 +35,8 @@ public class AntonymWordConverter {
             Log.d(TAG, "成功转换AntonymWordEntity ID: " + entity.getAntonymWordId());
             return model;
         } catch (Exception e) {
-            Log.d(TAG, "转换AntonymWordEntity失败, ID: " + entity.getAntonymWordId(), e); // 使用Log.d记录异常
-//            return DEFAULT_ANTONYM_WORD;
-            return null;
+            Log.d(TAG, "转换AntonymWordEntity失败, ID: " + entity.getAntonymWordId(), e);
+            return DEFAULT_ANTONYM_WORD;
         }
     }
 
@@ -67,15 +63,15 @@ public class AntonymWordConverter {
     }
 
 
-//    private static AntonymWord createDefaultAntonymWord() {
-//        Log.d(TAG, "创建默认AntonymWord实例");
-//        return new AntonymWord.Builder()
-//                .antonymWordId("null")
-//                .wordId("null")
-//                .correspondingWordId("null")
-//                .kanjiComponents(Collections.singletonList("null"))
-//                .kanaComponents(Collections.singletonList(""))
-//                .build();
-//    }
+    private static AntonymWord createDefaultAntonymWord() {
+        Log.d(TAG, "创建默认AntonymWord实例");
+        return new AntonymWord.Builder()
+                .antonymWordId("null")
+                .wordId("null")
+                .correspondingWordId("null")
+                .kanjiComponents(Collections.singletonList("null"))
+                .kanaComponents(Collections.singletonList("null"))
+                .build();
+    }
     // endregion
 }

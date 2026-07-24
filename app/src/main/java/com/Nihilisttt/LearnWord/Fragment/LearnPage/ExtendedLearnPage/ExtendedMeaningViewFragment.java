@@ -98,5 +98,9 @@ public class ExtendedMeaningViewFragment extends Fragment {
 
     }
 
-
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        NestedScrollableHostBetween3LayersManager.getInstance().setInner(null);
+    }
 }

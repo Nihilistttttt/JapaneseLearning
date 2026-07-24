@@ -20,7 +20,9 @@ public class Convert {
 
     @TypeConverter
     public static List<String> jsonToList(String value) {
-        return new Gson().fromJson(value, new TypeToken<List<String>>(){}.getType());
+        if (value == null || value.isEmpty()) return java.util.Collections.emptyList();
+        List<String> result = new Gson().fromJson(value, new TypeToken<List<String>>(){}.getType());
+        return result != null ? result : java.util.Collections.emptyList();
     }
 
     @TypeConverter
@@ -30,7 +32,9 @@ public class Convert {
 
     @TypeConverter
     public static List<List<String>> jsonToNestedList(String value) {
-        return new Gson().fromJson(value, new TypeToken<List<List<String>>>(){}.getType());
+        if (value == null || value.isEmpty()) return java.util.Collections.emptyList();
+        List<List<String>> result = new Gson().fromJson(value, new TypeToken<List<List<String>>>(){}.getType());
+        return result != null ? result : java.util.Collections.emptyList();
     }
 
     @TypeConverter

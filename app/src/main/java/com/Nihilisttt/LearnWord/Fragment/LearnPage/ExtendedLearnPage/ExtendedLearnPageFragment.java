@@ -108,6 +108,8 @@ public class ExtendedLearnPageFragment extends Fragment {
         super.onDestroyView();
         ViewPager2Navigation.getInstance().setMeaningVp2(null);
         ViewPager2Navigation.getInstance().clearPendingNavigation();
+        NestedScrollableHostBetween3LayersManager.getInstance().setMiddle(null);
+        NestedScrollableHostBetween3LayersManager.getInstance().setMiddleViewPage2(null);
         viewModel.getWordMeaningListLiveData().removeObservers(getViewLifecycleOwner());
         viewModel.getWordCollocationListLiveData().removeObservers(getViewLifecycleOwner());
         viewModel.getToastMessage().removeObservers(getViewLifecycleOwner());

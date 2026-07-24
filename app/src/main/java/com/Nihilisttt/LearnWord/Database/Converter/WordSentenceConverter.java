@@ -81,9 +81,9 @@ public class WordSentenceConverter {
                 .wordId("null")
                 .wordMeaningId("null")
                 .kanjiComponents(Collections.singletonList(Collections.singletonList("null")))
-                .kanaComponents(Collections.singletonList(Collections.singletonList("")))
+                .kanaComponents(Collections.singletonList(Collections.singletonList("null")))
                 .wordIdList(Collections.singletonList("null"))
-                .sentenceAudioUrl("")
+                .sentenceAudioUrl("null")
                 .translation("null")
                 .source("null")
                 .build();

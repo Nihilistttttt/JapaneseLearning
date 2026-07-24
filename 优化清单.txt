@@ -43,7 +43,45 @@ View层级树（从外到内）：
     2. level-2 host 调用 requestParentDisallowIntercept(true)
        → 沿父链传播：中层VP2、外层VP2 禁止拦截
     3. 净效果：只有释义VP2能拦截 → 翻到下一个释义
-       （中层VP2不抢事件翻回概览页，外层VP2不误触垂直翻页）
+        （中层VP2不抢事件翻回概览页，外层VP2不误触垂直翻页）
+
+================================
+
+【页面导航机制说明（ViewPager2Navigation）】
+================================
+
+从概览页点击释义跳转到详细页的导航流程：
+  1. MeaningView点击释义 → turnToDetailPage(position)
+  2. overviewDetailVp2.setCurrentItem(1) → 中层VP2切到ExtendedLearnPageFragment
+  3. meaningVp2.setCurrentItem(position) → 内层VP2跳到目标释义
+  4. 如果内层VP2尚未就绪(Fragment未创建) → pendingPosition暂存意图
+  5. Fragment创建后调用onMeaningVp2Ready → 消费pendingPosition
+
+字段命名说明：
+  - overviewDetailVp2 = 中层VP2(概览↔详细)，不是最外层VP2
+  - meaningVp2 = 内层VP2(释义间切换)，不是中层VP2
+  原因：LearnPageFragment:79覆盖了LearnPage.java:50的设置
+
+清理机制：
+  - Fragment.onDestroyView: setMeaningVp2(null) + clearPendingNavigation()
+  - 按钮点击: clearPendingNavigation() 防止切换单词后过期意图
+
+================================
+
+【导航校验机制说明（LearnPageViewModel.checkAndNavigate）】
+================================
+
+用户点击上一个/下一个按钮时的校验流程：
+  1. navigatePrevious/Next → checkAndNavigate(targetId)
+  2. databaseExecutor.execute → 同步查询wordDao.getWordByWordIdSync
+  3. 单词有效 → currentWordId.postValue(targetId) → 数据管道刷新
+  4. 单词无效 → toastMessage.postValue("已达词库末尾")
+
+为什么用同步查询而非observeForever：
+  - 导航校验是"查一次就走"，不需要观察数据变化
+  - observeForever的removeObserver会因Transformations.map每次创建新实例而失败
+  - 失败后observer永久挂在Room Dao LiveData上，数据库写入时误触发旧导航
+  - 同步查询+postValue：零observer、零泄漏、postValue批处理合并连续点击
 
 ================================
 
@@ -52,8 +90,8 @@ View层级树（从外到内）：
 1. [✓] 修复 NestedScrollableHostBetween3Layers.findAllChildViewPagers() 返回值被丢弃 — 删除3个冗余方法，替换为canAnyChildScroll()，修复canDeepChildScroll NPE，移除调试日志
 2. [✓] 修复 ViewPager2Navigation 无限递归post — 改为事件驱动(pendingPosition+onMeaningVp2Ready回调)，重命名字段消除歧义(outer→overviewDetail, middle→meaning)，添加clearPendingNavigation防止过期意图，Fragment销毁时清理引用和pending
 3. [✓] 修复 LearnPageViewModel.observeForever 内存泄漏 — 改为同步查询(方案C)：Dao添加getWordByWordIdSync，Repository添加getWordByIdSync，checkAndNavigate改为databaseExecutor+postValue，消除observeForever和匿名Observer泄漏
-4. [ ] ViewPager2Navigation/NestedScrollableHostBetween3LayersManager 中ViewPager2强引用改为WeakReference
-5. [ ] 修复 WordConverter/BasicWordConverter 中用字符串"null"作为无效ID的反模式，改为返回null或Optional
+4. [✓] 单例VP2强引用内存泄漏修复 — 方案B(手动清理)：在Fragment.onDestroyView中主动将单例引用设为null，补全3个Fragment的遗漏清理点（LearnPageFragment:overviewDetailVp2+outerViewPager2, ExtendedLearnPageFragment:middle+middleViewPage2, ExtendedMeaningViewFragment:inner），不使用WeakReference（引用关系明确且数量有限，强引用可读性更好）
+5. [✓] 修复Converter中"null"字符串反模式 — 方案C：6个Converter的createDefault方法中"null"改为""、singletonList("null")改为emptyList()，2个消费点equals("null")改为isEmpty()，保留DEFAULT对象空对象模式防止switchMap链NPE
 6. [ ] 实现数据导入管道（Python处理后的JSON/Excel → Room数据库），替换FirstPage中880行硬编码测试数据
 7. [ ] 修复 分词工具mecab.py 第155-158行 kana变量未赋值就使用的Bug
 8. [ ] 修复 匹配字典.py 第29行 for title, link in matches1 解包数量不匹配的Bug
