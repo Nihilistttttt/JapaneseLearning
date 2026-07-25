@@ -80,7 +80,18 @@ public class BasicWordView extends LinearLayout {
         wordComponentLayout.setClickable(false);
 
         TextView accentMark = new TextView(context);
-        accentMark.setText(basicWord.getAccentMark());
+        String accentStr = basicWord.getAccentMark();
+        if (accentStr != null && !accentStr.isEmpty()) {
+            try {
+                int num = Integer.parseInt(accentStr);
+                if (num == 0) {
+                    accentStr = "\u24EA";
+                } else if (num >= 1 && num <= 20) {
+                    accentStr = String.valueOf((char) (0x2460 + num - 1));
+                }
+            } catch (NumberFormatException ignored) {}
+        }
+        accentMark.setText(accentStr);
 
         word_component_part.addView(wordComponentLayout);
         accent_mark_part.addView(accentMark);
