@@ -220,6 +220,8 @@ def main():
                          for c in data.get('wordCollocations', [])]
     batch_insert(cursor, conn, 'WordCollocation', collocation_columns, collocation_rows)
 
+    MAX_SENTENCES_PER_WORD = 6
+
     # 从word_sentences_data.json导入例句
     if os.path.exists(SENTENCES_PATH):
         print(f"Loading sentences from {SENTENCES_PATH}...")
@@ -228,17 +230,31 @@ def main():
         sentences = sent_data['wordSentences']
         print(f"  Sentences: {len(sentences)}")
 
+        # Limit sentences per wordId
+        word_sent_count = defaultdict(int)
+        limited_sentences = []
+        skipped = 0
+        for s in sentences:
+            wid = s.get('wordId', '')
+            if wid and wid != "0":
+                if word_sent_count[wid] >= MAX_SENTENCES_PER_WORD:
+                    skipped += 1
+                    continue
+                word_sent_count[wid] += 1
+            limited_sentences.append(s)
+        print(f"  After limiting to {MAX_SENTENCES_PER_WORD}/word: {len(limited_sentences)} (skipped {skipped})")
+
         sentence_rows = [(s['wordSentenceId'], s.get('wordId', ''), s.get('wordMeaningId', ''),
                           s.get('kanjiComponents', '[]'), s.get('kanaComponents', '[]'),
                           s.get('wordIdList', '[]'), s.get('translation', ''), s.get('source', 'EDRG'),
                           s.get('audioUrl', ''))
-                         for s in sentences]
+                         for s in limited_sentences]
         batch_insert(cursor, conn, 'WordSentence', sentence_columns, sentence_rows)
 
         # 按wordId分组例句ID，更新Word.sentenceIdList
         print("Updating Word.sentenceIdList...")
         word_to_sent_ids = defaultdict(list)
-        for s in sentences:
+        for s in limited_sentences:
             wid = s.get('wordId', '')
             if wid and wid != "0":
                 word_to_sent_ids[wid].append(s['wordSentenceId'])

@@ -19,6 +19,8 @@ DB_PATH = os.path.join(BASE, 'app', 'src', 'main', 'assets', 'databases', 'word_
 SENTENCES_PATH = os.path.join(DATA_DIR, 'word_sentences_data.json')
 
 BATCH_SIZE = 2000
+MAX_TOKENS = 20
+MAX_SENTENCES_PER_WORD = 6
 
 
 def main():
@@ -44,10 +46,26 @@ def main():
     sql = f"INSERT INTO WordSentence ({col_str}) VALUES ({placeholders})"
 
     word_to_sent_ids = defaultdict(list)
+    word_sent_count = defaultdict(int)
     batch = []
     total = 0
 
+    skipped_long = 0
+    skipped_limit = 0
+
     for s in sentences:
+        kc = json.loads(s.get('kanjiComponents', '[]'))
+        if len(kc) > MAX_TOKENS:
+            skipped_long += 1
+            continue
+
+        wid = s.get('wordId', '')
+        if wid and wid != "0":
+            if word_sent_count[wid] >= MAX_SENTENCES_PER_WORD:
+                skipped_limit += 1
+                continue
+            word_sent_count[wid] += 1
+
         row = (s['wordSentenceId'], s.get('wordId', ''), s.get('wordMeaningId', ''),
                s.get('kanjiComponents', '[]'), s.get('kanaComponents', '[]'),
                s.get('wordIdList', '[]'), s.get('translation', ''), s.get('source', 'EDRG'),
@@ -71,6 +89,10 @@ def main():
         conn.commit()
 
     print(f"  Inserted {total} rows into WordSentence")
+    if skipped_long:
+        print(f"  Skipped {skipped_long} sentences exceeding {MAX_TOKENS} tokens")
+    if skipped_limit:
+        print(f"  Skipped {skipped_limit} sentences exceeding {MAX_SENTENCES_PER_WORD}/word limit")
 
     # 更新Word.sentenceIdList
     print("Updating Word.sentenceIdList...")
