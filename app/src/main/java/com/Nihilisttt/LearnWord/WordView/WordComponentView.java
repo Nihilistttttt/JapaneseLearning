@@ -8,6 +8,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.util.TypedValue;
+import androidx.core.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -26,6 +27,7 @@ import androidx.lifecycle.Observer;
 import com.Nihilisttt.LearnWord.Database.Repository.WordRepository;
 import com.Nihilisttt.LearnWord.JavaBean.BasicWord;
 import com.Nihilisttt.LearnWord.JavaBean.WordMeaning;
+import com.Nihilisttt.LearnWord.R;
 import com.Nihilisttt.LearnWord.UtilityClass.AudioManager;
 import com.Nihilisttt.LearnWord.UtilityClass.Constants;
 import com.Nihilisttt.LearnWord.UtilityClass.Convert;
@@ -89,7 +91,7 @@ public class WordComponentView extends LinearLayout {
         initComponents();
         setClickable(true);
         setFocusable(true);
-        setBackground(new PartialSelectorDrawable(marginStart, marginEnd));
+        setBackground(new PartialSelectorDrawable(marginStart, marginEnd, ContextCompat.getColor(context, R.color.md_item_pressed)));
         setOnClickListener(v -> {
             AudioManager audioManager = AudioManager.getInstance(context);
             if (audioManager.isPlaying()) {
@@ -120,7 +122,7 @@ public class WordComponentView extends LinearLayout {
         initComponents();
         setClickable(true);
         setFocusable(true);
-        setBackground(new PartialSelectorDrawable(marginStart, marginEnd));
+        setBackground(new PartialSelectorDrawable(marginStart, marginEnd, ContextCompat.getColor(context, R.color.md_item_pressed)));
         setOnClickListener(v -> showInfoDialog());
     }
 
@@ -339,7 +341,7 @@ public class WordComponentView extends LinearLayout {
         // 创建带圆角的 Material 风格容器
         MaterialCardView cardView = new MaterialCardView(context);
         cardView.setRadius(16); // 圆角半径
-        cardView.setCardBackgroundColor(Color.WHITE);
+        cardView.setCardBackgroundColor(ContextCompat.getColor(context, R.color.md_card_background));
         cardView.setLayoutParams(new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
@@ -398,7 +400,7 @@ public class WordComponentView extends LinearLayout {
         TextView titleView = new TextView(context);
         titleView.setText("单词详情页面");
         titleView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
-        titleView.setTextColor(Color.parseColor("#2196F3")); // Material Blue
+        titleView.setTextColor(ContextCompat.getColor(context, R.color.md_detail_label));
         titleView.setPadding(0, 0, 0, 16); // 底部留白
         titlePart.addView(titleView);
 

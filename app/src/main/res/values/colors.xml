@@ -7,9 +7,45 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="off_white">#FFF8DC</color>
-    <color name="antique_white">#FAEBD7</color>
     <color name="transparent">#00000000</color>
-    <color name="grey">#F8F8FF</color>
-    <color name="blue">#2196F3</color>
+
+    <color name="md_primary">#FF1565C0</color>
+    <color name="md_on_primary">#FFFFFFFF</color>
+    <color name="md_primary_container">#FFD1E4FF</color>
+    <color name="md_on_primary_container">#FF001D36</color>
+
+    <color name="md_secondary">#FF535F70</color>
+    <color name="md_on_secondary">#FFFFFFFF</color>
+    <color name="md_secondary_container">#FFD7E3F7</color>
+    <color name="md_on_secondary_container">#FF101C2B</color>
+
+    <color name="md_surface">#FFF8F9FF</color>
+    <color name="md_on_surface">#FF191C20</color>
+    <color name="md_surface_variant">#FFDFE2EB</color>
+    <color name="md_on_surface_variant">#FF43474E</color>
+
+    <color name="md_outline">#FF73777F</color>
+    <color name="md_outline_variant">#FFC3C6CF</color>
+
+    <color name="md_inverse_surface">#FF2E3036</color>
+    <color name="md_inverse_on_surface">#FFEFF0F7</color>
+
+    <color name="md_error">#FFBA1A1A</color>
+    <color name="md_on_error">#FFFFFFFF</color>
+    <color name="md_error_container">#FFFFDAD6</color>
+
+    <color name="md_part_of_speech">#FF1565C0</color>
+    <color name="md_definition_text">#FF424242</color>
+    <color name="md_detail_label">#FF1565C0</color>
+
+    <color name="md_card_background">#FFFFFFFF</color>
+    <color name="md_page_background">#FFF5F7FA</color>
+
+    <color name="md_button_normal">#FFD1E4FF</color>
+    <color name="md_button_pressed">#FFA7C8FF</color>
+    <color name="md_sign_in_normal">#FFE8F0FE</color>
+    <color name="md_sign_in_pressed">#FFD1E4FF</color>
+    <color name="md_indicator_selected">#FF1565C0</color>
+    <color name="md_indicator_unselected">#FFB0BEC5</color>
+    <color name="md_item_pressed">#FFE3F2FD</color>
 </resources>

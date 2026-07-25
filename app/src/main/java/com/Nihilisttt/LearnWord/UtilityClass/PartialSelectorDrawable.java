@@ -1,7 +1,7 @@
 package com.Nihilisttt.LearnWord.UtilityClass;
 
 import android.graphics.Canvas;
-import android.graphics.Color;
+
 import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
@@ -13,12 +13,14 @@ import androidx.annotation.Nullable;
 public class PartialSelectorDrawable extends Drawable {
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private boolean isPressed = false;
-    private final int startPixel;  // 左侧透明区域像素值
-    private final int endPixel;    // 右侧透明区域像素值
+    private final int startPixel;
+    private final int endPixel;
+    private final int pressedColor;
 
-    public PartialSelectorDrawable(int startPixel, int endPixel) {
+    public PartialSelectorDrawable(int startPixel, int endPixel, int pressedColor) {
         this.startPixel = Math.max(startPixel, 0);
         this.endPixel = Math.max(endPixel, 0);
+        this.pressedColor = pressedColor;
     }
 
     @Override
@@ -30,7 +32,7 @@ public class PartialSelectorDrawable extends Drawable {
         float width = bounds.width();
         float topPosition = height * 0.3f;
 
-        paint.setColor(Color.parseColor("#FAEBD7"));
+        paint.setColor(pressedColor);
         float drawLeft = startPixel;
         float drawRight = width - endPixel;
 

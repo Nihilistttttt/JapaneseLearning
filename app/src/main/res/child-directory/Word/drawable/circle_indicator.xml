@@ -1,18 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- 选中状态显示白色 -->
     <item android:state_selected="true">
         <shape android:shape="oval">
-            <solid android:color="@color/black" />
+            <solid android:color="@color/md_indicator_selected" />
             <size android:width="8dp"
                 android:height="8dp"/>
         </shape>
     </item>
-
-    <!-- 默认未选中状态显示灰色 -->
     <item>
         <shape android:shape="oval">
-            <solid android:color="@color/grey" />
+            <solid android:color="@color/md_indicator_unselected" />
             <size android:width="8dp"
                 android:height="8dp"/>
         </shape>

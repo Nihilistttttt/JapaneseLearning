@@ -4,18 +4,17 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/md_page_background"
     android:orientation="vertical">
 
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/learn_page_vp2_container"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="20dp"
         app:layout_constraintBottom_toTopOf="@+id/guideline"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline"
@@ -34,10 +33,12 @@
     <Button
         android:id="@+id/pre_word"
         android:layout_width="@dimen/next_or_pre_button_width"
-        android:layout_height="wrap_content"
+        android:layout_height="48dp"
         android:background="@drawable/button_style"
         android:text="@string/previous_word"
-        android:textSize="@dimen/next_or_pre_word_size"
+        android:textAllCaps="false"
+        android:textColor="@color/md_on_primary"
+        android:textSize="16sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/guideline2"
         app:layout_constraintStart_toStartOf="parent"
@@ -46,10 +47,12 @@
     <Button
         android:id="@+id/next_word"
         android:layout_width="@dimen/next_or_pre_button_width"
-        android:layout_height="wrap_content"
+        android:layout_height="48dp"
         android:background="@drawable/button_style"
         android:text="@string/next_value"
-        android:textSize="@dimen/next_or_pre_word_size"
+        android:textAllCaps="false"
+        android:textColor="@color/md_on_primary"
+        android:textSize="16sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="@+id/guideline2"

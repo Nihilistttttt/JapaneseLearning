@@ -3,6 +3,7 @@ package com.Nihilisttt.LearnWord.WordView;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
+
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.text.SpannableString;
@@ -17,6 +18,7 @@ import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
@@ -24,6 +26,7 @@ import androidx.lifecycle.Observer;
 import com.Nihilisttt.LearnWord.Database.Repository.WordRepository;
 import com.Nihilisttt.LearnWord.JavaBean.WordMeaning;
 import com.Nihilisttt.LearnWord.JavaBean.WordSentence;
+import com.Nihilisttt.LearnWord.R;
 import com.Nihilisttt.LearnWord.UtilityClass.Constants;
 import com.Nihilisttt.LearnWord.UtilityClass.Convert;
 import com.Nihilisttt.LearnWord.UtilityClass.Select;
@@ -86,12 +89,13 @@ public class MeaningView extends LinearLayout {
     private LinearLayout createPartOfSpeechLayout(Constants.PartOfSpeech pos) {
         LinearLayout posPart = new LinearLayout(getContext());
         posPart.setOrientation(LinearLayout.HORIZONTAL);
-        posPart.setPadding(0, Convert.dpToPx(getContext(), 4), 0, Convert.dpToPx(getContext(), 4));
+        posPart.setPadding(0, Convert.dpToPx(getContext(), 6), 0, Convert.dpToPx(getContext(), 2));
 
         TextView posView = new TextView(getContext());
         posView.setText(String.format("%s  ", pos.name()));
-        posView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-        posView.setTextColor(Color.parseColor("#1976D2"));
+        posView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        posView.setTypeface(null, android.graphics.Typeface.BOLD);
+        posView.setTextColor(ContextCompat.getColor(getContext(), R.color.md_part_of_speech));
 
         posPart.addView(posView);
         return posPart;
@@ -105,7 +109,7 @@ public class MeaningView extends LinearLayout {
 
         view.setText(spannable);
         view.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
-        view.setTextColor(Color.parseColor("#424242"));
+        view.setTextColor(ContextCompat.getColor(getContext(), R.color.md_definition_text));
         view.setTag(meaning);
         switch (mode){
             case Constants.SHOW_SENTENCE_POPUP:view.setOnClickListener(v -> showSentencePopup((WordMeaning) v.getTag()));break;
@@ -128,8 +132,9 @@ public class MeaningView extends LinearLayout {
 
         // 创建弹窗容器
         final MaterialCardView cardView = new MaterialCardView(context);
-        cardView.setRadius(Convert.dpToPx(getContext(), 8));
-        cardView.setCardBackgroundColor(Color.WHITE);
+        cardView.setRadius(Convert.dpToPx(getContext(), 12));
+        cardView.setCardElevation(Convert.dpToPx(getContext(), 4));
+        cardView.setCardBackgroundColor(ContextCompat.getColor(context, R.color.md_card_background));
 
         // 内容容器
         final LinearLayout container = new LinearLayout(context);
@@ -145,16 +150,16 @@ public class MeaningView extends LinearLayout {
         // 日文翻译
         TextView originalDefinition = new TextView(context);
         originalDefinition.setText(String.format("日: %s", meaning.getOriginalDefinition()));
-        originalDefinition.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-        originalDefinition.setTextColor(Color.parseColor("#2196F3"));
+        originalDefinition.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        originalDefinition.setTextColor(ContextCompat.getColor(context, R.color.md_detail_label));
         originalDefinition.setPadding(Convert.dpToPx(getContext(), 16), Convert.dpToPx(getContext(), 8), Convert.dpToPx(getContext(), 16), Convert.dpToPx(getContext(), 4));
         container.addView(originalDefinition);
 
         // 日文翻译
         TextView translationDefinition = new TextView(context);
         translationDefinition.setText(String.format("中: %s", meaning.getTranslationDefinition()));
-        translationDefinition.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-        translationDefinition.setTextColor(Color.parseColor("#2196F3"));
+        translationDefinition.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        translationDefinition.setTextColor(ContextCompat.getColor(context, R.color.md_detail_label));
         translationDefinition.setPadding(Convert.dpToPx(getContext(), 16), Convert.dpToPx(getContext(), 4), Convert.dpToPx(getContext(), 16), Convert.dpToPx(getContext(), 8));
         container.addView(translationDefinition);
 

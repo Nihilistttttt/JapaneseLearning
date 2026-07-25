@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="20dp">
+    android:padding="16dp">
 
     <com.Nihilisttt.LearnWord.ViewPager2.NestedScrollableHostBetween3Layers
         android:id="@+id/detailed_meaning_vp2_container"
@@ -15,7 +15,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        android:background="@color/cardview_light_background">
+        android:background="@color/md_card_background">
         <androidx.viewpager2.widget.ViewPager2
             android:id="@+id/detailed_meaning_viewpager"
             android:layout_width="match_parent"
@@ -32,6 +32,9 @@
         android:id="@+id/meaning_container"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        app:cardCornerRadius="@dimen/card_corner_radius"
+        app:cardElevation="@dimen/card_elevation"
+        app:cardBackgroundColor="@color/md_card_background"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -39,29 +42,36 @@
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:padding="12dp">
 
             <TextView
                 android:id="@+id/part_of_speech"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@color/blue"
-                app:layout_constraintStart_toStartOf="@+id/original_definition"
+                android:textColor="@color/md_detail_label"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
             <TextView
                 android:id="@+id/original_definition"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@color/blue"
-                app:layout_constraintStart_toStartOf="@+id/translation_definition"
+                android:textColor="@color/md_detail_label"
+                android:textSize="14sp"
+                android:layout_marginTop="4dp"
+                app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/part_of_speech" />
 
             <TextView
                 android:id="@+id/translation_definition"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@color/blue"
+                android:textColor="@color/md_definition_text"
+                android:textSize="14sp"
+                android:layout_marginTop="4dp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/original_definition" />
         </androidx.constraintlayout.widget.ConstraintLayout>
@@ -73,6 +83,5 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         app:layout_constraintGuide_percent="0.7" />
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>

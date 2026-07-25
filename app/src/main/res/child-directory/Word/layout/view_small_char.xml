@@ -14,7 +14,7 @@
         android:layout_height="wrap_content"
         android:gravity="center"
         android:includeFontPadding="false"
-        android:textColor="@color/black"
+        android:textColor="@color/md_on_surface"
         android:textSize="@dimen/small_kana_size"
         android:textStyle="bold" />
 
@@ -24,7 +24,7 @@
         android:layout_height="wrap_content"
         android:gravity="center"
         android:includeFontPadding="false"
-        android:textColor="@color/black"
+        android:textColor="@color/md_on_surface"
         android:textSize="@dimen/small_kanji_size"
         android:textStyle="bold" />
 

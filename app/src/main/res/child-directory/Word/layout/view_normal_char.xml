@@ -15,7 +15,7 @@
         android:gravity="center"
         android:text="あげあげ"
         android:includeFontPadding="false"
-        android:textColor="@color/black"
+        android:textColor="@color/md_on_surface"
         android:textSize="@dimen/normal_kana_size"
         android:textStyle="bold" />
 
@@ -26,7 +26,7 @@
         android:gravity="center"
         android:includeFontPadding="false"
         android:text="げ"
-        android:textColor="@color/black"
+        android:textColor="@color/md_on_surface"
         android:textSize="@dimen/normal_kanji_size"
         android:textStyle="bold" />
 

@@ -67,8 +67,8 @@ public class Vp2IndicatorView extends View {
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     private void init() {
-        mColorSelected = getContext().getColorStateList(R.color.blue);
-        mColorUnSelected = getContext().getColorStateList(R.color.design_default_color_error);
+        mColorSelected = getContext().getColorStateList(R.color.md_indicator_selected);
+        mColorUnSelected = getContext().getColorStateList(R.color.md_indicator_unselected);
         mIndicatorItemDistance = dip2px(6);
         mIndicatorStyle = STYLE_CIRCLE_CIRCLE;
         circleCircleRadius = dip2px(3);

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="md_primary">#FFA7C8FF</color>
+    <color name="md_on_primary">#FF003258</color>
+    <color name="md_primary_container">#FF00497D</color>
+    <color name="md_on_primary_container">#FFD1E4FF</color>
+
+    <color name="md_secondary">#FFBDC7DC</color>
+    <color name="md_on_secondary">#FF253140</color>
+    <color name="md_secondary_container">#FF3C4858</color>
+    <color name="md_on_secondary_container">#FFD7E3F7</color>
+
+    <color name="md_surface">#FF111318</color>
+    <color name="md_on_surface">#FFE2E2E9</color>
+    <color name="md_surface_variant">#FF43474E</color>
+    <color name="md_on_surface_variant">#FFC3C6CF</color>
+
+    <color name="md_outline">#FF8D9199</color>
+    <color name="md_outline_variant">#FF43474E</color>
+
+    <color name="md_inverse_surface">#FFE2E2E9</color>
+    <color name="md_inverse_on_surface">#FF2E3036</color>
+
+    <color name="md_error">#FFFFB4AB</color>
+    <color name="md_on_error">#FF690005</color>
+    <color name="md_error_container">#FF93000A</color>
+
+    <color name="md_part_of_speech">#FFA7C8FF</color>
+    <color name="md_definition_text">#FFE0E0E0</color>
+    <color name="md_detail_label">#FFA7C8FF</color>
+
+    <color name="md_card_background">#FF1E2024</color>
+    <color name="md_page_background">#FF111318</color>
+
+    <color name="md_button_normal">#FF1E3A5F</color>
+    <color name="md_button_pressed">#FF2A4A6B</color>
+    <color name="md_sign_in_normal">#FF1E3A5F</color>
+    <color name="md_sign_in_pressed">#FF2A4A6B</color>
+    <color name="md_indicator_selected">#FFA7C8FF</color>
+    <color name="md_indicator_unselected">#FF4A5568</color>
+    <color name="md_item_pressed">#FF1E3A5F</color>
+</resources>

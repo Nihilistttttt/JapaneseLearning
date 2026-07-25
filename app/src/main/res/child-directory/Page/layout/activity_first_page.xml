@@ -3,25 +3,27 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/md_page_background"
     android:orientation="vertical">
 
     <ImageButton
         android:id="@+id/user_page"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:layout_marginStart="10dp"
-        android:layout_marginTop="10dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
         android:background="@color/transparent"
         android:scaleType="fitCenter"
         android:src="@drawable/a_1"
+        android:contentDescription="User"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <FrameLayout
         android:id="@+id/sign_in_frame_layout"
-        android:layout_width="150dp"
-        android:layout_height="150dp"
-        android:layout_marginTop="100dp"
+        android:layout_width="140dp"
+        android:layout_height="140dp"
+        android:layout_marginTop="80dp"
         android:background="@drawable/sign_in_style"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -31,76 +33,64 @@
         android:id="@+id/center_line"
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:layout_gravity="center_vertical"
         android:background="@null"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
     <View
         android:id="@+id/center_bottom_line"
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:layout_gravity="center_vertical"
         android:background="@null"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/center_line"/>
+        app:layout_constraintTop_toBottomOf="@id/center_line" />
 
     <View
         android:id="@+id/center_bottom_center_line"
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:layout_gravity="center_vertical"
         android:background="@null"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/center_bottom_line"/>
+        app:layout_constraintTop_toBottomOf="@id/center_bottom_line" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_horizontal"
         android:orientation="horizontal"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        app:layout_constraintBottom_toTopOf="@id/center_bottom_center_line"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/center_bottom_center_line">
-        <View
-            android:layout_width="0dp"
-            android:layout_height="1dp"
-            android:layout_weight="0.5"
-            android:layout_gravity="center_vertical"
-            android:background="@null"/>
+        app:layout_constraintStart_toStartOf="parent">
 
         <Button
             android:id="@+id/learn_button"
             android:layout_width="0dp"
-            android:layout_height="70dp"
+            android:layout_height="56dp"
             android:layout_weight="1"
             android:background="@drawable/button_style"
             android:text="@string/learn_button_name"
             android:textAllCaps="false"
-            android:textSize="20sp" />
+            android:textColor="@color/md_on_primary"
+            android:textSize="18sp" />
 
         <View
             android:layout_width="0dp"
             android:layout_height="1dp"
-            android:layout_weight="0.5"
-            android:layout_gravity="center_vertical"
+            android:layout_weight="0.15"
             android:background="@null" />
 
         <Button
             android:id="@+id/review_button"
             android:layout_width="0dp"
+            android:layout_height="56dp"
             android:layout_weight="1"
-            android:layout_height="70dp"
             android:background="@drawable/button_style"
             android:text="@string/review_button_name"
             android:textAllCaps="false"
-            android:textSize="20sp" />
-
-        <View
-            android:layout_width="0dp"
-            android:layout_height="1dp"
-            android:layout_weight="0.5"
-            android:layout_gravity="center_vertical"
-            android:background="@null"/>
+            android:textColor="@color/md_on_primary"
+            android:textSize="18sp" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
