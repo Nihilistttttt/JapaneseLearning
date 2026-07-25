@@ -1,5 +1,5 @@
 """
-从room_import.json.gz生成Room兼容的SQLite数据库
+从room_import.json + word_sentences_data.json 生成Room兼容的SQLite数据库
 
 Room的createFromAsset会自动复制DB文件，无需运行时JSON解析，彻底避免OOM。
 
@@ -7,18 +7,19 @@ Room的createFromAsset会自动复制DB文件，无需运行时JSON解析，彻�
 1. 创建与Room Entity完全一致的表结构
 2. 插入room_master_table元数据（identity_hash）
 3. 从JSON批量导入数据
-4. 创建索引
+4. 从word_sentences_data.json导入例句并更新Word.sentenceIdList
 5. VACUUM压缩
 """
 
 import json
-import gzip
 import os
 import sqlite3
+from collections import defaultdict
 
 BASE = r'D:\Libraries\Projects\AndroidStudioProjects\Learn'
 DATA_DIR = os.path.join(BASE, '日语数据处理')
 INPUT_PATH = os.path.join(BASE, 'app', 'src', 'main', 'assets', 'room_import.json')
+SENTENCES_PATH = os.path.join(DATA_DIR, 'word_sentences_data.json')
 OUTPUT_PATH = os.path.join(BASE, 'app', 'src', 'main', 'assets', 'databases', 'word_database.db')
 
 # Room identity_hash - 从编译生成的WordDatabase_Impl.java中获取
@@ -214,10 +215,45 @@ def main():
     collocation_columns = ['wordCollocationId', 'wordId', 'kanjiComponents', 'kanaComponents',
                            'wordIdList', 'translation', 'source', 'audioUrl']
     collocation_rows = [(c['wordCollocationId'], c.get('wordId', ''), c.get('kanjiComponents', '[]'),
-                         c.get('kanaComponents', '[]'), c.get('wordIdList', '[]'), c.get('translation', ''),
-                         c.get('source', ''), c.get('audioUrl', ''))
-                        for c in data.get('wordCollocations', [])]
+                          c.get('kanaComponents', '[]'), c.get('wordIdList', '[]'), c.get('translation', ''),
+                          c.get('source', ''), c.get('audioUrl', ''))
+                         for c in data.get('wordCollocations', [])]
     batch_insert(cursor, conn, 'WordCollocation', collocation_columns, collocation_rows)
+
+    # 从word_sentences_data.json导入例句
+    if os.path.exists(SENTENCES_PATH):
+        print(f"Loading sentences from {SENTENCES_PATH}...")
+        with open(SENTENCES_PATH, 'r', encoding='utf-8') as f:
+            sent_data = json.load(f)
+        sentences = sent_data['wordSentences']
+        print(f"  Sentences: {len(sentences)}")
+
+        sentence_rows = [(s['wordSentenceId'], s.get('wordId', ''), s.get('wordMeaningId', ''),
+                          s.get('kanjiComponents', '[]'), s.get('kanaComponents', '[]'),
+                          s.get('wordIdList', '[]'), s.get('translation', ''), s.get('source', 'EDRG'),
+                          s.get('audioUrl', ''))
+                         for s in sentences]
+        batch_insert(cursor, conn, 'WordSentence', sentence_columns, sentence_rows)
+
+        # 按wordId分组例句ID，更新Word.sentenceIdList
+        print("Updating Word.sentenceIdList...")
+        word_to_sent_ids = defaultdict(list)
+        for s in sentences:
+            wid = s.get('wordId', '')
+            if wid and wid != "0":
+                word_to_sent_ids[wid].append(s['wordSentenceId'])
+
+        updated = 0
+        for wid, sent_ids in word_to_sent_ids.items():
+            cursor.execute("UPDATE Word SET sentenceIdList = ? WHERE wordId = ?",
+                           (json.dumps(sent_ids), wid))
+            updated += 1
+            if updated % 5000 == 0:
+                conn.commit()
+        conn.commit()
+        print(f"  Updated {updated} words with sentence IDs")
+    else:
+        print(f"  {SENTENCES_PATH} not found, skipping sentences")
 
     print("Skipping indexes (Room Entity does not declare them, schema validation would fail)")
 

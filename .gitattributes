@@ -3,3 +3,4 @@ app/src/main/assets/room_import.json filter=lfs diff=lfs merge=lfs -text
 日语数据处理/jmdict-all-3.6.2.json filter=lfs diff=lfs merge=lfs -text
 日语数据处理/links.tar.bz2 filter=lfs diff=lfs merge=lfs -text
 日语数据处理/sentences.tar_2.bz2 filter=lfs diff=lfs merge=lfs -text
+日语数据处理/word_sentences_data.json filter=lfs diff=lfs merge=lfs -text

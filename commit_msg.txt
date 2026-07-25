@@ -1,0 +1,16 @@
+例句数据导入+假名修复
+
+例句导入:
+- 162730条例句导入WordSentence表(EDRG 147835 + Tatoeba 14895)
+- 18538个词条关联了例句(sentenceIdList已更新)
+- generate_room_db.py: 直接从word_sentences_data.json加载例句并更新Word表
+- add_sentences_to_db.py: 独立脚本在已有DB上追加例句
+- merge_sentences_to_room.py: 适配当前流程(不再gzip)
+- PREBUILT_DB_VERSION升级到2
+- DB大小162.5MB
+
+例句假名修复:
+- extract_sentences.py v4: 用JmdictFurigana权威拆分+回溯匹配正确分配假名注音
+- 之前: 汉字位置存整词读音(如忙->いそがしい) 假名位置重复存假名
+- 现在: 汉字位置存逐字注音(如忙->いそが) 假名/送假名位置存空字符串
+- EDRG无reading的汉字词: 从JMDict查找读音后再拆分(如生活->せいかつ)

@@ -43,7 +43,7 @@ import java.util.concurrent.Executors;
 public abstract class WordDatabase extends RoomDatabase {
     private static final String PREFS_NAME = "room_db_prefs";
     private static final String KEY_DB_VERSION = "prebuilt_db_version";
-    private static final int PREBUILT_DB_VERSION = 1;
+    private static final int PREBUILT_DB_VERSION = 2;
     // 线程安全的单例模式
     private static volatile WordDatabase INSTANCE;
     // 数据库操作线程池（4线程）

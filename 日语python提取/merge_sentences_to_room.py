@@ -1,23 +1,20 @@
 """
-将例句数据合并到room_import.json.gz (v11)
+将例句数据合并到room_import.json
 
-1. 从room_import.json.gz加载现有数据
+1. 从room_import.json加载现有数据
 2. 加载word_sentences_data.json
 3. 按wordId分组例句，更新WordEntity的sentenceIdList
 4. 将wordSentences写入
-5. 重新gzip压缩
+5. 重新写入room_import.json
 """
 
 import json
 import os
-import gzip
-import shutil
 from collections import defaultdict
 
 BASE = r'D:\Libraries\Projects\AndroidStudioProjects\Learn'
 DATA_DIR = os.path.join(BASE, '日语数据处理')
 ROOM_IMPORT_PATH = os.path.join(BASE, 'app', 'src', 'main', 'assets', 'room_import.json')
-ROOM_IMPORT_GZ_PATH = os.path.join(BASE, 'app', 'src', 'main', 'assets', 'room_import.json.gz')
 SENTENCES_PATH = os.path.join(DATA_DIR, 'word_sentences_data.json')
 
 
@@ -28,6 +25,7 @@ def main():
     print(f"  Words: {len(room_data['words'])}")
     print(f"  BasicWords: {len(room_data['basicWords'])}")
     print(f"  WordMeanings: {len(room_data['wordMeanings'])}")
+    print(f"  WordSentences (before): {len(room_data.get('wordSentences', []))}")
 
     print("Loading word_sentences_data.json...")
     with open(SENTENCES_PATH, encoding='utf-8') as f:
@@ -59,25 +57,13 @@ def main():
     # 设置wordSentences
     room_data['wordSentences'] = sentences
 
-    # 先写临时JSON文件
-    tmp_json = os.path.join(DATA_DIR, 'room_import_v11.json')
-    print(f"Writing temporary JSON...")
-    with open(tmp_json, 'w', encoding='utf-8') as f:
+    # 写入room_import.json
+    print(f"Writing to {ROOM_IMPORT_PATH}...")
+    with open(ROOM_IMPORT_PATH, 'w', encoding='utf-8') as f:
         json.dump(room_data, f, ensure_ascii=False, separators=(',', ':'))
-    json_size = os.path.getsize(tmp_json)
+
+    json_size = os.path.getsize(ROOM_IMPORT_PATH)
     print(f"  JSON size: {json_size / 1024 / 1024:.1f} MB")
-
-    # Gzip压缩
-    print("Compressing to room_import.json.gz...")
-    with open(tmp_json, 'rb') as f_in:
-        with gzip.open(ROOM_IMPORT_GZ_PATH, 'wb') as f_out:
-            shutil.copyfileobj(f_in, f_out)
-
-    gz_size = os.path.getsize(ROOM_IMPORT_GZ_PATH)
-    print(f"  Gzipped size: {gz_size / 1024 / 1024:.1f} MB")
-
-    # 删除临时文件
-    os.remove(tmp_json)
     print("Done!")
 
 
