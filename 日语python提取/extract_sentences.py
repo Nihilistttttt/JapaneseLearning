@@ -83,6 +83,102 @@ def derive_conjugated_surface(dict_surface, dict_reading, conj_reading):
 
     return conj_reading
 
+def _merge_shared_kanji_kana(kc, kc_kana):
+    """Merge consecutive kanji chars that share a single kana annotation.
+    
+    e.g. ['貴','方'] / ['あなた',''] → ['貴方'] / ['あなた']
+         ['日','本','語'] / ['に','ほん','ご'] → unchanged (each kanji has its own kana)
+    """
+    if not kc or len(kc) <= 1:
+        return kc, kc_kana
+    
+    merged_kc = []
+    merged_kk = []
+    i = 0
+    while i < len(kc):
+        if _is_kanji(kc[i]) and kc_kana[i]:
+            # Start of a kanji group with kana - find consecutive kanji with empty kana
+            kanji_group = kc[i]
+            kana_val = kc_kana[i]
+            j = i + 1
+            while j < len(kc) and _is_kanji(kc[j]) and not kc_kana[j]:
+                kanji_group += kc[j]
+                j += 1
+            merged_kc.append(kanji_group)
+            merged_kk.append(kana_val)
+            i = j
+        else:
+            merged_kc.append(kc[i])
+            merged_kk.append(kc_kana[i])
+            i += 1
+    
+    return merged_kc, merged_kk
+
+def _split_reading_by_surface(surface, reading):
+    """Split a reading into per-character annotations based on surface structure.
+    
+    For tokens like 帽子を取る with reading ぼうしをとる:
+    - 帽子→ぼうし, を→(kana match), 取→と, る→(okurigana)
+    - Result: ['ぼうし', '', 'と', ''] (kana chars get empty annotation)
+    """
+    if not surface or not reading:
+        return None
+    
+    # Segment surface into kanji and kana groups
+    segments = []
+    i = 0
+    while i < len(surface):
+        if _is_kanji(surface[i]):
+            start = i
+            while i < len(surface) and _is_kanji(surface[i]):
+                i += 1
+            segments.append(('kanji', surface[start:i]))
+        elif _is_kana(surface[i]):
+            start = i
+            while i < len(surface) and _is_kana(surface[i]):
+                i += 1
+            segments.append(('kana', surface[start:i]))
+        else:
+            segments.append(('other', surface[i]))
+            i += 1
+    
+    # Match reading to segments left-to-right
+    # For kana segments: they must match kana in the reading
+    # For kanji segments: they consume the remaining reading between kana matches
+    remaining = reading
+    kanji_readings = {}  # segment_index -> reading for that kanji segment
+    
+    for seg_idx, (seg_type, seg_text) in enumerate(segments):
+        if seg_type == 'kana':
+            # Find this kana segment in the remaining reading
+            idx = remaining.find(seg_text)
+            if idx < 0:
+                return None
+            # Everything before this kana match belongs to preceding kanji segments
+            if idx > 0:
+                # Assign this reading to the most recent unmatched kanji segment
+                for j in range(seg_idx - 1, -1, -1):
+                    if segments[j][0] == 'kanji' and j not in kanji_readings:
+                        kanji_readings[j] = remaining[:idx]
+                        break
+            remaining = remaining[idx + len(seg_text):]
+    
+    # Any remaining reading belongs to the last kanji segment
+    if remaining:
+        for j in range(len(segments) - 1, -1, -1):
+            if segments[j][0] == 'kanji' and j not in kanji_readings:
+                kanji_readings[j] = remaining
+                break
+    
+    # Build per-char result
+    result_kana = [''] * len(surface)
+    for seg_idx, kanji_reading in kanji_readings.items():
+        seg_type, seg_text = segments[seg_idx]
+        pos = sum(len(segments[j][1]) for j in range(seg_idx))
+        result_kana[pos] = kanji_reading
+    
+    return result_kana
+
 BASE = r'D:\Libraries\Projects\AndroidStudioProjects\Learn\日语数据处理'
 OUT = os.path.join(BASE, 'word_sentences_data.json')
 
@@ -168,9 +264,12 @@ def parse_b_line(b_line, kanji_dict, furigana_splits, kanji_to_ids, kana_to_ids,
                 reading = id_to_primary.get(ids[0], ('', ''))[1]
 
         # Derive conjugated surface form if {xxx} is present
-        if conj_reading and reading:
+        conj_has_kanji = conj_reading and any(_is_kanji(ch) for ch in conj_reading)
+        if conj_reading and not conj_has_kanji and reading:
+            # Pure kana conjugation: derive surface from dict form
             surface_display = derive_conjugated_surface(surface_clean, reading, conj_reading)
         elif conj_reading:
+            # Mixed kanji+kana in {...}: use directly as surface_display
             surface_display = conj_reading
         else:
             surface_display = surface_clean
@@ -179,60 +278,85 @@ def parse_b_line(b_line, kanji_dict, furigana_splits, kanji_to_ids, kana_to_ids,
 
         if has_kanji_display and reading:
             if conj_reading:
-                # Conjugated form: derive per-char kana annotations
-                # The kanji part's reading = kanji_reading from derive logic
-                # The okurigana part = rest, no annotation needed
-                kanji_count = 0
-                for ch in surface_display:
-                    if _is_kanji(ch):
-                        kanji_count += 1
+                if conj_has_kanji:
+                    # Mixed kanji+kana conjugation (e.g. 帰った, 面白かった, 帽子を取り)
+                    # The kanji part should be same as dict form, only okurigana changed
+                    # Use furigana splits for dict form to annotate kanji, okurigana gets empty
+                    kc = list(surface_display)
+                    kc_kana = [''] * len(kc)
+                    # Try furigana splits for the dictionary form
+                    word_key = f"{surface_clean}-{reading}"
+                    if word_key in furigana_splits:
+                        dict_kc, dict_kc_kana = furigana_splits[word_key]
+                        # Map dict form annotations to conjugated form
+                        # Kanji chars that appear in both get their readings from dict form
+                        dict_idx = 0
+                        for ci in range(len(kc)):
+                            if _is_kanji(kc[ci]):
+                                # Find corresponding kanji in dict form
+                                while dict_idx < len(dict_kc) and not _is_kanji(dict_kc[dict_idx]):
+                                    dict_idx += 1
+                                if dict_idx < len(dict_kc) and dict_kc_kana[dict_idx]:
+                                    kc_kana[ci] = dict_kc_kana[dict_idx]
+                                    dict_idx += 1
                     else:
-                        break
-                kc = list(surface_display)
-                kc_kana = [''] * len(kc)
-                if kanji_count > 0:
-                    kanji_part_surf = surface_display[:kanji_count]
-                    okurigana_surf = surface_display[kanji_count:]
-                    # Determine kanji reading from dict_reading and okurigana
-                    dict_kanji_count = 0
-                    for ch in surface_clean:
+                        # No furigana splits: try _split_reading_by_surface
+                        split_result = _split_reading_by_surface(surface_display, reading)
+                        if split_result:
+                            kc_kana = split_result
+                        else:
+                            # Last resort: put reading on first kanji
+                            for ci in range(len(kc)):
+                                if _is_kanji(kc[ci]):
+                                    kc_kana[ci] = reading
+                                    break
+                else:
+                    # Pure kana conjugation (e.g. かぶって from 被る)
+                    # Derive per-char kana annotations
+                    kanji_count = 0
+                    for ch in surface_display:
                         if _is_kanji(ch):
-                            dict_kanji_count += 1
+                            kanji_count += 1
                         else:
                             break
-                    dict_okurigana = surface_clean[dict_kanji_count:]
-                    if dict_okurigana and reading.endswith(dict_okurigana):
-                        kanji_reading = reading[:-len(dict_okurigana)]
-                    elif dict_okurigana:
-                        kanji_reading = reading
-                        for i in range(len(dict_okurigana), 0, -1):
-                            if reading.endswith(dict_okurigana[:i]):
-                                kanji_reading = reading[:-i]
+                    kc = list(surface_display)
+                    kc_kana = [''] * len(kc)
+                    if kanji_count > 0:
+                        # Determine kanji reading from dict_reading and okurigana
+                        dict_kanji_count = 0
+                        for ch in surface_clean:
+                            if _is_kanji(ch):
+                                dict_kanji_count += 1
+                            else:
                                 break
-                    else:
-                        kanji_reading = reading
-                    # Assign kanji_reading to kanji characters
-                    # If multiple kanji, try to use furigana splits for the dictionary form
-                    if kanji_count == 1:
-                        kc_kana[0] = kanji_reading
-                    else:
-                        # Multiple kanji: try furigana splits for dict form to get per-kanji readings
-                        word_key = f"{surface_clean}-{reading}"
-                        if word_key in furigana_splits:
-                            dict_kc, dict_kc_kana = furigana_splits[word_key]
-                            # dict_kc_kana has per-char kana for dict form
-                            # Extract kanji readings from it
-                            dict_kanji_readings = []
-                            for i, ch in enumerate(dict_kc):
-                                if _is_kanji(ch) and dict_kc_kana[i]:
-                                    dict_kanji_readings.append(dict_kc_kana[i])
-                            if len(dict_kanji_readings) == kanji_count:
-                                for i in range(kanji_count):
-                                    kc_kana[i] = dict_kanji_readings[i]
+                        dict_okurigana = surface_clean[dict_kanji_count:]
+                        if dict_okurigana and reading.endswith(dict_okurigana):
+                            kanji_reading = reading[:-len(dict_okurigana)]
+                        elif dict_okurigana:
+                            kanji_reading = reading
+                            for i in range(len(dict_okurigana), 0, -1):
+                                if reading.endswith(dict_okurigana[:i]):
+                                    kanji_reading = reading[:-i]
+                                    break
+                        else:
+                            kanji_reading = reading
+                        if kanji_count == 1:
+                            kc_kana[0] = kanji_reading
+                        else:
+                            word_key = f"{surface_clean}-{reading}"
+                            if word_key in furigana_splits:
+                                dict_kc, dict_kc_kana = furigana_splits[word_key]
+                                dict_kanji_readings = []
+                                for idx, ch in enumerate(dict_kc):
+                                    if _is_kanji(ch) and dict_kc_kana[idx]:
+                                        dict_kanji_readings.append(dict_kc_kana[idx])
+                                if len(dict_kanji_readings) == kanji_count:
+                                    for idx in range(kanji_count):
+                                        kc_kana[idx] = dict_kanji_readings[idx]
+                                else:
+                                    kc_kana[0] = kanji_reading
                             else:
                                 kc_kana[0] = kanji_reading
-                        else:
-                            kc_kana[0] = kanji_reading
             else:
                 # Dictionary form: use furigana splits
                 word_key = f"{surface_clean}-{reading}"
@@ -244,10 +368,18 @@ def parse_b_line(b_line, kanji_dict, furigana_splits, kanji_to_ids, kana_to_ids,
                         kc, kc_kana = result
                     else:
                         kc = list(surface_display)
-                        kc_kana = [reading if _is_kanji(ch) else '' for ch in surface_display]
+                        split_result = _split_reading_by_surface(surface_display, reading)
+                        if split_result:
+                            kc_kana = split_result
+                        else:
+                            kc_kana = [reading if _is_kanji(ch) else '' for ch in surface_display]
                 else:
                     kc = list(surface_display)
-                    kc_kana = [reading if _is_kanji(ch) else '' for ch in surface_display]
+                    split_result = _split_reading_by_surface(surface_display, reading)
+                    if split_result:
+                        kc_kana = split_result
+                    else:
+                        kc_kana = [reading if _is_kanji(ch) else '' for ch in surface_display]
             kanji_comps.append(kc)
             kana_comps.append(kc_kana)
         else:
@@ -273,7 +405,16 @@ def parse_b_line(b_line, kanji_dict, furigana_splits, kanji_to_ids, kana_to_ids,
                 break
         token_word_ids.append(token_wid)
 
-    return kanji_comps, kana_comps, surfaces, token_word_ids
+    # Post-process: merge consecutive kanji with shared kana annotation
+    # e.g. ['貴','方'] / ['あなた',''] → ['貴方'] / ['あなた']
+    merged_kanji_comps = []
+    merged_kana_comps = []
+    for kc, kc_kana in zip(kanji_comps, kana_comps):
+        mk, mv = _merge_shared_kanji_kana(kc, kc_kana)
+        merged_kanji_comps.append(mk)
+        merged_kana_comps.append(mv)
+
+    return merged_kanji_comps, merged_kana_comps, surfaces, token_word_ids
 
 
 def find_word_id_for_surfaces(surfaces, kanji_to_ids, kana_to_ids):
