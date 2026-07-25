@@ -393,7 +393,7 @@ def convert_jmdict_to_room(input_path, output_path, furigana_splits_path=None, k
                 'wordMeaningId': mid,
                 'wordId': word_id,
                 'originalDefinition': original_def,
-                'translationDefinition': TRANSLATION_PLACEHOLDER,
+                'translationDefinition': original_def,
                 'partOfSpeech': pos
             })
 
