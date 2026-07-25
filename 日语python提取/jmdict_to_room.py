@@ -251,8 +251,16 @@ def convert_jmdict_to_room(input_path, output_path, furigana_splits_path=None, k
     kanji_to_ids = {}
     kana_to_ids = {}
     id_to_primary = {}
+    id_to_has_kanji = {}
+    id_to_pos = {}
     for w in jmdict_words:
         wid = w['id']
+        has_kanji = bool(w.get('kanji', []))
+        id_to_has_kanji[wid] = has_kanji
+        all_pos = set()
+        for sense in w.get('sense', []):
+            all_pos.update(sense.get('partOfSpeech', []))
+        id_to_pos[wid] = all_pos
         for k in w.get('kanji', []):
             kanji_to_ids.setdefault(k['text'], []).append(wid)
         for k in w.get('kana', []):
@@ -271,6 +279,14 @@ def convert_jmdict_to_room(input_path, output_path, furigana_splits_path=None, k
             pk = pkana
 
         id_to_primary[wid] = (pk, pkana)
+
+    PARTICLE_POS = {'prt', 'aux-v', 'cop', 'aux', 'conj'}
+    for key in kana_to_ids:
+        kana_to_ids[key].sort(key=lambda wid: (
+            0 if not id_to_has_kanji[wid] and id_to_pos[wid] & PARTICLE_POS else
+            1 if not id_to_has_kanji[wid] else
+            2
+        ))
 
     furigana_splits = {}
     if furigana_splits_path and os.path.exists(furigana_splits_path):

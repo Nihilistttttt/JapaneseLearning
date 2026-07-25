@@ -187,17 +187,27 @@ EDRG_PATH = os.path.join(BASE, 'examples.utf.gz')
 JMDICT_PATH = os.path.join(BASE, 'jmdict-all-3.6.2.json')
 
 
+PARTICLE_POS = {'prt', 'aux-v', 'cop', 'aux', 'conj'}
+
 def load_jmdict_word_ids():
     print("Loading JMDict word IDs...")
     kanji_to_ids = defaultdict(list)
     kana_to_ids = defaultdict(list)
     id_to_primary = {}
+    id_to_has_kanji = {}
+    id_to_pos = {}
     word_id_to_meaning_ids = {}
     with open(JMDICT_PATH, encoding='utf-8') as f:
         data = json.load(f)
     meaning_counter = 0
     for word in data['words']:
         wid = str(word['id'])
+        has_kanji = bool(word.get('kanji', []))
+        id_to_has_kanji[wid] = has_kanji
+        all_pos = set()
+        for sense in word.get('sense', []):
+            all_pos.update(sense.get('partOfSpeech', []))
+        id_to_pos[wid] = all_pos
         for kanji in word.get('kanji', []):
             kanji_to_ids[kanji['text']].append(wid)
         for kana in word.get('kana', []):
@@ -223,6 +233,12 @@ def load_jmdict_word_ids():
             if eng_glosses:
                 meaning_ids.append(str(meaning_counter))
         word_id_to_meaning_ids[wid] = meaning_ids
+    for key in kana_to_ids:
+        kana_to_ids[key].sort(key=lambda wid: (
+            0 if not id_to_has_kanji[wid] and id_to_pos[wid] & PARTICLE_POS else
+            1 if not id_to_has_kanji[wid] else
+            2
+        ))
     print(f"  kanji: {len(kanji_to_ids)}, kana: {len(kana_to_ids)}")
     return dict(kanji_to_ids), dict(kana_to_ids), id_to_primary, word_id_to_meaning_ids
 
