@@ -28,12 +28,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ExtendedLearnPageFragment extends Fragment {
-    // 界面组件
     private ViewPager2 viewPager2;
     private Vp2IndicatorView vp2IndicatorView;
     private List<Fragment> fragmentList;
 
-    // ViewModel
     private LearnPageViewModel viewModel;
 
     @Nullable
@@ -44,15 +42,11 @@ public class ExtendedLearnPageFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        // 初始化ViewModel
         viewModel = new ViewModelProvider(requireActivity(),
                 ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().getApplication()))
                 .get(LearnPageViewModel.class);
 
-        // 初始化视图组件
         initViews(view);
-
-        // 设置数据观察
         setupObservers();
     }
 
@@ -61,7 +55,7 @@ public class ExtendedLearnPageFragment extends Fragment {
         View childAt = viewPager2.getChildAt(0);
         if (childAt instanceof RecyclerView){
             childAt.setOverScrollMode(View.OVER_SCROLL_NEVER);
-        } // 取消滑动到边缘的阴影效果
+        }
         NestedScrollableHostBetween3LayersManager nestedScrollableHostBetween3LayersManager = NestedScrollableHostBetween3LayersManager.getInstance();
         NestedScrollableHostBetween3Layers nestedScrollableHost = view.findViewById(R.id.detailed_learn_page_vp2_container);
         nestedScrollableHostBetween3LayersManager.setMiddle(nestedScrollableHost);
@@ -75,16 +69,53 @@ public class ExtendedLearnPageFragment extends Fragment {
             List<WordMeaning> meanings = combinedWordInfo.getWordMeaningList();
             List<WordSentence> sentences = combinedWordInfo.getWordSentenceList();
             fragmentList = new ArrayList<>();
+
+            // Pass 1: match sentences to meanings by wordMeaningId
+            java.util.Set<String> matchedSentenceIds = new java.util.HashSet<>();
+            java.util.Map<String, List<WordSentence>> meaningToSentences = new java.util.HashMap<>();
+
             for (WordMeaning meaning : meanings) {
-                List<WordSentence> correspondingSentenceList = new ArrayList<>();
-                for (WordSentence sentence : sentences) {
-                    if (meaning.getWordMeaningId().equals(sentence.getWordMeaningId()))
-                        correspondingSentenceList.add(sentence);
+                List<WordSentence> matched = new ArrayList<>();
+                String meaningId = meaning.getWordMeaningId();
+                if (meaningId != null && !meaningId.isEmpty()) {
+                    for (WordSentence sentence : sentences) {
+                        String sentMeaningId = sentence.getWordMeaningId();
+                        if (meaningId.equals(sentMeaningId)) {
+                            matched.add(sentence);
+                            matchedSentenceIds.add(sentence.getWordSentenceId());
+                        }
+                    }
                 }
-                fragmentList.add(new ExtendedMeaningViewFragment(meaning, correspondingSentenceList));
+                meaningToSentences.put(meaningId, matched);
             }
 
-            // 创建ViewPager2所使用的适配器，FragmentStateAdapter抽象类的实现类对象
+            // Pass 2: for meanings with no matched sentences, fallback to wordId matching
+            // but exclude sentences already matched to other meanings
+            List<WordSentence> unmatchedSentences = new ArrayList<>();
+            for (WordSentence sentence : sentences) {
+                if (!matchedSentenceIds.contains(sentence.getWordSentenceId())) {
+                    unmatchedSentences.add(sentence);
+                }
+            }
+
+            for (WordMeaning meaning : meanings) {
+                String meaningId = meaning.getWordMeaningId();
+                List<WordSentence> matched = meaningToSentences.get(meaningId);
+                if (matched == null || matched.isEmpty()) {
+                    // Fallback: assign all unmatched sentences for this wordId
+                    matched = new ArrayList<>();
+                    String meaningWordId = meaning.getWordId();
+                    if (meaningWordId != null) {
+                        for (WordSentence sentence : unmatchedSentences) {
+                            if (meaningWordId.equals(sentence.getWordId())) {
+                                matched.add(sentence);
+                            }
+                        }
+                    }
+                }
+                fragmentList.add(new ExtendedMeaningViewFragment(meaning, matched));
+            }
+
             ExtendedLearnPageAdapter adapter = new ExtendedLearnPageAdapter(requireActivity(), fragmentList);
 
             viewPager2.setAdapter(adapter);

@@ -218,7 +218,10 @@ def load_jmdict_word_ids():
         meaning_ids = []
         for sense in word.get('sense', []):
             meaning_counter += 1
-            meaning_ids.append(str(meaning_counter))
+            glosses = sense.get('gloss', [])
+            eng_glosses = [g for g in glosses if g.get('lang', 'eng') == 'eng']
+            if eng_glosses:
+                meaning_ids.append(str(meaning_counter))
         word_id_to_meaning_ids[wid] = meaning_ids
     print(f"  kanji: {len(kanji_to_ids)}, kana: {len(kana_to_ids)}")
     return dict(kanji_to_ids), dict(kana_to_ids), id_to_primary, word_id_to_meaning_ids
@@ -437,6 +440,7 @@ def process_edrg_examples(kanji_to_ids, kana_to_ids, id_to_primary, word_id_to_m
     sentence_id_counter = 0
     current_a = None
     jmdict_hit = 0
+    word_sent_counter = defaultdict(int)
 
     with gzip.open(EDRG_PATH, 'rt', encoding='utf-8') as f:
         for line in f:
@@ -465,7 +469,10 @@ def process_edrg_examples(kanji_to_ids, kana_to_ids, id_to_primary, word_id_to_m
                 if word_id != "0" and word_id in word_id_to_meaning_ids:
                     mids = word_id_to_meaning_ids[word_id]
                     if mids:
-                        meaning_id = mids[0]
+                        # Round-robin assign sentences to meanings
+                        idx = word_sent_counter[word_id] % len(mids)
+                        meaning_id = mids[idx]
+                        word_sent_counter[word_id] += 1
 
                 sentence_id_counter += 1
 
@@ -494,6 +501,7 @@ def add_tatoeba_sentences(sentences, start_id, kanji_to_ids, kana_to_ids, word_i
     with open(tatoeba_path, encoding='utf-8') as f:
         data = json.load(f)
 
+    tatoeba_word_sent_counter = defaultdict(int)
     sentence_id = start_id
     added = 0
     jmdict_hit = 0
@@ -558,7 +566,9 @@ def add_tatoeba_sentences(sentences, start_id, kanji_to_ids, kana_to_ids, word_i
         if word_id != "0" and word_id in word_id_to_meaning_ids:
             mids = word_id_to_meaning_ids[word_id]
             if mids:
-                meaning_id = mids[0]
+                idx = tatoeba_word_sent_counter[word_id] % len(mids)
+                meaning_id = mids[idx]
+                tatoeba_word_sent_counter[word_id] += 1
 
         sentence_id += 1
         # 为每个token查找wordId

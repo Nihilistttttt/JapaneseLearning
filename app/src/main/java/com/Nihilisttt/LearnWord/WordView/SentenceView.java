@@ -31,8 +31,8 @@ public class SentenceView extends LinearLayout {
     public SentenceView(Context context, @NonNull LifecycleOwner lifecycleOwner, int layoutType, List<WordSentence> sentenceList) {
         super(context);
         setLayoutParams(new LayoutParams(
-                LayoutParams.MATCH_PARENT,  // 宽度设为match_parent
-                LayoutParams.WRAP_CONTENT   // 高度保持wrap_content
+                LayoutParams.MATCH_PARENT,
+                LayoutParams.WRAP_CONTENT
         ));
         setOrientation(LinearLayout.VERTICAL);
         this.layoutType = layoutType;
@@ -44,8 +44,8 @@ public class SentenceView extends LinearLayout {
     public SentenceView(Context context, @NonNull LifecycleOwner lifecycleOwner, int layoutType, WordSentence sentence) {
         super(context);
         setLayoutParams(new LayoutParams(
-                LayoutParams.MATCH_PARENT,  // 宽度设为match_parent
-                LayoutParams.WRAP_CONTENT   // 高度保持wrap_content
+                LayoutParams.MATCH_PARENT,
+                LayoutParams.WRAP_CONTENT
         ));
         setOrientation(LinearLayout.VERTICAL);
         this.layoutType = layoutType;
@@ -78,6 +78,10 @@ public class SentenceView extends LinearLayout {
 
     }
 
+    private boolean isNonClickableWordId(String wordId) {
+        return wordId.equals(String.valueOf(99)) || wordId.equals("0");
+    }
+
     private void processSentence(WordSentence sentence, LinearLayout sentencePart) {
         Context context = getContext();
         List<Integer> lastKanjiLengthList = new ArrayList<>();
@@ -100,7 +104,7 @@ public class SentenceView extends LinearLayout {
         List<List<String>> originalsKana = sentence.getKanaComponents();
 
         View sentenceColumn = View.inflate(context, R.layout.view_sentence_column, null);
-        sentencePart.addView(sentenceColumn);  // 将新布局添加到主容器
+        sentencePart.addView(sentenceColumn);
         sentenceColumn.setBackgroundResource(R.drawable.word_layout_selector);
         sentenceColumn.setOnClickListener(v -> {
             AudioManager audioManager = AudioManager.getInstance(context);
@@ -121,7 +125,7 @@ public class SentenceView extends LinearLayout {
         }
         sentenceRow.setLayoutParams(collocationRowParams);
 
-
+        // First word (i=0): add directly without margin calculation
         if (!originalsKanji.isEmpty()) {
             int i = 0;
             wordId = sentence.getWordIdList().get(i);
@@ -131,16 +135,13 @@ public class SentenceView extends LinearLayout {
             lastKanji = kanjiList.get(kanjiList.size() - 1);
             firstKana = kanaList.get(0);
             lastKana = kanaList.get(kanaList.size() - 1);
-            firstKanjiLength = firstKanji.length();
-            firstKanjiLengthList.add(firstKanjiLength);
-            lastKanjiLength = lastKanji.length();
-            lastKanjiLengthList.add(lastKanjiLength);
-            firstKanaLength = Constants.getKanaLength(firstKana);
-            firstKanaLengthList.add(firstKanaLength);
-            lastKanaLength = Constants.getKanaLength(lastKana);
-            lastKanaLengthList.add(lastKanaLength);
+            firstKanjiLengthList.add(firstKanji.length());
+            lastKanjiLengthList.add(lastKanji.length());
+            firstKanaLengthList.add(Constants.getKanaLength(firstKana));
+            lastKanaLengthList.add(Constants.getKanaLength(lastKana));
+
             WordComponentView wordComponentLayout;
-            if (wordId.equals(String.valueOf(99))) {
+            if (isNonClickableWordId(wordId)) {
                 wordComponentLayout = new WordComponentView(
                         context, lifecycleOwner, layoutParams,
                         kanjiList, kanaList
@@ -154,6 +155,7 @@ public class SentenceView extends LinearLayout {
             sentenceRow.addView(wordComponentLayout);
         }
 
+        // Remaining words (i>=1): with margin calculation
         for (int i = 1; i < originalsKanji.size(); i++) {
             wordId = sentence.getWordIdList().get(i);
             kanjiList = originalsKanji.get(i);
@@ -162,16 +164,13 @@ public class SentenceView extends LinearLayout {
             lastKanji = kanjiList.get(kanjiList.size() - 1);
             firstKana = kanaList.get(0);
             lastKana = kanaList.get(kanaList.size() - 1);
-            firstKanjiLength = firstKanji.length();
-            firstKanjiLengthList.add(firstKanjiLength);
-            lastKanjiLength = lastKanji.length();
-            lastKanjiLengthList.add(lastKanjiLength);
-            firstKanaLength = Constants.getKanaLength(firstKana);
-            firstKanaLengthList.add(firstKanaLength);
-            lastKanaLength = Constants.getKanaLength(lastKana);
-            lastKanaLengthList.add(lastKanaLength);
+            firstKanjiLengthList.add(firstKanji.length());
+            lastKanjiLengthList.add(lastKanji.length());
+            firstKanaLengthList.add(Constants.getKanaLength(firstKana));
+            lastKanaLengthList.add(Constants.getKanaLength(lastKana));
+
             WordComponentView wordComponentLayout;
-            if (wordId.equals(String.valueOf(99))) {
+            if (isNonClickableWordId(wordId)) {
                 wordComponentLayout = new WordComponentView(
                         context, lifecycleOwner, layoutParams,
                         kanjiList, kanaList
@@ -187,22 +186,21 @@ public class SentenceView extends LinearLayout {
                     LinearLayout.LayoutParams.WRAP_CONTENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
             );
-            wordComponentLayout.setLayoutParams(innerLp); // 关键修复：确保LayoutParams存在
-            MarginLayoutParams params = (MarginLayoutParams) wordComponentLayout.getLayoutParams();// 然后再获取Margin参数
-
+            wordComponentLayout.setLayoutParams(innerLp);
+            MarginLayoutParams params = (MarginLayoutParams) wordComponentLayout.getLayoutParams();
 
             float prev = lastKanaLengthList.get(i - 1) * layoutParams.getKanaSize() - lastKanjiLengthList.get(i - 1) * layoutParams.getKanjiSize();
             float curr = firstKanaLengthList.get(i) * layoutParams.getKanaSize() - firstKanjiLengthList.get(i) * layoutParams.getKanjiSize();
             if (prev * curr >= 0) {
                 float marginStart;
                 if (Judge.isSmallKana(firstKanji)) {
-                    marginStart = layoutParams.getCurrentIsSmallKanaMarginStart(); //小假名与前一个汉字的间距
+                    marginStart = layoutParams.getCurrentIsSmallKanaMarginStart();
                 } else if (Judge.isSmallKana(lastKanji)) {
-                    marginStart = layoutParams.getPreviousIsSmallKanaMarginStart(); //汉字与前一个小假名的间距
+                    marginStart = layoutParams.getPreviousIsSmallKanaMarginStart();
                 } else marginStart = layoutParams.getElseMarginStart();
                 params.setMarginStart(Convert.dpToPx(context, marginStart));
                 sentenceRow.addView(wordComponentLayout);
-                continue; // 仅跳过严格同号的情况
+                continue;
             }
 
             float marginValue = -Math.min(Math.abs(prev), Math.abs(curr)) / 2f;

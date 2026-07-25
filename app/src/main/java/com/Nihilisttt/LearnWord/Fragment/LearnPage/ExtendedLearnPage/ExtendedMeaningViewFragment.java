@@ -1,7 +1,6 @@
 package com.Nihilisttt.LearnWord.Fragment.LearnPage.ExtendedLearnPage;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,12 +26,13 @@ import java.util.List;
 
 public class ExtendedMeaningViewFragment extends Fragment {
 
+    private static final int MAX_SENTENCES_PER_PAGE = 6;
+
     private WordMeaning meaning;
     private List<WordSentence> sentenceList;
     private List<Fragment> fragmentList;
 
     public ExtendedMeaningViewFragment() {
-        // Required empty public constructor
     }
 
     public ExtendedMeaningViewFragment(WordMeaning meaning, List<WordSentence> sentenceList) {
@@ -42,7 +42,6 @@ public class ExtendedMeaningViewFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        // 仅负责创建视图
         return inflater.inflate(R.layout.fragment_extended_meaning, container, false);
     }
 
@@ -51,19 +50,18 @@ public class ExtendedMeaningViewFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         fragmentList = new ArrayList<>();
-        for (WordSentence sentence : sentenceList) {
-            Log.d("666666666", "sentence: "+sentence);
-            fragmentList.add(new ExtendedSentenceFragment(sentence));
+        int limit = Math.min(sentenceList.size(), MAX_SENTENCES_PER_PAGE);
+        for (int i = 0; i < limit; i++) {
+            fragmentList.add(new ExtendedSentenceFragment(sentenceList.get(i)));
         }
         ViewPager2 viewPager2 = view.findViewById(R.id.detailed_meaning_viewpager);
         View childAt = viewPager2.getChildAt(0);
         if (childAt instanceof RecyclerView){
             childAt.setOverScrollMode(View.OVER_SCROLL_NEVER);
-        } // 取消滑动到边缘的阴影效果
+        }
         NestedScrollableHostBetween3LayersManager nestedScrollableHostBetween3LayersManager = NestedScrollableHostBetween3LayersManager.getInstance();
         NestedScrollableHostBetween3Layers nestedScrollableHost=view.findViewById(R.id.detailed_meaning_vp2_container);
         nestedScrollableHostBetween3LayersManager.setInner(nestedScrollableHost);
-//        nestedScrollableHostBetween3LayersManager.setInnerViewPage2(viewPager2);
         nestedScrollableHostBetween3LayersManager.setInnerViewPage2Id(viewPager2.getId());
         FragmentStateAdapter adapter = new FragmentStateAdapter((FragmentActivity) requireContext()) {
             @NonNull
@@ -77,22 +75,17 @@ public class ExtendedMeaningViewFragment extends Fragment {
                 return fragmentList.size();
             }
         };
-        viewPager2.setAdapter(adapter); // 给ViewPager2设置适配器
+        viewPager2.setAdapter(adapter);
 
         Vp2IndicatorView vp2IndicatorView = view.findViewById(R.id.vp2_indicator);
         vp2IndicatorView.attachToViewPager2(viewPager2);
 
-        // 词性
         TextView pos = view.findViewById(R.id.part_of_speech);
         pos.setText(String.valueOf(meaning.getPartOfSpeech()));
 
-
-        // 日文翻译
         TextView originalDefinition = view.findViewById(R.id.original_definition);
         originalDefinition.setText(String.format("日: %s", meaning.getOriginalDefinition()));
 
-
-        // 日文翻译
         TextView translationDefinition = view.findViewById(R.id.translation_definition);
         translationDefinition.setText(String.format("中: %s", meaning.getTranslationDefinition()));
 
