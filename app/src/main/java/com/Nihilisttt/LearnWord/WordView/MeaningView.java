@@ -92,7 +92,7 @@ public class MeaningView extends LinearLayout {
         posPart.setPadding(0, Convert.dpToPx(getContext(), 6), 0, Convert.dpToPx(getContext(), 2));
 
         TextView posView = new TextView(getContext());
-        posView.setText(String.format("%s  ", pos.name()));
+        posView.setText(String.format("%s  ", pos.getAbbreviation()));
         posView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
         posView.setTypeface(null, android.graphics.Typeface.BOLD);
         posView.setTextColor(ContextCompat.getColor(getContext(), R.color.md_part_of_speech));
@@ -104,13 +104,16 @@ public class MeaningView extends LinearLayout {
     private TextView createTranslationView(WordMeaning meaning,int position) {
         TextView view = new TextView(getContext());
 
-        SpannableString spannable = new SpannableString(meaning.getTranslationDefinition());
+        String def = meaning.getDefinitionSummary();
+        SpannableString spannable = new SpannableString(def);
         spannable.setSpan(new UnderlineSpan(), 0, spannable.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
 
         view.setText(spannable);
         view.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
         view.setTextColor(ContextCompat.getColor(getContext(), R.color.md_definition_text));
         view.setTag(meaning);
+        view.setMaxLines(2);
+        view.setEllipsize(android.text.TextUtils.TruncateAt.END);
         switch (mode){
             case Constants.SHOW_SENTENCE_POPUP:view.setOnClickListener(v -> showSentencePopup((WordMeaning) v.getTag()));break;
             case Constants.TURN_TO_DETAIL_PAGE:view.setOnClickListener(v -> ViewPager2Navigation.getInstance().turnToDetailPage(position));break;

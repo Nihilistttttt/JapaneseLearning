@@ -81,13 +81,13 @@ public class ExtendedMeaningViewFragment extends Fragment {
         vp2IndicatorView.attachToViewPager2(viewPager2);
 
         TextView pos = view.findViewById(R.id.part_of_speech);
-        pos.setText(String.valueOf(meaning.getPartOfSpeech()));
+        pos.setText(meaning.getPartOfSpeech().getAbbreviation());
 
         TextView originalDefinition = view.findViewById(R.id.original_definition);
-        originalDefinition.setText(String.format("日: %s", meaning.getOriginalDefinition()));
+        originalDefinition.setText(meaning.getOriginalDefinition());
 
         TextView translationDefinition = view.findViewById(R.id.translation_definition);
-        translationDefinition.setText(String.format("中: %s", meaning.getTranslationDefinition()));
+        translationDefinition.setText(meaning.getTranslationDefinition());
 
     }
 

@@ -7,16 +7,19 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.MutableLiveData;
 
 public class LearnPageStateViewModel extends AndroidViewModel {
-    // 滚动方向枚举
     public enum FragmentInLearnPage {
         LearnPageFragment,
         SearchFragment
     }
+
+    public static final int FONT_SIZE_SMALL = 0;
+    public static final int FONT_SIZE_NORMAL = 1;
+    public static final int FONT_SIZE_LARGE = 2;
+
     public LearnPageStateViewModel(@NonNull Application application) {
         super(application);
     }
 
-    // region  添加控制 ViewPager 滚动的 LiveData
     private MutableLiveData<Boolean> isViewPagerScrollEnabled = new MutableLiveData<>(true);
 
     public MutableLiveData<Boolean> getIsViewPagerScrollEnabled() {
@@ -26,8 +29,7 @@ public class LearnPageStateViewModel extends AndroidViewModel {
     public void setViewPagerScrollEnabled(boolean enabled) {
         isViewPagerScrollEnabled.setValue(enabled);
     }
-    // endregion
-    // region  添加控制 是否启用blankPart 判定的 LiveData
+
     private MutableLiveData<FragmentInLearnPage> whichFragmentInLearnPage = new MutableLiveData<>();
 
     public MutableLiveData<FragmentInLearnPage> getWhichFragmentInLearnPage() {
@@ -37,13 +39,22 @@ public class LearnPageStateViewModel extends AndroidViewModel {
     public void setWhichFragmentInLearnPage(FragmentInLearnPage fragment) {
         whichFragmentInLearnPage.setValue(fragment);
     }
-    // endregion
 
+    private MutableLiveData<Integer> fontSizeLevel = new MutableLiveData<>(FONT_SIZE_NORMAL);
+
+    public MutableLiveData<Integer> getFontSizeLevel() {
+        return fontSizeLevel;
+    }
+
+    public void cycleFontSize() {
+        Integer current = fontSizeLevel.getValue();
+        if (current == null) current = FONT_SIZE_NORMAL;
+        int next = (current + 1) % 3;
+        fontSizeLevel.setValue(next);
+    }
 
     @Override
     protected void onCleared() {
         super.onCleared();
-        // 清理可能存在的资源
     }
 }
-

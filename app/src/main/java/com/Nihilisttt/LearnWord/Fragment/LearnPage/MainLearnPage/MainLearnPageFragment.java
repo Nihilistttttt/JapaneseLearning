@@ -48,21 +48,6 @@ public class MainLearnPageFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_main_learn_page, container, false);
     }
 
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        // 初始化ViewModel
-        viewModel = new ViewModelProvider(requireActivity(),
-                ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().getApplication()))
-                .get(LearnPageViewModel.class);
-        stateViewModel = new ViewModelProvider(requireActivity(),
-                ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().getApplication()))
-                .get(LearnPageStateViewModel.class);
-        // 初始化视图组件
-        initViews(view);
-
-        // 设置数据观察
-        setupObservers();
-    }
 
     private void initViews(View view) {
         toolBar = view.findViewById(R.id.learn_page_tool_bar);
@@ -72,6 +57,19 @@ public class MainLearnPageFragment extends Fragment {
         integratedPartContainer = view.findViewById(R.id.integrated_part_container);
         blankPart = view.findViewById(R.id.blank_part);
         blankText = view.findViewById(R.id.blank_text);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        viewModel = new ViewModelProvider(requireActivity(),
+                ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().getApplication()))
+                .get(LearnPageViewModel.class);
+        stateViewModel = new ViewModelProvider(requireActivity(),
+                ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().getApplication()))
+                .get(LearnPageStateViewModel.class);
+        initViews(view);
+        toolBar.setStateViewModel(stateViewModel);
+        setupObservers();
     }
 
     @SuppressLint("ClickableViewAccessibility")

@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp">
+    android:padding="12dp">
 
     <com.Nihilisttt.LearnWord.ViewPager2.NestedScrollableHostBetween3Layers
         android:id="@+id/detailed_meaning_vp2_container"
@@ -42,36 +42,42 @@
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:padding="12dp">
 
             <TextView
                 android:id="@+id/part_of_speech"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@color/md_detail_label"
-                android:textSize="14sp"
+                android:textColor="@color/md_part_of_speech"
+                android:textSize="13sp"
                 android:textStyle="bold"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
             <TextView
                 android:id="@+id/original_definition"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:textColor="@color/md_detail_label"
                 android:textSize="14sp"
                 android:layout_marginTop="4dp"
+                android:maxLines="3"
+                android:ellipsize="end"
+                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/part_of_speech" />
 
             <TextView
                 android:id="@+id/translation_definition"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:textColor="@color/md_definition_text"
-                android:textSize="14sp"
+                android:textSize="15sp"
                 android:layout_marginTop="4dp"
+                android:maxLines="3"
+                android:ellipsize="end"
+                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/original_definition" />
         </androidx.constraintlayout.widget.ConstraintLayout>

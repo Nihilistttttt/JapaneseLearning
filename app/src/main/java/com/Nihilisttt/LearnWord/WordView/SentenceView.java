@@ -27,13 +27,9 @@ public class SentenceView extends LinearLayout {
     private final Select.layoutParams layoutParams;
     private final LifecycleOwner lifecycleOwner;
 
-
     public SentenceView(Context context, @NonNull LifecycleOwner lifecycleOwner, int layoutType, List<WordSentence> sentenceList) {
         super(context);
-        setLayoutParams(new LayoutParams(
-                LayoutParams.MATCH_PARENT,
-                LayoutParams.WRAP_CONTENT
-        ));
+        setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
         setOrientation(LinearLayout.VERTICAL);
         this.layoutType = layoutType;
         this.layoutParams = Select.selectLayout(this.layoutType);
@@ -43,10 +39,7 @@ public class SentenceView extends LinearLayout {
 
     public SentenceView(Context context, @NonNull LifecycleOwner lifecycleOwner, int layoutType, WordSentence sentence) {
         super(context);
-        setLayoutParams(new LayoutParams(
-                LayoutParams.MATCH_PARENT,
-                LayoutParams.WRAP_CONTENT
-        ));
+        setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
         setOrientation(LinearLayout.VERTICAL);
         this.layoutType = layoutType;
         this.layoutParams = Select.selectLayout(this.layoutType);
@@ -62,44 +55,33 @@ public class SentenceView extends LinearLayout {
     }
 
     private void initViews(List<WordSentence> sentenceList) {
-        processSentenceList(sentenceList);
-    }
-
-    private void processSentenceList(List<WordSentence> sentences) {
-
         LinearLayout sentencePart = new LinearLayout(getContext());
         sentencePart.setOrientation(LinearLayout.VERTICAL);
-
-        for (WordSentence sentence : sentences) {
+        for (WordSentence sentence : sentenceList) {
             processSentence(sentence, sentencePart);
         }
         addView(sentencePart);
-
-
     }
 
     private boolean isNonClickableWordId(String wordId) {
         return wordId.equals(String.valueOf(99)) || wordId.equals("0");
     }
 
+    private float estimateWordWidth(List<String> kanjiList, List<String> kanaList) {
+        float kanjiSize = layoutParams.getKanjiSize();
+        float kanaSize = layoutParams.getKanaSize();
+        float maxWidth = 0;
+        for (int i = 0; i < kanjiList.size(); i++) {
+            float kanaW = Constants.getKanaLength(kanaList.get(i)) * kanaSize;
+            float kanjiW = kanjiList.get(i).length() * kanjiSize;
+            float charW = Math.max(kanaW, kanjiW);
+            maxWidth += charW;
+        }
+        return Convert.dpToPx(getContext(), maxWidth);
+    }
+
     private void processSentence(WordSentence sentence, LinearLayout sentencePart) {
         Context context = getContext();
-        List<Integer> lastKanjiLengthList = new ArrayList<>();
-        List<Float> lastKanaLengthList = new ArrayList<>();
-        List<Integer> firstKanjiLengthList = new ArrayList<>();
-        List<Float> firstKanaLengthList = new ArrayList<>();
-        String firstKanji;
-        String lastKanji;
-        String firstKana;
-        String lastKana;
-        int firstKanjiLength;
-        int lastKanjiLength;
-        float firstKanaLength;
-        float lastKanaLength;
-        List<String> kanjiList;
-        List<String> kanaList;
-        String wordId;
-
         List<List<String>> originalsKanji = sentence.getKanjiComponents();
         List<List<String>> originalsKana = sentence.getKanaComponents();
 
@@ -108,33 +90,37 @@ public class SentenceView extends LinearLayout {
         sentenceColumn.setBackgroundResource(R.drawable.word_layout_selector);
         sentenceColumn.setOnClickListener(v -> {
             AudioManager audioManager = AudioManager.getInstance(context);
-            if (audioManager.isPlaying()) {
-                audioManager.stopAudio();
-            }
+            if (audioManager.isPlaying()) audioManager.stopAudio();
             audioManager.playAudio(sentence.getAudioUrl());
         });
-        LinearLayout sentenceRow = sentenceColumn.findViewById(R.id.sentence_row);
+
+        LinearLayout sentenceRowContainer = sentenceColumn.findViewById(R.id.sentence_row);
+        sentenceRowContainer.setOrientation(LinearLayout.VERTICAL);
         TextView translation = sentenceColumn.findViewById(R.id.sentence_translation);
 
-        float tempMarginStart = (originalsKanji.get(0).get(0).length() * layoutParams.getKanjiSize() - Constants.getKanaLength(originalsKana.get(0).get(0)) * layoutParams.getKanaSize()) / 2f;
-        ConstraintLayout.LayoutParams collocationRowParams = (ConstraintLayout.LayoutParams) sentenceRow.getLayoutParams();
-        if (tempMarginStart < 0) {
-            collocationRowParams.setMarginStart(Convert.dpToPx(context, Constants.SENTENCE_ROW_MARGIN_START + tempMarginStart));
-        } else {
-            collocationRowParams.setMarginStart(Convert.dpToPx(context, Constants.SENTENCE_ROW_MARGIN_START));
-        }
-        sentenceRow.setLayoutParams(collocationRowParams);
+        int screenWidthPx = context.getResources().getDisplayMetrics().widthPixels;
+        int availableWidthPx = screenWidthPx - Convert.dpToPx(context, 40);
 
-        // First word (i=0): add directly without margin calculation
-        if (!originalsKanji.isEmpty()) {
-            int i = 0;
-            wordId = sentence.getWordIdList().get(i);
-            kanjiList = originalsKanji.get(i);
-            kanaList = originalsKana.get(i);
-            firstKanji = kanjiList.get(0);
-            lastKanji = kanjiList.get(kanjiList.size() - 1);
-            firstKana = kanaList.get(0);
-            lastKana = kanaList.get(kanaList.size() - 1);
+        List<Integer> lastKanjiLengthList = new ArrayList<>();
+        List<Float> lastKanaLengthList = new ArrayList<>();
+        List<Integer> firstKanjiLengthList = new ArrayList<>();
+        List<Float> firstKanaLengthList = new ArrayList<>();
+
+        LinearLayout currentRow = new LinearLayout(context);
+        currentRow.setOrientation(LinearLayout.HORIZONTAL);
+        currentRow.setLayoutParams(new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
+        sentenceRowContainer.addView(currentRow);
+        float currentRowWidth = 0;
+
+        for (int i = 0; i < originalsKanji.size(); i++) {
+            String wordId = sentence.getWordIdList().get(i);
+            List<String> kanjiList = originalsKanji.get(i);
+            List<String> kanaList = originalsKana.get(i);
+
+            String firstKanji = kanjiList.get(0);
+            String lastKanji = kanjiList.get(kanjiList.size() - 1);
+            String firstKana = kanaList.get(0);
+            String lastKana = kanaList.get(kanaList.size() - 1);
             firstKanjiLengthList.add(firstKanji.length());
             lastKanjiLengthList.add(lastKanji.length());
             firstKanaLengthList.add(Constants.getKanaLength(firstKana));
@@ -142,72 +128,52 @@ public class SentenceView extends LinearLayout {
 
             WordComponentView wordComponentLayout;
             if (isNonClickableWordId(wordId)) {
-                wordComponentLayout = new WordComponentView(
-                        context, lifecycleOwner, layoutParams,
-                        kanjiList, kanaList
-                );
+                wordComponentLayout = new WordComponentView(context, lifecycleOwner, layoutParams, kanjiList, kanaList);
             } else {
-                wordComponentLayout = new WordComponentView(
-                        context, lifecycleOwner, layoutParams,
-                        kanjiList, kanaList, wordId
-                );
+                wordComponentLayout = new WordComponentView(context, lifecycleOwner, layoutParams, kanjiList, kanaList, wordId);
             }
-            sentenceRow.addView(wordComponentLayout);
+
+            float wordWidthPx = estimateWordWidth(kanjiList, kanaList);
+
+            if (i > 0) {
+                float prev = lastKanaLengthList.get(i - 1) * layoutParams.getKanaSize() - lastKanjiLengthList.get(i - 1) * layoutParams.getKanjiSize();
+                float curr = firstKanaLengthList.get(i) * layoutParams.getKanaSize() - firstKanjiLengthList.get(i) * layoutParams.getKanjiSize();
+
+                float marginPx;
+                if (prev * curr >= 0) {
+                    float marginDp;
+                    if (Judge.isSmallKana(firstKanji)) {
+                        marginDp = layoutParams.getCurrentIsSmallKanaMarginStart();
+                    } else if (Judge.isSmallKana(lastKanji)) {
+                        marginDp = layoutParams.getPreviousIsSmallKanaMarginStart();
+                    } else {
+                        marginDp = layoutParams.getElseMarginStart();
+                    }
+                    marginPx = Convert.dpToPx(context, marginDp);
+                } else {
+                    marginPx = Convert.dpToPx(context, -Math.min(Math.abs(prev), Math.abs(curr)) / 2f);
+                }
+
+                if (currentRowWidth + marginPx + wordWidthPx > availableWidthPx && currentRowWidth > 0) {
+                    currentRow = new LinearLayout(context);
+                    currentRow.setOrientation(LinearLayout.HORIZONTAL);
+                    currentRow.setLayoutParams(new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
+                    sentenceRowContainer.addView(currentRow);
+                    currentRowWidth = 0;
+                } else {
+                    LinearLayout.LayoutParams innerLp = new LinearLayout.LayoutParams(
+                            LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+                    wordComponentLayout.setLayoutParams(innerLp);
+                    MarginLayoutParams params = (MarginLayoutParams) wordComponentLayout.getLayoutParams();
+                    params.setMarginStart((int) marginPx);
+                    currentRowWidth += marginPx;
+                }
+            }
+
+            currentRow.addView(wordComponentLayout);
+            currentRowWidth += wordWidthPx;
         }
 
-        // Remaining words (i>=1): with margin calculation
-        for (int i = 1; i < originalsKanji.size(); i++) {
-            wordId = sentence.getWordIdList().get(i);
-            kanjiList = originalsKanji.get(i);
-            kanaList = originalsKana.get(i);
-            firstKanji = kanjiList.get(0);
-            lastKanji = kanjiList.get(kanjiList.size() - 1);
-            firstKana = kanaList.get(0);
-            lastKana = kanaList.get(kanaList.size() - 1);
-            firstKanjiLengthList.add(firstKanji.length());
-            lastKanjiLengthList.add(lastKanji.length());
-            firstKanaLengthList.add(Constants.getKanaLength(firstKana));
-            lastKanaLengthList.add(Constants.getKanaLength(lastKana));
-
-            WordComponentView wordComponentLayout;
-            if (isNonClickableWordId(wordId)) {
-                wordComponentLayout = new WordComponentView(
-                        context, lifecycleOwner, layoutParams,
-                        kanjiList, kanaList
-                );
-            } else {
-                wordComponentLayout = new WordComponentView(
-                        context, lifecycleOwner, layoutParams,
-                        kanjiList, kanaList, wordId
-                );
-            }
-
-            LinearLayout.LayoutParams innerLp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-            );
-            wordComponentLayout.setLayoutParams(innerLp);
-            MarginLayoutParams params = (MarginLayoutParams) wordComponentLayout.getLayoutParams();
-
-            float prev = lastKanaLengthList.get(i - 1) * layoutParams.getKanaSize() - lastKanjiLengthList.get(i - 1) * layoutParams.getKanjiSize();
-            float curr = firstKanaLengthList.get(i) * layoutParams.getKanaSize() - firstKanjiLengthList.get(i) * layoutParams.getKanjiSize();
-            if (prev * curr >= 0) {
-                float marginStart;
-                if (Judge.isSmallKana(firstKanji)) {
-                    marginStart = layoutParams.getCurrentIsSmallKanaMarginStart();
-                } else if (Judge.isSmallKana(lastKanji)) {
-                    marginStart = layoutParams.getPreviousIsSmallKanaMarginStart();
-                } else marginStart = layoutParams.getElseMarginStart();
-                params.setMarginStart(Convert.dpToPx(context, marginStart));
-                sentenceRow.addView(wordComponentLayout);
-                continue;
-            }
-
-            float marginValue = -Math.min(Math.abs(prev), Math.abs(curr)) / 2f;
-            params.setMarginStart(Convert.dpToPx(context, marginValue));
-            sentenceRow.addView(wordComponentLayout);
-        }
         translation.setText(sentence.getTranslation());
     }
-
 }

@@ -21,18 +21,20 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="16dp"
         android:orientation="vertical"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/learn_page_tool_bar" />
 
     <LinearLayout
         android:id="@+id/meaning_container"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:visibility="invisible"
-        android:layout_marginStart="40dp"
+        android:layout_marginStart="16dp"
         android:layout_marginTop="8dp"
+        android:layout_marginEnd="16dp"
         android:orientation="vertical"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/word_container" />
@@ -41,24 +43,16 @@
         android:id="@+id/sentence_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="@dimen/card_layout_margin_horizontal"
+        android:layout_marginStart="12dp"
         android:layout_marginTop="8dp"
-        android:layout_marginRight="@dimen/card_layout_margin_horizontal"
-        android:orientation="vertical"
-        app:cardCornerRadius="@dimen/card_corner_radius"
-        app:cardElevation="@dimen/card_elevation"
+        android:layout_marginEnd="12dp"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="1dp"
         app:cardBackgroundColor="@color/md_card_background"
         android:visibility="invisible"
-        app:contentPadding="@dimen/card_content_padding"
+        app:contentPadding="8dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/meaning_container" />
-
-    <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/guideline"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.5" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline1"
@@ -72,13 +66,13 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:visibility="gone"
-        android:layout_marginLeft="@dimen/card_layout_margin_horizontal"
+        android:layout_marginStart="12dp"
         android:layout_marginTop="8dp"
-        android:layout_marginRight="@dimen/card_layout_margin_horizontal"
-        app:cardCornerRadius="@dimen/card_corner_radius"
-        app:cardElevation="@dimen/card_elevation"
+        android:layout_marginEnd="12dp"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="1dp"
         app:cardBackgroundColor="@color/md_card_background"
-        app:contentPadding="@dimen/card_content_padding"
+        app:contentPadding="8dp"
         app:layout_constraintBottom_toBottomOf="@id/guideline1"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/sentence_container" />

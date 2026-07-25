@@ -2,13 +2,12 @@ package com.Nihilisttt.LearnWord.WordView;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.constraintlayout.widget.ConstraintLayout;
+
 import androidx.lifecycle.LifecycleOwner;
 
 import com.Nihilisttt.LearnWord.JavaBean.BasicWord;
@@ -22,69 +21,66 @@ import java.util.List;
 
 @SuppressLint("ViewConstructor")
 public class BasicWordView extends LinearLayout {
-    private static final String TAB = "BasicWordView";
-    private final Select.layoutParams layoutParams;
     private final LifecycleOwner lifecycleOwner;
 
     public BasicWordView(Context context, @NonNull LifecycleOwner lifecycleOwner, int layoutType, BasicWord basicWord) {
         super(context);
-        setLayoutParams(new LayoutParams(
-                LayoutParams.MATCH_PARENT,  // 宽度设为match_parent
-                LayoutParams.WRAP_CONTENT   // 高度保持wrap_content
-        ));
-        this.layoutParams = Select.selectLayout(layoutType);
+        setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
         this.lifecycleOwner = lifecycleOwner;
         setClickable(true);
         setFocusable(true);
         setBackgroundResource(R.drawable.word_layout_selector);
         setOnClickListener(v -> {
             AudioManager audioManager = AudioManager.getInstance(context);
-            if (audioManager.isPlaying()) {
-                audioManager.stopAudio();
-            }
+            if (audioManager.isPlaying()) audioManager.stopAudio();
             audioManager.playAudio(basicWord.getAudioUrl());
         });
-        initViews(context, basicWord);
+        initViews(context, basicWord, layoutType);
     }
 
+    private float estimateWordWidth(List<String> kanjiComponents, List<String> kanaComponents, Select.layoutParams lp) {
+        float total = 0;
+        for (int i = 0; i < kanjiComponents.size(); i++) {
+            float kanaW = Constants.getKanaLength(kanaComponents.get(i)) * lp.getKanaSize();
+            float kanjiW = kanjiComponents.get(i).length() * lp.getKanjiSize();
+            total += Math.max(kanaW, kanjiW);
+        }
+        return Convert.dpToPx(getContext(), total);
+    }
 
-    private void initViews(Context context, BasicWord basicWord) {
+    private void initViews(Context context, BasicWord basicWord, int layoutType) {
         View container = View.inflate(context, R.layout.view_basic_word, null);
-        addView(container);  // 将新布局添加到主容器
+        addView(container);
         LinearLayout word_component_part = container.findViewById(R.id.word_component_container);
         LinearLayout accent_mark_part = container.findViewById(R.id.accent_mark_container);
 
         List<String> kanjiComponents = basicWord.getKanjiComponents();
         List<String> kanaComponents = basicWord.getKanaComponents();
-        int firstKanjiLength = kanjiComponents.get(0).length();
-        float firstKanaLength = Constants.getKanaLength(kanaComponents.get(0));
 
-        float tempMarginStart = (firstKanjiLength * layoutParams.getKanjiSize() - firstKanaLength * layoutParams.getKanaSize()) / 2f;
-        ConstraintLayout.LayoutParams containerParams = (ConstraintLayout.LayoutParams) word_component_part.getLayoutParams();
-        Log.d(TAB, "   kanjiComponents.get(0): "+kanjiComponents.get(0)+"   tempMarginStart: "+tempMarginStart);
-        if (tempMarginStart < 0) {
-            containerParams.setMarginStart(Convert.dpToPx(context, Constants.BASIC_WORD_LAYOUT_MARGIN_START + tempMarginStart));
-        } else {
-            containerParams.setMarginStart(Convert.dpToPx(context, Constants.BASIC_WORD_LAYOUT_MARGIN_START));
+        int screenWidthPx = context.getResources().getDisplayMetrics().widthPixels;
+        int availableWidthPx = screenWidthPx - Convert.dpToPx(context, 32);
+
+        Select.layoutParams lp = Select.selectLayout(layoutType);
+        float estimatedWidth = estimateWordWidth(kanjiComponents, kanaComponents, lp);
+
+        if (estimatedWidth > availableWidthPx && layoutType == Constants.LARGE) {
+            lp = Select.selectLayout(Constants.NORMAL);
+            estimatedWidth = estimateWordWidth(kanjiComponents, kanaComponents, lp);
         }
-        word_component_part.setLayoutParams(containerParams);
+        if (estimatedWidth > availableWidthPx && layoutType != Constants.SMALL) {
+            lp = Select.selectLayout(Constants.SMALL);
+        }
 
-        // 创建子项布局部件
+
         WordComponentView wordComponentLayout = new WordComponentView(
-                context,
-                lifecycleOwner,
-                layoutParams,
+                context, lifecycleOwner, lp,
                 basicWord.getAudioUrl(),
-                kanjiComponents,
-                kanaComponents
+                kanjiComponents, kanaComponents
         );
         wordComponentLayout.setClickable(false);
 
-        // 添加重音符号
         TextView accentMark = new TextView(context);
         accentMark.setText(basicWord.getAccentMark());
-
-        // 整体布局结构
 
         word_component_part.addView(wordComponentLayout);
         accent_mark_part.addView(accentMark);

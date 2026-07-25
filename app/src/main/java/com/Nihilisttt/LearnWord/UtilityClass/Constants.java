@@ -2,15 +2,11 @@ package com.Nihilisttt.LearnWord.UtilityClass;
 
 import android.util.Log;
 
-import java.util.HashSet;
-
 public class Constants {
-    // 私有构造函数，防止实例化
     private Constants() {
         throw new UnsupportedOperationException("Cannot instantiate utility class");
     }
 
-    // 常量
     public static final int SMALL = 0;
     public static final int NORMAL = 1;
     public static final int LARGE = 2;
@@ -32,21 +28,59 @@ public class Constants {
     public static final int SHOW_SENTENCE_POPUP = 0;
     public static final int TURN_TO_DETAIL_PAGE = 1;
 
+    public static final int FONT_SIZE_SMALL = 0;
+    public static final int FONT_SIZE_NORMAL = 1;
+    public static final int FONT_SIZE_LARGE = 2;
+
+    private static final float[] KANJI_SIZES = {14f, 18f, 24f};
+    private static final float[] KANA_SIZES = {7f, 9f, 12f};
+    private static final float[] DEFINITION_SIZES = {12f, 14f, 17f};
+    private static final float[] SENTENCE_KANJI_SIZES = {14f, 18f, 22f};
+    private static final float[] SENTENCE_KANA_SIZES = {7f, 9f, 11f};
+
+    public static float getKanjiSize(int fontSizeLevel) {
+        return KANJI_SIZES[Math.max(0, Math.min(2, fontSizeLevel))];
+    }
+
+    public static float getKanaSize(int fontSizeLevel) {
+        return KANA_SIZES[Math.max(0, Math.min(2, fontSizeLevel))];
+    }
+
+    public static float getDefinitionSize(int fontSizeLevel) {
+        return DEFINITION_SIZES[Math.max(0, Math.min(2, fontSizeLevel))];
+    }
+
+    public static float getSentenceKanjiSize(int fontSizeLevel) {
+        return SENTENCE_KANJI_SIZES[Math.max(0, Math.min(2, fontSizeLevel))];
+    }
+
+    public static float getSentenceKanaSize(int fontSizeLevel) {
+        return SENTENCE_KANA_SIZES[Math.max(0, Math.min(2, fontSizeLevel))];
+    }
+
     public static enum PartOfSpeech {
-        NOUN, VERB, ADJECTIVE, ADVERB, UNKNOWN
+        NOUN("n."), VERB("v."), ADJECTIVE("adj."), ADVERB("adv."), UNKNOWN("");
+
+        private final String abbreviation;
+
+        PartOfSpeech(String abbreviation) {
+            this.abbreviation = abbreviation;
+        }
+
+        public String getAbbreviation() {
+            return abbreviation;
+        }
     }
 
     public static float getKanaLength(String kanaString) {
         float kanaLength = 0;
         if (kanaString.equals("")) {
-            Log.d("Constants.getKanaLength", "KanaLength: " + kanaLength);
             return kanaLength;
         }
         char[] chars = kanaString.toCharArray();
         for (char kana : chars) {
             kanaLength = Judge.isSmallKana(kana) ? (kanaLength + 0.8f) : (kanaLength + 1f);
         }
-        Log.d("Constants.getKanaLength", "KanaLength: " + kanaLength);
         return kanaLength;
     }
 }
