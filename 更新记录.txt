@@ -1,0 +1,146 @@
+LearnWord 项目更新记录
+========================
+记录每次实质性更新的内容、意义、必要性，以及对项目的新理解。
+按时间倒序排列（最新在前）。
+
+========================
+
+【更新8】非英文释义彻底过滤
+日期：2026-07-25
+涉及文件：jmdict_to_room.py, generate_room_db.py, WordDatabase.java, room_import.json, word_database.db
+
+问题：
+  释义界面只有第一个卡片是英文的，其余是德语/法语/西班牙语/俄语等。
+  之前的"英文过滤"只在DB层面用ijson更新了translationDefinition字段，但：
+  1. originalDefinition仍然包含所有语言的gloss
+  2. 每个sense都创建了WordMeaning，包括没有英文gloss的sense
+  3. 重新生成DB时room_import.json中仍有非英文数据
+
+根因：
+  jmdict_to_room.py第384行 `if not eng_glosses: eng_glosses = [g for g in glosses if g.get('text')]`
+  这个fallback把非英文gloss当作英文释义写入了originalDefinition
+
+解决方案：
+  1. 跳过没有英文gloss的sense，不创建WordMeaning（continue而非fallback）
+  2. 重新运行jmdict_to_room.py生成新的room_import.json
+  3. 重新运行generate_room_db.py重建DB
+
+效果：
+  - WordMeanings从676547降到252393（去掉62%非英文释义）
+  - DB从120.2MB降到72.4MB
+  - 彼の：6个meaning→1个（只保留英文"that; those; the"）
+  - 彼：11个meaning→6个（只保留英文释义）
+  - 抽查1000条无任何非英文内容
+
+意义：
+  - 释义是用户最核心的交互界面，非英文释义对中文用户毫无价值且造成困惑
+  - 每个释义卡片应对应一种意思的进一步展开，与单词页面可跳转的释义一一对应
+
+新理解：
+  - JMDict的sense结构：每个sense可能只包含一种语言的gloss，不同语言的翻译被分到不同的sense中
+  - 之前以为一个sense包含多种语言gloss是误解——实际上JMDict为每种语言创建独立的sense
+  - room_import.json是数据的源头，任何修改都必须从源头重新生成，不能只改DB
+
+========================
+
+【更新7】例句假名注音修复：多汉字合并 + reading拆分 + 混合变形处理
+日期：2026-07-25
+涉及文件：extract_sentences.py, generate_room_db.py, add_sentences_to_db.py, WordDatabase.java, word_sentences_data.json, word_database.db
+
+问题：
+  1. 多汉字词共享假名时，假名只放在第一个汉字头上（如"貴方"的"あなた"只在"貴"上方），不居中
+  2. EDRG复合词/短语的reading被整体当作第一个汉字的注音（如"帽子を取る"的"ぼうしをとる"全放在"帽"上）
+  3. {xxx}含汉字的变形形式（如{帰った}、{面白かった}）处理不当——要么被当作假名变形走derive导致乱码，要么reading无法正确拆分
+
+解决方案：
+  1. _merge_shared_kanji_kana(): 后处理步骤，将连续汉字+只有第一个有假名的情况合并为一组
+     - 貴方→['貴方']/['あなた']，渲染时"あなた"自然居中在"貴方"上方
+     - 有逐字注音的词不受影响（如日本語→['日','本','語']/['に','ほん','ご']）
+  2. _split_reading_by_surface(): 按surface中的假名段拆分reading
+     - 帽子を取る+ぼうしをとる→帽/ぼうし, を/(匹配消耗), 取/と, る/(送假名)
+     - 核心思路：从左到右匹配surface中的假名段到reading中的对应位置，中间的reading属于前面的汉字段
+  3. 混合变形处理：{xxx}含汉字时直接用作surface_display，用furigana splits映射辞书形注音
+     - 帰った→用帰る的splits把"かえ"映射到"帰"位置
+     - 面白かった→用面白い的splits把"おも"/"しろ"映射到"面"/"白"位置
+     - {xxx}纯假名时（如{かぶって}）仍走derive_conjugated_surface推导
+
+意义：
+  - 假名注音从"基本不可用"提升到"大部分正确"，用户体验显著改善
+  - 解决了EDRG数据中最常见的三类注音问题
+
+新理解：
+  - EDRG B行{xxx}标记有两种：纯假名（变形读音，如{かぶって}）和混合形（变形表面形，如{帰った}），比例约220k:124k，必须分别处理
+  - EDRG的分词粒度不统一——有时"帽子を取る"是一个token，有时"帽子"+"を"+"取る"是三个token，reading拆分必须能处理这两种情况
+  - furigana splits数据是最高质量的注音来源，应尽可能复用；_split_reading_by_surface是次优方案
+
+========================
+
+【更新6】例句变形形式修复 + 每词最多6条例句
+日期：2026-07-25
+涉及文件：extract_sentences.py, generate_room_db.py, add_sentences_to_db.py, WordDatabase.java, word_sentences_data.json, word_database.db
+
+问题：
+  1. EDRG B行{...}标记里的变形读音被直接用作表面形，丢失汉字信息（如被る+かぶる+かぶって→显示"かぶって"而非"被って"）
+  2. 部分词例句过多（彼の900条、彼22167条），全部加载到内存浪费资源
+
+解决方案：
+  1. 集成derive_conjugated_surface()算法到extract_sentences.py
+     - 从辞书形表面+辞书读音+变形读音推导变形表面形
+     - 修复正则bug：先从完整token提取{...}再解析(reading)，之前{...}被截断
+     - 变形形式假名注音：汉字位置存kanji_reading，送假名位置存空字符串
+     - 19/21测试用例通过（来る→きた而非来た，可接受的不规则动词限制）
+  2. generate_room_db.py和add_sentences_to_db.py添加MAX_SENTENCES_PER_WORD=6
+     - 数据层面限制，不依赖UI层截断
+     - DB从173.1MB降到120.1MB，例句从162730条降到41436条
+
+意义：
+  - 变形形式是日语例句中的普遍现象（{...}标记出现344533次），必须全面解决
+  - 每词6句上限在数据层面保证一致性，UI层MAX_SENTENCES_PER_PAGE变为冗余安全网
+
+新理解：
+  - EDRG B行格式：表面形(読み)[頻度]{実際の変形読み}~，{...}里是变形读音（假名形式），不是表面形
+  - derive_conjugated_surface核心逻辑：找到辞书读音中汉字部分对应的读音前缀，保留汉字部分，替换送假名后缀
+  - 不规则动词（する→した、くる→きた）无法通过读音前缀匹配推导，fallback到变形读音是正确的
+
+========================
+
+【更新5】例句数据导入 + 假名修复 + 非英文过滤 + 闪退修复
+日期：2026-07-25（之前的工作，此处补录）
+涉及文件：extract_sentences.py, jmdict_to_room.py, SentenceView.java, ExtendedLearnPageFragment.java, ExtendedMeaningViewFragment.java, WordDatabase.java, DataImporter.java, generate_room_db.py, merge_sentences_to_room.py
+
+内容：
+  1. createFromAsset预构建DB方案：彻底解决OOM（190MB JSON运行时解析导致内存溢出）
+     - Room的createFromAsset只在DB不存在时复制，通过SharedPreferences版本检测+deleteOldDatabaseIfNeeded()解决升级问题
+     - 预构建DB不能有索引（Room Entity未声明，schema验证会失败）
+     - generate_room_db.py从room_import.json生成SQLite DB，含identity_hash
+  2. 近/反义词假名修复：两遍扫描——Pass1构建word_id_to_components，Pass2处理引用
+     - 单遍扫描时前面的词引用后面的词，后者还没被处理，fallback把汉字当假名
+  3. 例句假名修复：EDRG B行用JmdictFurigana权威拆分+回溯匹配，逐字分配假名注音
+     - 之前：汉字位置存整词读音（如"忙"→"いそがしい"）
+     - 之后：汉字位置存逐字注音（如"忙"→"いそが"）
+  4. 非英文翻译过滤：JMDict gloss包含荷兰语/德语等，过滤只保留lang="eng"
+  5. 闪退修复：SentenceView wordId="0"时不带点击交互，meaning.getWordId()空安全检查
+  6. 过长句子过滤：token数超过20的句子会导致崩溃（955条被跳过）
+  7. 长按快速切换：长按前/后按钮500ms后每1ms自动切换单词
+
+意义：
+  - 预构建DB是项目可用性的基础，没有它应用无法在手机上运行
+  - 假名注音是日语学习应用的核心功能，错误注音比没有注音更糟糕
+  - 闪退修复是P0优先级
+
+新理解：
+  - Room的createFromAsset机制：只在DB文件不存在时复制，设备上已有旧DB时不会覆盖
+  - 190MB JSON用json.load()会超时，需要用ijson流式解析或分步操作
+  - EDRG B行parse_b_line是整个例句系统的核心，任何修改都需要仔细测试边界case
+  - Git LFS：超过100MB的文件需要LFS管理，migrate后文件变成指针文件
+
+========================
+
+【待办事项】
+========================
+
+- [ ] 例句懒加载：提供更多例句但不全加载到内存，可按需加载/翻页
+- [ ] 清理DataImporter代码和旧assets文件
+- [ ] UI整体优化（回退到abd13b2之前的版本再做）
+- [ ] 中文释义翻译（结合日语+英文，非直接翻译英文）
+- [ ] 中英切换开关（等翻译导入后再做）

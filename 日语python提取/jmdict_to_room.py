@@ -375,14 +375,19 @@ def convert_jmdict_to_room(input_path, output_path, furigana_splits_path=None, k
         for sense in w.get('sense', []):
             meaning_id_counter += 1
             mid = str(meaning_id_counter)
-            meaning_ids.append(mid)
 
             pos = map_pos(sense.get('partOfSpeech', []))
 
             glosses = sense.get('gloss', [])
-            original_def = '; '.join(g['text'] for g in glosses if g.get('text'))
+            eng_glosses = [g for g in glosses if g.get('lang', 'eng') == 'eng']
+            if not eng_glosses:
+                # Skip non-English senses entirely
+                continue
+            original_def = '; '.join(g['text'] for g in eng_glosses if g.get('text'))
             if not original_def:
-                original_def = '(no definition)'
+                continue
+
+            meaning_ids.append(mid)
 
             word_meanings.append({
                 'wordMeaningId': mid,
