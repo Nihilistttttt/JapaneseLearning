@@ -21,6 +21,10 @@ import com.Nihilisttt.LearnWord.Database.Entities.BasicWordEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.WordEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.WordSentenceEntity;
 
+import android.content.SharedPreferences;
+
+
+import java.io.File;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -37,6 +41,9 @@ import java.util.concurrent.Executors;
         version = 1,
         exportSchema = false)
 public abstract class WordDatabase extends RoomDatabase {
+    private static final String PREFS_NAME = "room_db_prefs";
+    private static final String KEY_DB_VERSION = "prebuilt_db_version";
+    private static final int PREBUILT_DB_VERSION = 1;
     // 线程安全的单例模式
     private static volatile WordDatabase INSTANCE;
     // 数据库操作线程池（4线程）
@@ -47,20 +54,35 @@ public abstract class WordDatabase extends RoomDatabase {
         if (INSTANCE == null) {
             synchronized (WordDatabase.class) {
                 if (INSTANCE == null) {
+                    deleteOldDatabaseIfNeeded(context);
                     INSTANCE = Room.databaseBuilder(
                             context.getApplicationContext(),
                             WordDatabase.class,
                             "word_database"
                     )
+                            .createFromAsset("databases/word_database.db")
                             .setQueryExecutor(databaseExecutor)
                             .setJournalMode(JournalMode.TRUNCATE)
-                            .fallbackToDestructiveMigration()  // 允许破坏性迁移（清空旧数据）
+                            .fallbackToDestructiveMigration()
                             .enableMultiInstanceInvalidation()
                             .build();
                 }
             }
         }
         return INSTANCE;
+    }
+
+    private static void deleteOldDatabaseIfNeeded(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        if (prefs.getInt(KEY_DB_VERSION, 0) >= PREBUILT_DB_VERSION) {
+            return;
+        }
+        String dbName = "word_database";
+        File dbFile = context.getDatabasePath(dbName);
+        if (dbFile.exists()) {
+            context.deleteDatabase(dbName);
+        }
+        prefs.edit().putInt(KEY_DB_VERSION, PREBUILT_DB_VERSION).apply();
     }
     public abstract WordDao getWordDao();
     public abstract BasicWordDao getBasicWordDao();

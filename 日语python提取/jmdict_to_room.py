@@ -302,13 +302,14 @@ def convert_jmdict_to_room(input_path, output_path, furigana_splits_path=None, k
 
     word_id_to_components = {}
 
+    # Pass 1: Build word_id_to_components for all words
+    print("Pass 1: Building word_id_to_components...")
     for w in jmdict_words:
         word_id = w['id']
         kanji_list = w.get('kanji', [])
         kana_list = w.get('kana', [])
 
         if not kanji_list and not kana_list:
-            skipped_no_kanji_no_kana += 1
             continue
 
         primary_kanji, primary_kana = id_to_primary[word_id]
@@ -350,6 +351,23 @@ def convert_jmdict_to_room(input_path, output_path, furigana_splits_path=None, k
 
         word_id_to_components[word_id] = (kanji_components, kana_components)
 
+    print(f"  word_id_to_components: {len(word_id_to_components)} entries")
+    print(f"  Split sources: furigana={furigana_hit}, backtrack={backtrack_hit}, ka_repeat={ka_repeat_hit}, repeated={repeated_hit}, fallback={fallback_hit}")
+
+    # Pass 2: Process all words (meanings, antonyms, synonyms)
+    print("Pass 2: Processing words, meanings, antonyms, synonyms...")
+    for w in jmdict_words:
+        word_id = w['id']
+        kanji_list = w.get('kanji', [])
+        kana_list = w.get('kana', [])
+
+        if not kanji_list and not kana_list:
+            skipped_no_kanji_no_kana += 1
+            continue
+
+        primary_kanji, primary_kana = id_to_primary[word_id]
+        kanji_components, kana_components = word_id_to_components[word_id]
+
         meaning_ids = []
         antonym_ids = []
         synonym_ids = []
@@ -389,11 +407,9 @@ def convert_jmdict_to_room(input_path, output_path, furigana_splits_path=None, k
                 ref_comps = word_id_to_components.get(ant_word_id)
                 if ref_comps:
                     ant_kanji_comps, ant_kana_comps = ref_comps
-                    if all(k == '' for k in ant_kana_comps):
-                        ant_kana_comps = list(ant_kanji_comps)
                 else:
                     ant_kanji_comps = [ref_text]
-                    ant_kana_comps = [ref_text]
+                    ant_kana_comps = ['']
 
                 antonym_words.append({
                     'antonymWordId': aid,
@@ -418,11 +434,9 @@ def convert_jmdict_to_room(input_path, output_path, furigana_splits_path=None, k
                 ref_comps = word_id_to_components.get(rel_word_id)
                 if ref_comps:
                     rel_kanji_comps, rel_kana_comps = ref_comps
-                    if all(k == '' for k in rel_kana_comps):
-                        rel_kana_comps = list(rel_kanji_comps)
                 else:
                     rel_kanji_comps = [ref_text]
-                    rel_kana_comps = [ref_text]
+                    rel_kana_comps = ['']
 
                 synonym_words.append({
                     'synonymWordId': sid,

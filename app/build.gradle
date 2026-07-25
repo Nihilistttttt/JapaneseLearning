@@ -29,9 +29,6 @@ android {
             }
         }
     }
-    aaptOptions {
-        noCompress 'gz'
-    }
     packagingOptions
             {
                 exclude'META-INF/DEPENDENCIES'
