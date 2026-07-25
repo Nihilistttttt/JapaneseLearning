@@ -9,12 +9,14 @@ import com.Nihilisttt.LearnWord.Database.Dao.BasicWordDao;
 import com.Nihilisttt.LearnWord.Database.Dao.SynonymWordDao;
 import com.Nihilisttt.LearnWord.Database.Dao.WordDao;
 import com.Nihilisttt.LearnWord.Database.Dao.WordMeaningDao;
+import com.Nihilisttt.LearnWord.Database.Dao.WordSentenceDao;
 import com.Nihilisttt.LearnWord.Database.Database.WordDatabase;
 import com.Nihilisttt.LearnWord.Database.Entities.AntonymWordEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.BasicWordEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.SynonymWordEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.WordEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.WordMeaningEntity;
+import com.Nihilisttt.LearnWord.Database.Entities.WordSentenceEntity;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -34,7 +36,7 @@ public class DataImporter {
     private static final String PREFS_NAME = "data_import_prefs";
     private static final String KEY_IMPORTED = "is_data_imported";
     private static final String KEY_VERSION = "import_data_version";
-    private static final int CURRENT_VERSION = 10;
+    private static final int CURRENT_VERSION = 11;
     private static final int BATCH_SIZE = 500;
 
     private DataImporter() {
@@ -59,6 +61,7 @@ public class DataImporter {
         WordDao wordDao = database.getWordDao();
         BasicWordDao basicWordDao = database.getBasicWordDao();
         WordMeaningDao wordMeaningDao = database.getWordMeaningDao();
+        WordSentenceDao wordSentenceDao = database.getWordSentenceDao();
         AntonymWordDao antonymWordDao = database.getAntonymWordDao();
         SynonymWordDao synonymWordDao = database.getSynonymWordDao();
 
@@ -77,12 +80,14 @@ public class DataImporter {
                     wordDao.deleteAllWords();
                     basicWordDao.deleteAllBasicWords();
                     wordMeaningDao.deleteAllWordMeanings();
+                    wordSentenceDao.deleteAllWordSentences();
                     antonymWordDao.deleteAllAntonymWords();
                     synonymWordDao.deleteAllSynonymWords();
 
                     batchInsertWords(wordDao, root.getAsJsonArray("words"));
                     batchInsertBasicWords(basicWordDao, root.getAsJsonArray("basicWords"));
                     batchInsertWordMeanings(wordMeaningDao, root.getAsJsonArray("wordMeanings"));
+                    batchInsertWordSentences(wordSentenceDao, root.getAsJsonArray("wordSentences"));
                     batchInsertAntonymWords(antonymWordDao, root.getAsJsonArray("antonymWords"));
                     batchInsertSynonymWords(synonymWordDao, root.getAsJsonArray("synonymWords"));
                 });
@@ -110,12 +115,23 @@ public class DataImporter {
     }
 
     private static JsonObject loadJson(Context context) {
-        try (InputStream is = context.getAssets().open("room_import.json.gz");
-             GZIPInputStream gzis = new GZIPInputStream(is);
-             InputStreamReader reader = new InputStreamReader(gzis, StandardCharsets.UTF_8)) {
+        // AAPT may decompress .gz files and strip the extension, so try both
+        try {
+            InputStream is = context.getAssets().open("room_import.json.gz");
+            GZIPInputStream gzis = new GZIPInputStream(is);
+            InputStreamReader reader = new InputStreamReader(gzis, StandardCharsets.UTF_8);
+            JsonObject result = new Gson().fromJson(reader, JsonObject.class);
+            reader.close();
+            return result;
+        } catch (Exception e) {
+            Log.d(TAG, "room_import.json.gz not found or not gzipped, trying room_import.json");
+        }
+
+        try (InputStream is = context.getAssets().open("room_import.json");
+             InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8)) {
             return new Gson().fromJson(reader, JsonObject.class);
         } catch (Exception e) {
-            Log.e(TAG, "Error reading room_import.json.gz", e);
+            Log.e(TAG, "Error reading room_import.json", e);
             return null;
         }
     }
@@ -189,6 +205,33 @@ public class DataImporter {
             dao.insertWords(batch.toArray(new WordMeaningEntity[0]));
         }
         Log.d(TAG, "Inserted " + array.size() + " wordMeanings");
+    }
+
+    private static void batchInsertWordSentences(WordSentenceDao dao, JsonArray array) {
+        if (array == null) return;
+        List<WordSentenceEntity> batch = new ArrayList<>(BATCH_SIZE);
+        for (JsonElement elem : array) {
+            JsonObject obj = elem.getAsJsonObject();
+            batch.add(new WordSentenceEntity(
+                    obj.get("wordSentenceId").getAsString(),
+                    obj.get("wordId").getAsString(),
+                    getAsStringOrDefault(obj, "wordMeaningId", ""),
+                    obj.get("kanjiComponents").getAsString(),
+                    obj.get("kanaComponents").getAsString(),
+                    obj.get("wordIdList").getAsString(),
+                    getAsStringOrDefault(obj, "translation", ""),
+                    getAsStringOrDefault(obj, "source", "EDRG"),
+                    getAsStringOrDefault(obj, "audioUrl", "")
+            ));
+            if (batch.size() >= BATCH_SIZE) {
+                dao.insertWords(batch.toArray(new WordSentenceEntity[0]));
+                batch.clear();
+            }
+        }
+        if (!batch.isEmpty()) {
+            dao.insertWords(batch.toArray(new WordSentenceEntity[0]));
+        }
+        Log.d(TAG, "Inserted " + array.size() + " wordSentences");
     }
 
     private static void batchInsertAntonymWords(AntonymWordDao dao, JsonArray array) {

@@ -389,9 +389,11 @@ def convert_jmdict_to_room(input_path, output_path, furigana_splits_path=None, k
                 ref_comps = word_id_to_components.get(ant_word_id)
                 if ref_comps:
                     ant_kanji_comps, ant_kana_comps = ref_comps
+                    if all(k == '' for k in ant_kana_comps):
+                        ant_kana_comps = list(ant_kanji_comps)
                 else:
                     ant_kanji_comps = [ref_text]
-                    ant_kana_comps = ['']
+                    ant_kana_comps = [ref_text]
 
                 antonym_words.append({
                     'antonymWordId': aid,
@@ -416,9 +418,11 @@ def convert_jmdict_to_room(input_path, output_path, furigana_splits_path=None, k
                 ref_comps = word_id_to_components.get(rel_word_id)
                 if ref_comps:
                     rel_kanji_comps, rel_kana_comps = ref_comps
+                    if all(k == '' for k in rel_kana_comps):
+                        rel_kana_comps = list(rel_kanji_comps)
                 else:
                     rel_kanji_comps = [ref_text]
-                    rel_kana_comps = ['']
+                    rel_kana_comps = [ref_text]
 
                 synonym_words.append({
                     'synonymWordId': sid,

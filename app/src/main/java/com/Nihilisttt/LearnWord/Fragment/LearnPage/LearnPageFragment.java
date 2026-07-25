@@ -1,7 +1,10 @@
 package com.Nihilisttt.LearnWord.Fragment.LearnPage;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -99,15 +102,47 @@ public class LearnPageFragment extends Fragment {
         });
 
         // 设置按钮点击监听
-        preButton.setOnClickListener(v -> {
+        setupRepeatButton(preButton, () -> {
             viewModel.navigatePrevious();
             viewPager2.setCurrentItem(0, false);
             ViewPager2Navigation.getInstance().clearPendingNavigation();
         });
-        nextButton.setOnClickListener(v -> {
+        setupRepeatButton(nextButton, () -> {
             viewModel.navigateNext();
             viewPager2.setCurrentItem(0, false);
             ViewPager2Navigation.getInstance().clearPendingNavigation();
+        });
+    }
+
+    private void setupRepeatButton(Button button, Runnable action) {
+        Handler handler = new Handler(Looper.getMainLooper());
+        Runnable[] repeatRef = new Runnable[1];
+
+        button.setOnTouchListener((v, event) -> {
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    v.setPressed(true);
+                    action.run();
+                    repeatRef[0] = new Runnable() {
+                        @Override
+                        public void run() {
+                            if (v.isPressed()) {
+                                action.run();
+                                handler.postDelayed(this, 1);
+                            }
+                        }
+                    };
+                    handler.postDelayed(repeatRef[0], 500);
+                    return true;
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+                    v.setPressed(false);
+                    if (repeatRef[0] != null) {
+                        handler.removeCallbacks(repeatRef[0]);
+                    }
+                    return true;
+            }
+            return false;
         });
     }
 
