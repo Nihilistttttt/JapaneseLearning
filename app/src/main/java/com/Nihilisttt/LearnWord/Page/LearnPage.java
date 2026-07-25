@@ -13,6 +13,7 @@ import com.Nihilisttt.LearnWord.Adapter.LearnPageAdapter;
 import com.Nihilisttt.LearnWord.R;
 
 import com.Nihilisttt.LearnWord.ViewPager2.ViewPager2ScrollController;
+import com.Nihilisttt.LearnWord.ViewPager2.NestedScrollableHostBetween3LayersManager;
 
 public class LearnPage extends AppCompatActivity {
     private ViewPager2 viewPager2;
@@ -30,8 +31,23 @@ public class LearnPage extends AppCompatActivity {
     }
 
     @Override
+    public void onBackPressed() {
+        if (viewPager2.getCurrentItem() == 0) {
+            viewPager2.setCurrentItem(1, true);
+            return;
+        }
+
+        ViewPager2 overviewDetailVp2 = NestedScrollableHostBetween3LayersManager.getInstance().getOuterViewPager2();
+        if (overviewDetailVp2 != null && overviewDetailVp2.getCurrentItem() != 0) {
+            overviewDetailVp2.setCurrentItem(0, true);
+            return;
+        }
+
+        super.onBackPressed();
+    }
+
+    @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
-        // 先让系统处理事件
         boolean handled = super.dispatchTouchEvent(ev);
         scrollController.handleTouchEvent(ev);
         return handled;
@@ -46,8 +62,7 @@ public class LearnPage extends AppCompatActivity {
         View childAt = viewPager2.getChildAt(0);
         if (childAt instanceof RecyclerView) {
             childAt.setOverScrollMode(View.OVER_SCROLL_NEVER);
-        } // 取消滑动到边缘的阴影效果
-
+        }
     }
 
 }
