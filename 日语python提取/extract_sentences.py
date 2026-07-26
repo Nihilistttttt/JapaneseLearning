@@ -28,6 +28,8 @@ def _is_kanji(ch):
 def _is_kana(ch):
     return ('\u3040' <= ch <= '\u309F') or ('\u30A0' <= ch <= '\u30FF')
 
+JAPANESE_PUNCT = set('。、！？・…「」『』（）()〈〉《》【】〔〕［］｛｝')
+
 def derive_conjugated_surface(dict_surface, dict_reading, conj_reading):
     if not dict_surface or not dict_reading or not conj_reading:
         return conj_reading if conj_reading else dict_surface
@@ -243,7 +245,7 @@ def load_jmdict_word_ids():
     return dict(kanji_to_ids), dict(kana_to_ids), id_to_primary, word_id_to_meaning_ids
 
 
-def parse_b_line(b_line, kanji_dict, furigana_splits, kanji_to_ids, kana_to_ids, id_to_primary):
+def parse_b_line(b_line, kanji_dict, furigana_splits, kanji_to_ids, kana_to_ids, id_to_primary, a_jpn=''):
     tokens = b_line.strip().split(' ')
     kanji_comps = []
     kana_comps = []
@@ -433,6 +435,91 @@ def parse_b_line(b_line, kanji_dict, furigana_splits, kanji_to_ids, kana_to_ids,
         merged_kanji_comps.append(mk)
         merged_kana_comps.append(mv)
 
+    # Insert punctuation from A-line as separate tokens using difflib alignment
+    if a_jpn:
+        punct_positions = [(i, c) for i, c in enumerate(a_jpn) if c in JAPANESE_PUNCT]
+        if punct_positions:
+            import difflib
+            display_texts = [''.join(kc) for kc in merged_kanji_comps]
+            b_concat = ''.join(display_texts)
+            a_no_punct = ''.join(c for c in a_jpn if c not in JAPANESE_PUNCT and c != ' ')
+            
+            sm = difflib.SequenceMatcher(None, a_no_punct, b_concat, autojunk=False)
+            a_to_b = {}
+            for tag, i1, i2, j1, j2 in sm.get_opcodes():
+                if tag == 'equal':
+                    for k in range(i2 - i1):
+                        a_to_b[i1 + k] = j1 + k
+                elif tag == 'replace':
+                    min_len = min(i2 - i1, j2 - j1)
+                    for k in range(min_len):
+                        a_to_b[i1 + k] = j1 + k
+                elif tag == 'delete':
+                    for k in range(i1, i2):
+                        a_to_b[k] = j1
+            
+            token_boundaries = []
+            cumul = 0
+            for dt in display_texts:
+                cumul += len(dt)
+                token_boundaries.append(cumul)
+            
+            def b_pos_to_token_idx(b_pos):
+                for ti, boundary in enumerate(token_boundaries):
+                    if b_pos < boundary:
+                        return ti
+                return len(token_boundaries) - 1
+            
+            punct_after_token = {}
+            for pi, pc in punct_positions:
+                chars_before = sum(1 for c in a_jpn[:pi] if c not in JAPANESE_PUNCT and c != ' ')
+                if chars_before == 0:
+                    punct_after_token.setdefault(-1, []).append(pc)
+                    continue
+                a_idx = chars_before - 1
+                if a_idx in a_to_b:
+                    b_pos = a_to_b[a_idx]
+                    token_idx = b_pos_to_token_idx(b_pos)
+                    punct_after_token.setdefault(token_idx, []).append(pc)
+                else:
+                    found = False
+                    for offset in range(1, 5):
+                        if a_idx - offset in a_to_b:
+                            b_pos = a_to_b[a_idx - offset]
+                            token_idx = b_pos_to_token_idx(b_pos)
+                            punct_after_token.setdefault(token_idx, []).append(pc)
+                            found = True
+                            break
+                        if a_idx + offset in a_to_b:
+                            b_pos = a_to_b[a_idx + offset]
+                            token_idx = b_pos_to_token_idx(b_pos)
+                            punct_after_token.setdefault(token_idx, []).append(pc)
+                            found = True
+                            break
+                    if not found:
+                        punct_after_token.setdefault(len(merged_kanji_comps) - 1, []).append(pc)
+            
+            new_kanji_comps = []
+            new_kana_comps = []
+            new_word_ids = []
+            if -1 in punct_after_token:
+                for pc in punct_after_token[-1]:
+                    new_kanji_comps.append([pc])
+                    new_kana_comps.append([''])
+                    new_word_ids.append('0')
+            for ti in range(len(merged_kanji_comps)):
+                new_kanji_comps.append(merged_kanji_comps[ti])
+                new_kana_comps.append(merged_kana_comps[ti])
+                new_word_ids.append(token_word_ids[ti] if ti < len(token_word_ids) else '0')
+                if ti in punct_after_token:
+                    for pc in punct_after_token[ti]:
+                        new_kanji_comps.append([pc])
+                        new_kana_comps.append([''])
+                        new_word_ids.append('0')
+            merged_kanji_comps = new_kanji_comps
+            merged_kana_comps = new_kana_comps
+            token_word_ids = new_word_ids
+
     return merged_kanji_comps, merged_kana_comps, surfaces, token_word_ids
 
 
@@ -466,13 +553,13 @@ def process_edrg_examples(kanji_to_ids, kana_to_ids, id_to_primary, word_id_to_m
 
             if line.startswith('A:'):
                 parts = line[2:].split('\t')
-                jpn_text = parts[0] if parts else ''
+                jpn_text = parts[0].strip() if parts else ''
                 eng_text = parts[1].split('#ID=')[0] if len(parts) > 1 else ''
                 current_a = {'jpn': jpn_text, 'eng': eng_text}
 
             elif line.startswith('B:') and current_a:
                 b_text = line[2:]
-                kanji_c, kana_c, surfaces, token_wids = parse_b_line(b_text, kanji_dict, furigana_splits, kanji_to_ids, kana_to_ids, id_to_primary)
+                kanji_c, kana_c, surfaces, token_wids = parse_b_line(b_text, kanji_dict, furigana_splits, kanji_to_ids, kana_to_ids, id_to_primary, current_a['jpn'])
                 if not kanji_c:
                     current_a = None
                     continue
@@ -534,7 +621,7 @@ def add_tatoeba_sentences(sentences, start_id, kanji_to_ids, kana_to_ids, word_i
         current_kana = []
 
         for ch in jpn_text:
-            if ch in '。、！？・…「」『』（）':
+            if ch in JAPANESE_PUNCT:
                 if current_kanji:
                     kanji_comps.append(current_kanji)
                     kana_comps.append([''] * len(current_kanji))
@@ -543,7 +630,8 @@ def add_tatoeba_sentences(sentences, start_id, kanji_to_ids, kana_to_ids, word_i
                     kanji_comps.append(current_kana)
                     kana_comps.append(current_kana[:])
                     current_kana = []
-                continue
+                kanji_comps.append([ch])
+                kana_comps.append([''])
             elif '\u4e00' <= ch <= '\u9fff' or ch == '々':
                 if current_kana:
                     kanji_comps.append(current_kana)
