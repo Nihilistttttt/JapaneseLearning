@@ -5,6 +5,48 @@ LearnWord 项目更新记录
 
 ========================
 
+【更新9】例句换行优化：单词内拆分+跨行高亮联动+标点前瞻预留
+日期：2026-07-26
+涉及文件：SentenceView.java, WordComponentView.java
+
+问题：
+  1. 例句换行时整个单词换到下一行，即使只差一两个字符也整词换行，空间浪费严重
+  2. 闭合标点（。、！？」等）放不下时留在当前行溢出，视觉不美观
+  3. 拆分后的单词两部分没有高亮联动，点击一部分只高亮该部分
+
+解决方案：
+  1. 单词内拆分：放不下时按组件粒度拆分WordComponentView，part1留当前行，part2换新行
+     - isSplittableWord(): 共享假名组件（如貴方→['貴方']/['あなた']）不拆分
+     - findSplitPoint(): 逐字符累加宽度找拆分点
+     - 不可拆分词仍整个换行
+  2. 跨行高亮联动：WordComponentView新增linkedView机制
+     - setLinkedView(): 双向绑定两个拆分部分
+     - setPressed()重写：同步linkedView的pressed状态，isSyncingPress防递归
+     - drawableStateChanged()重写：同步刷新linkedView的Drawable
+  3. 标点前瞻预留：处理单词时前瞻下一个token是否闭合标点
+     - 如果是，将标点宽度+词与标点间margin计入换行判断(punctReservePx)
+     - remainingPx也减去punctReservePx，确保拆分后part2后面留有标点空间
+     - 标点自然跟在单词后面，不会孤零零出现在行首
+  4. 间距计算重构：去掉indexed lists(firstKanjiLengthList等)，改用prevLastKanji/prevLastKana追踪
+     - 提取calcMarginPx()独立方法，消除重复代码
+
+效果：
+  - 长单词可拆分跨行显示，空间利用率大幅提升
+  - 闭合标点不再溢出或孤立在行首
+  - 拆分单词两部分高亮联动，点击任意部分整体高亮
+
+意义：
+  - 例句是日语学习最核心的展示内容，换行质量直接影响阅读体验
+  - 标点不换行首是日文排版的基本规范
+  - 跨行高亮联动保证拆分后单词的交互一致性
+
+新理解：
+  - 单词内换行比回溯移除View简单得多——前瞻预留空间，标点自然跟随
+  - linkedView双向绑定需注意递归：isSyncingPress标志确保setPressed只传播一层
+  - 共享假名词（多汉字共享一个假名注音）不能拆分，否则假名注音无法正确居中
+
+========================
+
 【更新8】非英文释义彻底过滤
 日期：2026-07-25
 涉及文件：jmdict_to_room.py, generate_room_db.py, WordDatabase.java, room_import.json, word_database.db

@@ -57,6 +57,37 @@ public class WordComponentView extends LinearLayout {
     private WordRepository repository;
     private LiveData<BasicWord> basicWordLiveData;
     private LiveData<List<WordMeaning>> wordMeaningsLiveData;
+    private WordComponentView linkedView;
+    private boolean isSyncingPress = false;
+
+    public void setLinkedView(WordComponentView view) {
+        this.linkedView = view;
+        view.linkedView = this;
+    }
+
+    @Override
+    public void setPressed(boolean pressed) {
+        if (isSyncingPress) {
+            super.setPressed(pressed);
+            return;
+        }
+        super.setPressed(pressed);
+        if (linkedView != null) {
+            linkedView.isSyncingPress = true;
+            linkedView.setPressed(pressed);
+            linkedView.isSyncingPress = false;
+        }
+    }
+
+    @Override
+    protected void drawableStateChanged() {
+        super.drawableStateChanged();
+        Drawable bg = getBackground();
+        if (bg instanceof PartialSelectorDrawable) {
+            bg.setState(getDrawableState());
+            invalidate();
+        }
+    }
 
     // region 构造函数
 
@@ -291,16 +322,7 @@ public class WordComponentView extends LinearLayout {
         }
     }
 
-    // 确保按压状态更新时刷新Drawable
-    @Override
-    protected void drawableStateChanged() {
-        super.drawableStateChanged();
-        Drawable bg = getBackground();
-        if (bg instanceof PartialSelectorDrawable) {
-            bg.setState(getDrawableState());
-            invalidate();
-        }
-    }
+
 
     private Rect getClickableArea() {
         Rect bounds = new Rect();
