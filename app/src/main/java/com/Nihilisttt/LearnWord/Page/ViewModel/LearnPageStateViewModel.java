@@ -28,10 +28,10 @@ public class LearnPageStateViewModel extends AndroidViewModel {
     public LearnPageStateViewModel(@NonNull Application application) {
         super(application);
         prefs = application.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        int savedWord = prefs.getInt(KEY_WORD_FONT_LEVEL, Constants.FONT_SIZE_NORMAL);
-        int savedSub = prefs.getInt(KEY_SUB_FONT_LEVEL, Constants.FONT_SIZE_NORMAL);
-        wordFontLevel = new MutableLiveData<>(savedWord);
-        subFontLevel = new MutableLiveData<>(savedSub);
+        int savedWord = prefs.getInt(KEY_WORD_FONT_LEVEL, 5);
+        int savedSub = prefs.getInt(KEY_SUB_FONT_LEVEL, 2);
+        wordFontLevel = new MutableLiveData<>(Math.max(4, Math.min(6, savedWord)));
+        subFontLevel = new MutableLiveData<>(Math.max(1, Math.min(3, savedSub)));
     }
 
     private MutableLiveData<Boolean> isViewPagerScrollEnabled = new MutableLiveData<>(true);
@@ -63,13 +63,13 @@ public class LearnPageStateViewModel extends AndroidViewModel {
     }
 
     public void setWordFontLevel(int level) {
-        int clamped = Math.max(0, Math.min(Constants.FONT_SIZE_LARGE, level));
+        int clamped = Math.max(4, Math.min(6, level));
         wordFontLevel.setValue(clamped);
         prefs.edit().putInt(KEY_WORD_FONT_LEVEL, clamped).apply();
     }
 
     public void setSubFontLevel(int level) {
-        int clamped = Math.max(0, Math.min(Constants.FONT_SIZE_LARGE, level));
+        int clamped = Math.max(1, Math.min(3, level));
         subFontLevel.setValue(clamped);
         prefs.edit().putInt(KEY_SUB_FONT_LEVEL, clamped).apply();
     }

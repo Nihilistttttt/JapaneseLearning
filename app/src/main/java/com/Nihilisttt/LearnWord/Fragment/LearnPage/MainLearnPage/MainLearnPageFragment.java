@@ -17,6 +17,7 @@ import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.Nihilisttt.LearnWord.JavaBean.WordSentence;
 import com.Nihilisttt.LearnWord.Page.ViewModel.LearnPageStateViewModel;
 import com.Nihilisttt.LearnWord.Page.ViewModel.LearnPageViewModel;
 import com.Nihilisttt.LearnWord.R;
@@ -26,6 +27,8 @@ import com.Nihilisttt.LearnWord.WordView.BasicWordView;
 import com.Nihilisttt.LearnWord.WordView.IntegratedPartView;
 import com.Nihilisttt.LearnWord.WordView.MeaningView;
 import com.Nihilisttt.LearnWord.WordView.SentenceView;
+
+import java.util.List;
 
 public class MainLearnPageFragment extends Fragment {
     private static final String TAG = "MainLearnPageFragment";
@@ -110,7 +113,10 @@ public class MainLearnPageFragment extends Fragment {
 
         BasicWordView basicWordView = new BasicWordView(requireContext(), requireActivity(), wordLevel, combinedWordInfo.getBasicWord());
 
-        SentenceView sentenceView = new SentenceView(requireContext(), requireActivity(), subLevel, combinedWordInfo.getWordSentenceList());
+        List<WordSentence> allSentences = combinedWordInfo.getWordSentenceList();
+        int maxSentences = Constants.getSentenceCardMinSentences(subLevel);
+        List<WordSentence> limitedSentences = allSentences.subList(0, Math.min(maxSentences, allSentences.size()));
+        SentenceView sentenceView = new SentenceView(requireContext(), requireActivity(), subLevel, limitedSentences);
         updateView(basicWordView, wordContainer);
         updateView(sentenceView, sentenceContainer);
         sentenceContainer.setVisibility(View.VISIBLE);
@@ -180,6 +186,7 @@ public class MainLearnPageFragment extends Fragment {
         container.removeAllViews();
         container.addView(view);
     }
+
 
     @Override
     public void onDestroyView() {

@@ -57,6 +57,12 @@ public class Constants {
         return lerp(SUB_DEFINITION_RANGE[0], SUB_DEFINITION_RANGE[1], t);
     }
 
+    public static int getSentenceCardMinSentences(int subLevel) {
+        if (subLevel >= 3) return 1;
+        if (subLevel >= 2) return 2;
+        return 3;
+    }
+
 
     public static enum PartOfSpeech {
         NOUN("n."), VERB("v."), ADJECTIVE("adj."), ADVERB("adv."), UNKNOWN("");
