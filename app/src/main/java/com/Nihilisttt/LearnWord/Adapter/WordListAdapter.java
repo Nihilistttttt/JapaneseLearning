@@ -15,6 +15,7 @@ import com.Nihilisttt.LearnWord.Database.Repository.WordRepository;
 import com.Nihilisttt.LearnWord.JavaBean.BasicWord;
 import com.Nihilisttt.LearnWord.JavaBean.Word;
 import com.Nihilisttt.LearnWord.JavaBean.WordMeaning;
+import com.Nihilisttt.LearnWord.Page.ViewModel.LearnPageStateViewModel;
 import com.Nihilisttt.LearnWord.R;
 import com.Nihilisttt.LearnWord.UtilityClass.Constants;
 import com.Nihilisttt.LearnWord.WordView.MeaningView;
@@ -25,11 +26,12 @@ import java.util.List;
 
 public class WordListAdapter extends RecyclerView.Adapter<WordListAdapter.WordItemViewHolder> {
     private final LifecycleOwner lifecycleOwner;
+    private final int layoutType;
     private List<Word> wordList = new ArrayList<>();
 
-    // 修改构造函数接收LifecycleOwner
-    public WordListAdapter(LifecycleOwner lifecycleOwner) {
+    public WordListAdapter(LifecycleOwner lifecycleOwner, int layoutType) {
         this.lifecycleOwner = lifecycleOwner;
+        this.layoutType = layoutType;
     }
 
     @SuppressLint("NotifyDataSetChanged")
@@ -53,7 +55,7 @@ public class WordListAdapter extends RecyclerView.Adapter<WordListAdapter.WordIt
         // 使用构造函数传入的lifecycleOwner
         LiveData<BasicWord> basicWordLiveData = wordRepository.getBasicWordById(wordList.get(position).getWordId());
         basicWordLiveData.observe(lifecycleOwner, basicWord -> {
-            BasicWordView basicWordView = new BasicWordView(holder.itemView.getContext(),lifecycleOwner, Constants.LARGE, basicWord);
+            BasicWordView basicWordView = new BasicWordView(holder.itemView.getContext(),lifecycleOwner, layoutType, basicWord);
 
             holder.word_item_container.removeAllViews();
             holder.word_item_container.addView(basicWordView);
@@ -61,7 +63,7 @@ public class WordListAdapter extends RecyclerView.Adapter<WordListAdapter.WordIt
 
         LiveData<List<WordMeaning>> wordDMeaningsLiveData = wordRepository.getWordMeaningsByWordMeaningIdList(wordList.get(position).getMeaningIdList());
         wordDMeaningsLiveData.observe(lifecycleOwner, wordMeanings -> {
-            MeaningView meaningView = new MeaningView(holder.itemView.getContext(),lifecycleOwner, Constants.LARGE, wordMeanings,Constants.SHOW_SENTENCE_POPUP);
+            MeaningView meaningView = new MeaningView(holder.itemView.getContext(),lifecycleOwner, layoutType, wordMeanings,Constants.SHOW_SENTENCE_POPUP);
             holder.meaning_item_container.removeAllViews();
             holder.meaning_item_container.addView(meaningView);
         });

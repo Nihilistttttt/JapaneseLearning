@@ -3,6 +3,7 @@ package com.Nihilisttt.LearnWord.WordView;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.TypedValue;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -81,6 +82,7 @@ public class CollocationView extends LinearLayout {
 
             LinearLayout collocationRow = collocationLayout.findViewById(R.id.collocation_row);
             TextView translation = collocationLayout.findViewById(R.id.collocation_translation);
+            translation.setTextSize(TypedValue.COMPLEX_UNIT_SP, Constants.getSubDefinitionSize(layoutType));
 
 
             List<List<String>> originalsKanji = collocation.getKanjiComponents();

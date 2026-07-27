@@ -12,6 +12,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.Nihilisttt.LearnWord.JavaBean.BasicWord;
+import com.Nihilisttt.LearnWord.Page.ViewModel.LearnPageStateViewModel;
 import com.Nihilisttt.LearnWord.Page.ViewModel.LearnPageViewModel;
 import com.Nihilisttt.LearnWord.R;
 import com.Nihilisttt.LearnWord.UtilityClass.Constants;
@@ -20,6 +21,7 @@ import com.Nihilisttt.LearnWord.WordView.BasicWordView;
 
 public class DictionaryFragment extends Fragment {
     private LearnPageViewModel viewModel;
+    private LearnPageStateViewModel stateViewModel;
     private LinearLayout basicWordContainer;
 
     @Nullable
@@ -37,6 +39,9 @@ public class DictionaryFragment extends Fragment {
         viewModel = new ViewModelProvider(requireActivity(),
                 ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().getApplication()))
                 .get(LearnPageViewModel.class);
+        stateViewModel = new ViewModelProvider(requireActivity(),
+                ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().getApplication()))
+                .get(LearnPageStateViewModel.class);
         initViews(view);
 
         // 设置数据观察
@@ -51,7 +56,9 @@ public class DictionaryFragment extends Fragment {
     private void setupObservers() {
         viewModel.getCombinedWordInfo().observe(getViewLifecycleOwner(), combinedWordInfo -> {
             BasicWord basicWord = combinedWordInfo.getBasicWord();
-            BasicWordView basicWordView = new BasicWordView(getContext(), this, Constants.NORMAL, basicWord);
+            Integer wordFontLevel = stateViewModel.getWordFontLevel().getValue();
+            if (wordFontLevel == null) wordFontLevel = Constants.FONT_SIZE_NORMAL;
+            BasicWordView basicWordView = new BasicWordView(getContext(), this, wordFontLevel, basicWord);
             basicWordContainer.addView(basicWordView);
         });
 

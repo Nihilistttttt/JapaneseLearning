@@ -69,94 +69,108 @@ public class MainLearnPageFragment extends Fragment {
                 .get(LearnPageStateViewModel.class);
         initViews(view);
         toolBar.setStateViewModel(stateViewModel);
+        toolBar.observeFontSize(getViewLifecycleOwner());
         setupObservers();
     }
 
     @SuppressLint("ClickableViewAccessibility")
     private void setupObservers() {
         viewModel.getCombinedWordInfo().observe(getViewLifecycleOwner(), combinedWordInfo -> {
-            stateViewModel.setViewPagerScrollEnabled(false);
-            meaningContainer.setVisibility(View.INVISIBLE);
-            integratedPartContainer.setVisibility(View.GONE);
-            blankPart.setVisibility(View.VISIBLE);
-            blankText.setVisibility(View.VISIBLE);
+            renderWord(combinedWordInfo);
+        });
 
-            BasicWordView basicWordView = new BasicWordView(requireContext(), requireActivity(), Constants.LARGE, combinedWordInfo.getBasicWord());
+        stateViewModel.getWordFontLevel().observe(getViewLifecycleOwner(), level -> {
+            LearnPageViewModel.CombinedWordInfo info = viewModel.getCombinedWordInfo().getValue();
+            if (info != null) renderWord(info);
+        });
 
-            SentenceView sentenceView = new SentenceView(requireContext(), requireActivity(), Constants.NORMAL, combinedWordInfo.getWordSentenceList());
-            updateView(basicWordView, wordContainer);
-            updateView(sentenceView, sentenceContainer);
-            sentenceContainer.setVisibility(View.VISIBLE);
-
-            MeaningView meaningView = new MeaningView(requireContext(), requireActivity(), Constants.NORMAL, combinedWordInfo.getWordMeaningList(), Constants.TURN_TO_DETAIL_PAGE);
-            updateView(meaningView, meaningContainer);
-
-            IntegratedPartView integratedPartView = new IntegratedPartView(requireContext(), combinedWordInfo.getWordCollocationList(),
-                    combinedWordInfo.getAntonymWordList(), combinedWordInfo.getSynonymWordList());
-            updateView(integratedPartView, integratedPartContainer);
-
-            // 修改空白区域的触摸事件处理
-            final int touchSlop = ViewConfiguration.get(requireContext()).getScaledTouchSlop();
-            blankPart.setOnTouchListener(new View.OnTouchListener() {
-                private float startX, startY;
-                private boolean isDragging = false;
-
-                @Override
-                public boolean onTouch(View v, MotionEvent event) {
-                    // 检查当前是否在LearnPageFragment中
-                    if (stateViewModel.getWhichFragmentInLearnPage().getValue() !=
-                            LearnPageStateViewModel.FragmentInLearnPage.LearnPageFragment) {
-                        return false; // 不在LearnPageFragment中，不处理事件
-                    }
-                    switch (event.getAction()) {
-                        case MotionEvent.ACTION_DOWN:
-                            startX = event.getX();
-                            startY = event.getY();
-                            isDragging = false;
-                            return true;
-
-                        case MotionEvent.ACTION_MOVE:
-                            if (!isDragging) {
-                                float currentX = event.getX();
-                                float currentY = event.getY();
-                                float dx = currentX - startX;  // 水平滑动距离（负值表示向左）
-                                float dy = currentY - startY;  // 垂直滑动距离
-                                float absDx = Math.abs(dx);
-                                float absDy = Math.abs(dy);
-
-                                // 判断是否达到滑动阈值且主要是水平滑动
-                                if (absDx > touchSlop && absDx > absDy) {
-                                    // 从右向左滑动（dx为负值）
-                                    isDragging = true;
-                                    if (dx < 0) {
-                                        Toast.makeText(requireContext(),
-                                                "完成测试后可查看例句",
-                                                Toast.LENGTH_SHORT).show();
-                                    }
-                                }
-                            }
-                            return true;
-
-                        case MotionEvent.ACTION_UP:
-                            if (!isDragging) {
-                                // 启用 ViewPager 滚动
-                                stateViewModel.setViewPagerScrollEnabled(true);
-
-                                meaningContainer.setVisibility(View.VISIBLE);
-                                integratedPartContainer.setVisibility(View.VISIBLE);
-                                blankPart.setVisibility(View.GONE);
-                                blankText.setVisibility(View.GONE);
-                            }
-                            return true;
-                    }
-                    return false;
-                }
-            });
+        stateViewModel.getSubFontLevel().observe(getViewLifecycleOwner(), level -> {
+            LearnPageViewModel.CombinedWordInfo info = viewModel.getCombinedWordInfo().getValue();
+            if (info != null) renderWord(info);
         });
 
         viewModel.getToastMessage().observe(getViewLifecycleOwner(), message -> {
             if (message != null) {
                 Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void renderWord(LearnPageViewModel.CombinedWordInfo combinedWordInfo) {
+        stateViewModel.setViewPagerScrollEnabled(false);
+        meaningContainer.setVisibility(View.INVISIBLE);
+        integratedPartContainer.setVisibility(View.GONE);
+        blankPart.setVisibility(View.VISIBLE);
+        blankText.setVisibility(View.VISIBLE);
+
+        Integer wordLevel = stateViewModel.getWordFontLevel().getValue();
+        if (wordLevel == null) wordLevel = Constants.FONT_SIZE_NORMAL;
+        Integer subLevel = stateViewModel.getSubFontLevel().getValue();
+        if (subLevel == null) subLevel = Constants.FONT_SIZE_NORMAL;
+
+        BasicWordView basicWordView = new BasicWordView(requireContext(), requireActivity(), wordLevel, combinedWordInfo.getBasicWord());
+
+        SentenceView sentenceView = new SentenceView(requireContext(), requireActivity(), subLevel, combinedWordInfo.getWordSentenceList());
+        updateView(basicWordView, wordContainer);
+        updateView(sentenceView, sentenceContainer);
+        sentenceContainer.setVisibility(View.VISIBLE);
+
+        MeaningView meaningView = new MeaningView(requireContext(), requireActivity(), subLevel, combinedWordInfo.getWordMeaningList(), Constants.TURN_TO_DETAIL_PAGE);
+        updateView(meaningView, meaningContainer);
+
+        IntegratedPartView integratedPartView = new IntegratedPartView(requireContext(), combinedWordInfo.getWordCollocationList(),
+                combinedWordInfo.getAntonymWordList(), combinedWordInfo.getSynonymWordList());
+        updateView(integratedPartView, integratedPartContainer);
+
+        final int touchSlop = ViewConfiguration.get(requireContext()).getScaledTouchSlop();
+        blankPart.setOnTouchListener(new View.OnTouchListener() {
+            private float startX, startY;
+            private boolean isDragging = false;
+
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if (stateViewModel.getWhichFragmentInLearnPage().getValue() !=
+                        LearnPageStateViewModel.FragmentInLearnPage.LearnPageFragment) {
+                    return false;
+                }
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        startX = event.getX();
+                        startY = event.getY();
+                        isDragging = false;
+                        return true;
+
+                    case MotionEvent.ACTION_MOVE:
+                        if (!isDragging) {
+                            float currentX = event.getX();
+                            float currentY = event.getY();
+                            float dx = currentX - startX;
+                            float dy = currentY - startY;
+                            float absDx = Math.abs(dx);
+                            float absDy = Math.abs(dy);
+
+                            if (absDx > touchSlop && absDx > absDy) {
+                                isDragging = true;
+                                if (dx < 0) {
+                                    Toast.makeText(requireContext(),
+                                            "完成测试后可查看例句",
+                                            Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        }
+                        return true;
+
+                    case MotionEvent.ACTION_UP:
+                        if (!isDragging) {
+                            stateViewModel.setViewPagerScrollEnabled(true);
+                            meaningContainer.setVisibility(View.VISIBLE);
+                            integratedPartContainer.setVisibility(View.VISIBLE);
+                            blankPart.setVisibility(View.GONE);
+                            blankText.setVisibility(View.GONE);
+                        }
+                        return true;
+                }
+                return false;
             }
         });
     }

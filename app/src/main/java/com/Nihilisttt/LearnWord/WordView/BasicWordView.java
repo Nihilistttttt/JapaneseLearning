@@ -2,6 +2,8 @@ package com.Nihilisttt.LearnWord.WordView;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.Paint;
+import android.util.TypedValue;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -25,7 +27,7 @@ public class BasicWordView extends LinearLayout {
 
     public BasicWordView(Context context, @NonNull LifecycleOwner lifecycleOwner, int layoutType, BasicWord basicWord) {
         super(context);
-        setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+        setLayoutParams(new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
         this.lifecycleOwner = lifecycleOwner;
         setClickable(true);
         setFocusable(true);
@@ -39,13 +41,19 @@ public class BasicWordView extends LinearLayout {
     }
 
     private float estimateWordWidth(List<String> kanjiComponents, List<String> kanaComponents, Select.layoutParams lp) {
+        Paint kanjiPaint = new Paint();
+        kanjiPaint.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        kanjiPaint.setTextSize(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, lp.getKanjiSize(), getContext().getResources().getDisplayMetrics()));
+        Paint kanaPaint = new Paint();
+        kanaPaint.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        kanaPaint.setTextSize(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, lp.getKanaSize(), getContext().getResources().getDisplayMetrics()));
         float total = 0;
         for (int i = 0; i < kanjiComponents.size(); i++) {
-            float kanaW = Constants.getKanaLength(kanaComponents.get(i)) * lp.getKanaSize();
-            float kanjiW = kanjiComponents.get(i).length() * lp.getKanjiSize();
+            float kanaW = kanaPaint.measureText(kanaComponents.get(i));
+            float kanjiW = kanjiPaint.measureText(kanjiComponents.get(i));
             total += Math.max(kanaW, kanjiW);
         }
-        return Convert.dpToPx(getContext(), total);
+        return total;
     }
 
     private void initViews(Context context, BasicWord basicWord, int layoutType) {
@@ -63,12 +71,11 @@ public class BasicWordView extends LinearLayout {
         Select.layoutParams lp = Select.selectLayout(layoutType);
         float estimatedWidth = estimateWordWidth(kanjiComponents, kanaComponents, lp);
 
-        if (estimatedWidth > availableWidthPx && layoutType == Constants.LARGE) {
-            lp = Select.selectLayout(Constants.NORMAL);
+        int currentLevel = layoutType;
+        while (estimatedWidth > availableWidthPx && currentLevel > Constants.FONT_SIZE_SMALL) {
+            currentLevel--;
+            lp = Select.selectLayout(currentLevel);
             estimatedWidth = estimateWordWidth(kanjiComponents, kanaComponents, lp);
-        }
-        if (estimatedWidth > availableWidthPx && layoutType != Constants.SMALL) {
-            lp = Select.selectLayout(Constants.SMALL);
         }
 
 

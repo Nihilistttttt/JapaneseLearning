@@ -10,18 +10,7 @@ public class Constants {
     public static final int SMALL = 0;
     public static final int NORMAL = 1;
     public static final int LARGE = 2;
-    public static final float LARGE_KANJI = 32f;
-    public static final float LARGE_KANA = 16f;
-    public static final float NORMAL_KANJI = 18f;
-    public static final float NORMAL_KANA = 9f;
-    public static final float SMALL_KANJI = 8f;
-    public static final float SMALL_KANA = 4f;
-    public static final float LARGE_SMALL_KANJI = 30f;
-    public static final float LARGE_SMALL_KANA = 18f;
-    public static final float NORMAL_SMALL_KANJI = 16.875f;
-    public static final float NORMAL_SMALL_KANA = 10.125f;
-    public static final float SMALL_SMALL_KANJI = 7.5f;
-    public static final float SMALL_SMALL_KANA = 4.5f;
+
     public static final float COLLOCATION_ROW_MARGIN_START = 10f;
     public static final float SENTENCE_ROW_MARGIN_START = 10f;
     public static final float BASIC_WORD_LAYOUT_MARGIN_START = 24f;
@@ -29,34 +18,45 @@ public class Constants {
     public static final int TURN_TO_DETAIL_PAGE = 1;
 
     public static final int FONT_SIZE_SMALL = 0;
-    public static final int FONT_SIZE_NORMAL = 1;
-    public static final int FONT_SIZE_LARGE = 2;
+    public static final int FONT_SIZE_NORMAL = 3;
+    public static final int FONT_SIZE_LARGE = 6;
+    public static final int FONT_SIZE_COUNT = 7;
 
-    private static final float[] KANJI_SIZES = {14f, 18f, 24f};
-    private static final float[] KANA_SIZES = {7f, 9f, 12f};
-    private static final float[] DEFINITION_SIZES = {12f, 14f, 17f};
-    private static final float[] SENTENCE_KANJI_SIZES = {14f, 18f, 22f};
-    private static final float[] SENTENCE_KANA_SIZES = {7f, 9f, 11f};
-
-    public static float getKanjiSize(int fontSizeLevel) {
-        return KANJI_SIZES[Math.max(0, Math.min(2, fontSizeLevel))];
+    private static final float lerp(float a, float b, float t) {
+        return a + (b - a) * t;
     }
 
-    public static float getKanaSize(int fontSizeLevel) {
-        return KANA_SIZES[Math.max(0, Math.min(2, fontSizeLevel))];
+    private static final float[] WORD_KANJI_RANGE = {8f, 32f};
+    private static final float[] WORD_KANA_RANGE = {4f, 16f};
+    private static final float[] WORD_SMALL_KANJI_RANGE = {7.5f, 30f};
+    private static final float[] WORD_SMALL_KANA_RANGE = {4.5f, 18f};
+    private static final float[] SUB_DEFINITION_RANGE = {12f, 17f};
+
+    public static float getWordKanjiSize(int level) {
+        float t = (float) Math.max(0, Math.min(FONT_SIZE_LARGE, level)) / FONT_SIZE_LARGE;
+        return lerp(WORD_KANJI_RANGE[0], WORD_KANJI_RANGE[1], t);
     }
 
-    public static float getDefinitionSize(int fontSizeLevel) {
-        return DEFINITION_SIZES[Math.max(0, Math.min(2, fontSizeLevel))];
+    public static float getWordKanaSize(int level) {
+        float t = (float) Math.max(0, Math.min(FONT_SIZE_LARGE, level)) / FONT_SIZE_LARGE;
+        return lerp(WORD_KANA_RANGE[0], WORD_KANA_RANGE[1], t);
     }
 
-    public static float getSentenceKanjiSize(int fontSizeLevel) {
-        return SENTENCE_KANJI_SIZES[Math.max(0, Math.min(2, fontSizeLevel))];
+    public static float getWordSmallKanjiSize(int level) {
+        float t = (float) Math.max(0, Math.min(FONT_SIZE_LARGE, level)) / FONT_SIZE_LARGE;
+        return lerp(WORD_SMALL_KANJI_RANGE[0], WORD_SMALL_KANJI_RANGE[1], t);
     }
 
-    public static float getSentenceKanaSize(int fontSizeLevel) {
-        return SENTENCE_KANA_SIZES[Math.max(0, Math.min(2, fontSizeLevel))];
+    public static float getWordSmallKanaSize(int level) {
+        float t = (float) Math.max(0, Math.min(FONT_SIZE_LARGE, level)) / FONT_SIZE_LARGE;
+        return lerp(WORD_SMALL_KANA_RANGE[0], WORD_SMALL_KANA_RANGE[1], t);
     }
+
+    public static float getSubDefinitionSize(int level) {
+        float t = (float) Math.max(0, Math.min(FONT_SIZE_LARGE, level)) / FONT_SIZE_LARGE;
+        return lerp(SUB_DEFINITION_RANGE[0], SUB_DEFINITION_RANGE[1], t);
+    }
+
 
     public static enum PartOfSpeech {
         NOUN("n."), VERB("v."), ADJECTIVE("adj."), ADVERB("adv."), UNKNOWN("");

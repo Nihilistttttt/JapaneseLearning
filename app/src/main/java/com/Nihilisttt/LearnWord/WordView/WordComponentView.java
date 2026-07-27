@@ -2,6 +2,7 @@ package com.Nihilisttt.LearnWord.WordView;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
@@ -9,6 +10,7 @@ import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.util.TypedValue;
 import androidx.core.content.ContextCompat;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -44,7 +46,8 @@ import java.util.List;
 @SuppressLint("ViewConstructor")
 public class WordComponentView extends LinearLayout {
 
-    private final Select.layoutParams layoutParams; // 布局参数配置
+    private final Select.layoutParams layoutParams;
+    private final int layoutType;
     private final List<String> kanjiComponents;     // 汉字组件列表（如「日」「本」「語」）
     private final List<String> kanaComponents;      // 假名组件列表（如「に」「ほん」「ご」）
     private String wordId;
@@ -101,6 +104,7 @@ public class WordComponentView extends LinearLayout {
     public WordComponentView(Context context, @NonNull LifecycleOwner lifecycleOwner, Select.layoutParams layoutParams, List<String> kanjiComponents, List<String> kanaComponents) {
         super(context);
         this.layoutParams = layoutParams;
+        this.layoutType = layoutParams.getLayoutType();
         this.kanjiComponents = kanjiComponents;
         this.kanaComponents = kanaComponents;
         this.kanjiSize = this.layoutParams.getKanjiSize();
@@ -113,6 +117,7 @@ public class WordComponentView extends LinearLayout {
     public WordComponentView(Context context, @NonNull LifecycleOwner lifecycleOwner, Select.layoutParams layoutParams, String audioUid, List<String> kanjiComponents, List<String> kanaComponents) {
         super(context);
         this.layoutParams = layoutParams;
+        this.layoutType = layoutParams.getLayoutType();
         this.kanjiComponents = kanjiComponents;
         this.kanaComponents = kanaComponents;
         this.kanjiSize = this.layoutParams.getKanjiSize();
@@ -143,6 +148,7 @@ public class WordComponentView extends LinearLayout {
     public WordComponentView(Context context, @NonNull LifecycleOwner lifecycleOwner, Select.layoutParams layoutParams, List<String> kanjiComponents, List<String> kanaComponents, String wordId) {
         super(context);
         this.layoutParams = layoutParams;
+        this.layoutType = layoutParams.getLayoutType();
         this.kanjiComponents = kanjiComponents;
         this.kanaComponents = kanaComponents;
         this.wordId = wordId;
@@ -217,7 +223,7 @@ public class WordComponentView extends LinearLayout {
         int curKanjiLength = curKanji.length();
         boolean curIsSmall = Judge.isSmallKana(curKanji);
 
-        float marginValue = (curKanaLength * kanaSize - curKanjiLength * kanjiSize) / 2;
+        float marginValue = (curKanaLength * kanaSize - curKanjiLength * kanjiSize) / 2f;
         if (position == 0) {
             marginStart = Convert.dpToPx(getContext(), marginValue);
             return; // 第一个子项无需左边距
@@ -373,10 +379,12 @@ public class WordComponentView extends LinearLayout {
         NestedScrollView scrollView = new NestedScrollView(context);
         LinearLayout container = new LinearLayout(context);
         container.setOrientation(LinearLayout.VERTICAL);
-        container.setPadding(32, 32, 32, 32);
+        int containerPadding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 16, context.getResources().getDisplayMetrics());
+        container.setPadding(containerPadding, containerPadding, containerPadding, containerPadding);
 
         LinearLayout basicWordPart = new LinearLayout(context);
         basicWordPart.setOrientation(LinearLayout.VERTICAL);
+        basicWordPart.setGravity(Gravity.CENTER_HORIZONTAL);
         final Observer<BasicWord> basicWordObserver = basicWord -> {
             if (basicWord == null || basicWord.getWordId().equals("null")) {
                 TextView emptyView = new TextView(context);
@@ -389,7 +397,9 @@ public class WordComponentView extends LinearLayout {
                 audioManager.stopAudio();
             }
             audioManager.playAudio(basicWord.getAudioUrl());
-            BasicWordView basicWordView = new BasicWordView(getContext(), lifecycleOwner, Constants.LARGE, basicWord);
+            SharedPreferences fontPrefs = context.getSharedPreferences("FontSizePrefs", Context.MODE_PRIVATE);
+            int wordLevel = fontPrefs.getInt("word_font_level", Constants.FONT_SIZE_NORMAL);
+            BasicWordView basicWordView = new BasicWordView(getContext(), lifecycleOwner, wordLevel, basicWord);
             basicWordPart.addView(basicWordView);
             // 查看单词详情
         };
@@ -397,7 +407,7 @@ public class WordComponentView extends LinearLayout {
         basicWordLiveData.observe(lifecycleOwner, basicWordObserver);
 
         LinearLayout meaningPart = new LinearLayout(context);
-        meaningPart.setOrientation(LinearLayout.HORIZONTAL);
+        meaningPart.setOrientation(LinearLayout.VERTICAL);
         final Observer<List<WordMeaning>> wordMeaningObserver = wordMeanings -> {
             if (wordMeanings == null) {
                 TextView emptyView = new TextView(context);
@@ -406,27 +416,17 @@ public class WordComponentView extends LinearLayout {
                 return;
             }
 
-            MeaningView meaningView = new MeaningView(getContext(), lifecycleOwner, Constants.LARGE, wordMeanings,Constants.SHOW_SENTENCE_POPUP);
+            MeaningView meaningView = new MeaningView(getContext(), lifecycleOwner, layoutType, wordMeanings,Constants.SHOW_SENTENCE_POPUP);
             meaningPart.addView(meaningView);
         };
 
         // 绑定生命周期观察
         wordMeaningsLiveData.observe(lifecycleOwner, wordMeaningObserver);
 
-        LinearLayout titlePart = new LinearLayout(context);
-        titlePart.setOrientation(LinearLayout.VERTICAL);
+        // 查看单词详情
         LinearLayout buttonPart = new LinearLayout(context);
         buttonPart.setOrientation(LinearLayout.HORIZONTAL);
 
-        // 标题文字
-        TextView titleView = new TextView(context);
-        titleView.setText("单词详情页面");
-        titleView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
-        titleView.setTextColor(ContextCompat.getColor(context, R.color.md_detail_label));
-        titleView.setPadding(0, 0, 0, 16); // 底部留白
-        titlePart.addView(titleView);
-
-        // 查看单词详情
         Button wordDetails = new Button(context);
         wordDetails.setText("查看详情➡");
         buttonPart.addView(wordDetails);
@@ -441,7 +441,6 @@ public class WordComponentView extends LinearLayout {
 
 
         // 组装视图
-        container.addView(titlePart);
         container.addView(basicWordPart);
         container.addView(meaningPart);
         container.addView(buttonPart);
@@ -449,19 +448,20 @@ public class WordComponentView extends LinearLayout {
         cardView.addView(scrollView);
         popupWindow.setContentView(cardView);
 
-        // 设置弹窗尺寸（根据内容自适应）
-        popupWindow.setWidth(ViewGroup.LayoutParams.WRAP_CONTENT);
+        // 弹窗宽度95%屏宽（宽于主页面卡片），水平居中
+        int screenWidth = context.getResources().getDisplayMetrics().widthPixels;
+        int popupWidth = (int) (screenWidth * 0.95);
+        popupWindow.setWidth(popupWidth);
         popupWindow.setHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
 
-        // 直接使用当前视图作为锚点（类似showWordIdPopup的实现）
-        View anchorView = this;
+        // Y轴：点击词位置 + 固定偏移，X轴：居中
+        int[] location = new int[2];
+        this.getLocationOnScreen(location);
+        int yOffset = location[1] + this.getHeight() + (int) TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics());
+        int xOffset = (screenWidth - popupWidth) / 2;
 
-        // 显示在点击位置下方（添加垂直偏移避免遮挡）
-        popupWindow.showAsDropDown(anchorView, 0, (int) TypedValue.applyDimension(
-                TypedValue.COMPLEX_UNIT_DIP,
-                8,
-                getResources().getDisplayMetrics()
-        ));
+        popupWindow.showAtLocation(this, Gravity.NO_GRAVITY, xOffset, yOffset);
     }
 
 }

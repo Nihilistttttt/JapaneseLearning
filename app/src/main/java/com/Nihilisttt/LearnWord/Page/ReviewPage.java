@@ -4,12 +4,15 @@ import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.Nihilisttt.LearnWord.Adapter.WordListAdapter;
 import com.Nihilisttt.LearnWord.Database.Repository.WordRepository;
 import com.Nihilisttt.LearnWord.JavaBean.Word;
+import com.Nihilisttt.LearnWord.Page.ViewModel.LearnPageStateViewModel;
 import com.Nihilisttt.LearnWord.R;
+import com.Nihilisttt.LearnWord.UtilityClass.Constants;
 
 import java.util.List;
 
@@ -33,7 +36,13 @@ public class ReviewPage extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         // 关键修改：传入当前Activity作为LifecycleOwner
-        wordListAdapter = new WordListAdapter(this);
+        LearnPageStateViewModel stateViewModel = new ViewModelProvider(this,
+                ViewModelProvider.AndroidViewModelFactory.getInstance(getApplication()))
+                .get(LearnPageStateViewModel.class);
+        Integer subFontLevel = stateViewModel.getSubFontLevel().getValue();
+        if (subFontLevel == null) subFontLevel = Constants.FONT_SIZE_NORMAL;
+
+        wordListAdapter = new WordListAdapter(this, subFontLevel);
         recyclerView.setAdapter(wordListAdapter);
 
         // 观察数据变化

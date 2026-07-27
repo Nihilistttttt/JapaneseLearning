@@ -1,10 +1,14 @@
 package com.Nihilisttt.LearnWord.Page.ViewModel;
 
 import android.app.Application;
+import android.content.Context;
+import android.content.SharedPreferences;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.MutableLiveData;
+
+import com.Nihilisttt.LearnWord.UtilityClass.Constants;
 
 public class LearnPageStateViewModel extends AndroidViewModel {
     public enum FragmentInLearnPage {
@@ -12,12 +16,22 @@ public class LearnPageStateViewModel extends AndroidViewModel {
         SearchFragment
     }
 
-    public static final int FONT_SIZE_SMALL = 0;
-    public static final int FONT_SIZE_NORMAL = 1;
-    public static final int FONT_SIZE_LARGE = 2;
+    private static final String PREFS_NAME = "FontSizePrefs";
+    private static final String KEY_WORD_FONT_LEVEL = "word_font_level";
+    private static final String KEY_SUB_FONT_LEVEL = "sub_font_level";
+
+    private final SharedPreferences prefs;
+
+    private final MutableLiveData<Integer> wordFontLevel;
+    private final MutableLiveData<Integer> subFontLevel;
 
     public LearnPageStateViewModel(@NonNull Application application) {
         super(application);
+        prefs = application.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        int savedWord = prefs.getInt(KEY_WORD_FONT_LEVEL, Constants.FONT_SIZE_NORMAL);
+        int savedSub = prefs.getInt(KEY_SUB_FONT_LEVEL, Constants.FONT_SIZE_NORMAL);
+        wordFontLevel = new MutableLiveData<>(savedWord);
+        subFontLevel = new MutableLiveData<>(savedSub);
     }
 
     private MutableLiveData<Boolean> isViewPagerScrollEnabled = new MutableLiveData<>(true);
@@ -40,18 +54,28 @@ public class LearnPageStateViewModel extends AndroidViewModel {
         whichFragmentInLearnPage.setValue(fragment);
     }
 
-    private MutableLiveData<Integer> fontSizeLevel = new MutableLiveData<>(FONT_SIZE_NORMAL);
-
-    public MutableLiveData<Integer> getFontSizeLevel() {
-        return fontSizeLevel;
+    public MutableLiveData<Integer> getWordFontLevel() {
+        return wordFontLevel;
     }
 
-    public void cycleFontSize() {
-        Integer current = fontSizeLevel.getValue();
-        if (current == null) current = FONT_SIZE_NORMAL;
-        int next = (current + 1) % 3;
-        fontSizeLevel.setValue(next);
+    public MutableLiveData<Integer> getSubFontLevel() {
+        return subFontLevel;
     }
+
+    public void setWordFontLevel(int level) {
+        int clamped = Math.max(0, Math.min(Constants.FONT_SIZE_LARGE, level));
+        wordFontLevel.setValue(clamped);
+        prefs.edit().putInt(KEY_WORD_FONT_LEVEL, clamped).apply();
+    }
+
+    public void setSubFontLevel(int level) {
+        int clamped = Math.max(0, Math.min(Constants.FONT_SIZE_LARGE, level));
+        subFontLevel.setValue(clamped);
+        prefs.edit().putInt(KEY_SUB_FONT_LEVEL, clamped).apply();
+    }
+
+    public static final int FONT_SIZE_NORMAL = Constants.FONT_SIZE_NORMAL;
+
 
     @Override
     protected void onCleared() {

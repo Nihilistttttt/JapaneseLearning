@@ -11,11 +11,14 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.Nihilisttt.LearnWord.JavaBean.SynonymWord;
+import com.Nihilisttt.LearnWord.Page.ViewModel.LearnPageStateViewModel;
 import com.Nihilisttt.LearnWord.R;
 import com.Nihilisttt.LearnWord.UtilityClass.Constants;
 import com.Nihilisttt.LearnWord.WordView.SynonymWordView;
 
 import java.util.List;
+
+import androidx.lifecycle.ViewModelProvider;
 
 public class SynonymWordViewFragment extends Fragment {
 
@@ -40,8 +43,14 @@ public class SynonymWordViewFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         // 初始化逻辑
+        LearnPageStateViewModel stateViewModel = new ViewModelProvider(requireActivity(),
+                ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().getApplication()))
+                .get(LearnPageStateViewModel.class);
+        Integer subFontLevel = stateViewModel.getSubFontLevel().getValue();
+        if (subFontLevel == null) subFontLevel = Constants.FONT_SIZE_NORMAL;
+
         LinearLayout containerLayout = view.findViewById(R.id.word_fragment_container);
-        SynonymWordView synonymWordView = new SynonymWordView(requireContext(), this, Constants.NORMAL, synonymWords);
+        SynonymWordView synonymWordView = new SynonymWordView(requireContext(), this, subFontLevel, synonymWords);
         // 添加布局参数
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,

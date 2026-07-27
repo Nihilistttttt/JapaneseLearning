@@ -12,9 +12,12 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.Nihilisttt.LearnWord.JavaBean.WordSentence;
+import com.Nihilisttt.LearnWord.Page.ViewModel.LearnPageStateViewModel;
 import com.Nihilisttt.LearnWord.R;
 import com.Nihilisttt.LearnWord.UtilityClass.Constants;
 import com.Nihilisttt.LearnWord.WordView.SentenceView;
+
+import androidx.lifecycle.ViewModelProvider;
 
 @SuppressLint("ViewConstructor")
 public class ExtendedSentenceFragment extends Fragment {
@@ -39,8 +42,14 @@ public class ExtendedSentenceFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         // 初始化逻辑
+        LearnPageStateViewModel stateViewModel = new ViewModelProvider(requireActivity(),
+                ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().getApplication()))
+                .get(LearnPageStateViewModel.class);
+        Integer subFontLevel = stateViewModel.getSubFontLevel().getValue();
+        if (subFontLevel == null) subFontLevel = Constants.FONT_SIZE_NORMAL;
+
         LinearLayout containerLayout = view.findViewById(R.id.sentence_fragment_container);
-        SentenceView sentenceView = new SentenceView(requireContext(), this, Constants.NORMAL, sentence);
+        SentenceView sentenceView = new SentenceView(requireContext(), this, subFontLevel, sentence);
 
         // 添加布局参数
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(

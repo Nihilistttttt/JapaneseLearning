@@ -29,6 +29,7 @@ import com.Nihilisttt.LearnWord.JavaBean.WordSentence;
 import com.Nihilisttt.LearnWord.R;
 import com.Nihilisttt.LearnWord.UtilityClass.Constants;
 import com.Nihilisttt.LearnWord.UtilityClass.Convert;
+import com.Nihilisttt.LearnWord.UtilityClass.FlowLayout;
 import com.Nihilisttt.LearnWord.UtilityClass.Select;
 import com.Nihilisttt.LearnWord.ViewPager2.ViewPager2Navigation;
 import com.google.android.material.card.MaterialCardView;
@@ -45,6 +46,8 @@ public class MeaningView extends LinearLayout {
     private final int mode;
     private final Select.layoutParams layoutParams;
     private final LifecycleOwner lifecycleOwner;
+    private final float definitionTextSize;
+    private final float posTextSize;
     private final LinkedHashMap<Constants.PartOfSpeech, List<WordMeaning>> meaningMap = new LinkedHashMap<>();
     private WordRepository repository;
     private LiveData<List<WordSentence>> sentenceLiveData;
@@ -58,27 +61,25 @@ public class MeaningView extends LinearLayout {
         this.mode = mode;
         this.layoutParams = Select.selectLayout(this.layoutType);
         this.lifecycleOwner = lifecycleOwner;
+        this.definitionTextSize = Constants.getSubDefinitionSize(layoutType);
+        this.posTextSize = Constants.getSubDefinitionSize(layoutType);
         initViews(meanings);
     }
 
     private void initViews(List<WordMeaning> meanings) {
-        // 清空旧数据
         meaningMap.clear();
         removeAllViews();
 
-        // 构建词性映射
         for (WordMeaning meaning : meanings) {
             Constants.PartOfSpeech pos = meaning.getPartOfSpeech();
             meaningMap.computeIfAbsent(pos, k -> new ArrayList<>()).add(meaning);
         }
-        int i =0;
-        // 生成动态视图
+        int i = 0;
         for (Map.Entry<Constants.PartOfSpeech, List<WordMeaning>> entry : meaningMap.entrySet()) {
-            LinearLayout partLayout = createPartOfSpeechLayout(entry.getKey()); // 先放词性
+            FlowLayout partLayout = createPartOfSpeechLayout(entry.getKey());
 
             for (WordMeaning detail : entry.getValue()) {
-                partLayout.addView(createTranslationView(detail,i)); // 再放翻译
-                partLayout.addView(createSpaceView()); // 空格
+                partLayout.addView(createTranslationView(detail, i));
                 i++;
             }
 
@@ -86,14 +87,14 @@ public class MeaningView extends LinearLayout {
         }
     }
 
-    private LinearLayout createPartOfSpeechLayout(Constants.PartOfSpeech pos) {
-        LinearLayout posPart = new LinearLayout(getContext());
-        posPart.setOrientation(LinearLayout.HORIZONTAL);
+    private FlowLayout createPartOfSpeechLayout(Constants.PartOfSpeech pos) {
+        FlowLayout posPart = new FlowLayout(getContext());
+        posPart.setLineSpacing(Convert.dpToPx(getContext(), 4));
         posPart.setPadding(0, Convert.dpToPx(getContext(), 6), 0, Convert.dpToPx(getContext(), 2));
 
         TextView posView = new TextView(getContext());
         posView.setText(String.format("%s  ", pos.getAbbreviation()));
-        posView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        posView.setTextSize(TypedValue.COMPLEX_UNIT_SP, posTextSize);
         posView.setTypeface(null, android.graphics.Typeface.BOLD);
         posView.setTextColor(ContextCompat.getColor(getContext(), R.color.md_part_of_speech));
 
@@ -109,11 +110,18 @@ public class MeaningView extends LinearLayout {
         spannable.setSpan(new UnderlineSpan(), 0, spannable.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
 
         view.setText(spannable);
-        view.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        view.setTextSize(TypedValue.COMPLEX_UNIT_SP, definitionTextSize);
         view.setTextColor(ContextCompat.getColor(getContext(), R.color.md_definition_text));
         view.setTag(meaning);
-        view.setMaxLines(2);
-        view.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        if (mode == Constants.TURN_TO_DETAIL_PAGE) {
+            view.setMaxLines(1);
+            view.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        }
+        int marginEnd = Convert.dpToPx(getContext(), 8);
+        ViewGroup.MarginLayoutParams lp = new ViewGroup.MarginLayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.rightMargin = marginEnd;
+        view.setLayoutParams(lp);
         switch (mode){
             case Constants.SHOW_SENTENCE_POPUP:view.setOnClickListener(v -> showSentencePopup((WordMeaning) v.getTag()));break;
             case Constants.TURN_TO_DETAIL_PAGE:view.setOnClickListener(v -> ViewPager2Navigation.getInstance().turnToDetailPage(position));break;
@@ -121,11 +129,6 @@ public class MeaningView extends LinearLayout {
         return view;
     }
 
-    private View createSpaceView() {
-        TextView space = new TextView(getContext());
-        space.setText("  ");
-        return space;
-    }
 
     private void showSentencePopup(WordMeaning meaning) {
         final Context context = getContext();
@@ -153,15 +156,15 @@ public class MeaningView extends LinearLayout {
         // 日文翻译
         TextView originalDefinition = new TextView(context);
         originalDefinition.setText(String.format("日: %s", meaning.getOriginalDefinition()));
-        originalDefinition.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        originalDefinition.setTextSize(TypedValue.COMPLEX_UNIT_SP, definitionTextSize);
         originalDefinition.setTextColor(ContextCompat.getColor(context, R.color.md_detail_label));
-        originalDefinition.setPadding(Convert.dpToPx(getContext(), 16), Convert.dpToPx(getContext(), 8), Convert.dpToPx(getContext(), 16), Convert.dpToPx(getContext(), 4));
+        originalDefinition.setPadding(Convert.dpToPx(getContext(), 16), Convert.dpToPx(getContext(), 12), Convert.dpToPx(getContext(), 16), Convert.dpToPx(getContext(), 4));
         container.addView(originalDefinition);
 
-        // 日文翻译
+        // 中文翻译
         TextView translationDefinition = new TextView(context);
         translationDefinition.setText(String.format("中: %s", meaning.getTranslationDefinition()));
-        translationDefinition.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        translationDefinition.setTextSize(TypedValue.COMPLEX_UNIT_SP, definitionTextSize);
         translationDefinition.setTextColor(ContextCompat.getColor(context, R.color.md_detail_label));
         translationDefinition.setPadding(Convert.dpToPx(getContext(), 16), Convert.dpToPx(getContext(), 4), Convert.dpToPx(getContext(), 16), Convert.dpToPx(getContext(), 8));
         container.addView(translationDefinition);
@@ -180,7 +183,7 @@ public class MeaningView extends LinearLayout {
             }
 
             SentenceView sentenceView = new SentenceView(context, lifecycleOwner, layoutType, sentences);
-            sentenceView.setPadding(0, 0, 0,0);
+            sentenceView.setPadding(Convert.dpToPx(getContext(), 12), Convert.dpToPx(getContext(), 4), Convert.dpToPx(getContext(), 12), Convert.dpToPx(getContext(), 8));
             container.addView(sentenceView);
         };
 

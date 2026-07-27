@@ -1,6 +1,7 @@
 package com.Nihilisttt.LearnWord.Fragment.LearnPage.ExtendedLearnPage;
 
 import android.os.Bundle;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,13 +17,17 @@ import androidx.viewpager2.widget.ViewPager2;
 
 import com.Nihilisttt.LearnWord.JavaBean.WordMeaning;
 import com.Nihilisttt.LearnWord.JavaBean.WordSentence;
+import com.Nihilisttt.LearnWord.Page.ViewModel.LearnPageStateViewModel;
 import com.Nihilisttt.LearnWord.R;
+import com.Nihilisttt.LearnWord.UtilityClass.Constants;
 import com.Nihilisttt.LearnWord.ViewPager2.NestedScrollableHostBetween3Layers;
 import com.Nihilisttt.LearnWord.ViewPager2.NestedScrollableHostBetween3LayersManager;
 import com.Nihilisttt.LearnWord.ViewPager2.Vp2IndicatorView;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import androidx.lifecycle.ViewModelProvider;
 
 public class ExtendedMeaningViewFragment extends Fragment {
 
@@ -80,14 +85,24 @@ public class ExtendedMeaningViewFragment extends Fragment {
         Vp2IndicatorView vp2IndicatorView = view.findViewById(R.id.vp2_indicator);
         vp2IndicatorView.attachToViewPager2(viewPager2);
 
+        LearnPageStateViewModel stateViewModel = new ViewModelProvider(requireActivity(),
+                ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().getApplication()))
+                .get(LearnPageStateViewModel.class);
+        Integer subFontLevel = stateViewModel.getSubFontLevel().getValue();
+        if (subFontLevel == null) subFontLevel = Constants.FONT_SIZE_NORMAL;
+        float definitionSize = Constants.getSubDefinitionSize(subFontLevel);
+
         TextView pos = view.findViewById(R.id.part_of_speech);
         pos.setText(meaning.getPartOfSpeech().getAbbreviation());
+        pos.setTextSize(TypedValue.COMPLEX_UNIT_SP, definitionSize);
 
         TextView originalDefinition = view.findViewById(R.id.original_definition);
         originalDefinition.setText(meaning.getOriginalDefinition());
+        originalDefinition.setTextSize(TypedValue.COMPLEX_UNIT_SP, definitionSize);
 
         TextView translationDefinition = view.findViewById(R.id.translation_definition);
         translationDefinition.setText(meaning.getTranslationDefinition());
+        translationDefinition.setTextSize(TypedValue.COMPLEX_UNIT_SP, definitionSize);
 
     }
 
