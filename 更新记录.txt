@@ -5,6 +5,63 @@ LearnWord 项目更新记录
 
 ========================
 
+【更新10】字体大小重构：7档线性插值+弹窗选择+UI优化
+日期：2026-07-27
+涉及文件：Constants.java, Select.java, LearnPageStateViewModel.java, LearnPageToolBar.java,
+  MainLearnPageFragment.java, 7个Fragment, ReviewPage.java, BasicWordView.java,
+  MeaningView.java, SentenceView.java, CollocationView.java, WordComponentView.java,
+  WordListAdapter.java, fragment_extended_meaning.xml, fragment_main_learn_page.xml
+
+问题：
+  1. 旧3档字体(SMALL/NORMAL/LARGE)粒度太粗，用户无法精细调节
+  2. 循环切换(cycleFontSize)交互差，无法直观选择目标档位
+  3. 主词区和子区域(释义/例句/搭配)共用一个fontLevel，无法独立控制
+  4. 弹窗内词头大小与主页面不一致，释义换行不自然，例句区域无圆角卡片
+  5. SentenceView文字宽度估算用sp×字符数模型，7档插值后偏差大导致换行溢出
+  6. calcMarginPx异号分支(假名宽-汉字宽<0)从未生效，marginPx>0过滤了负值
+
+解决方案：
+  1. 7档线性插值(0-6)：FONT_SIZE_SMALL=0, FONT_SIZE_NORMAL=3, FONT_SIZE_LARGE=6
+     - 主词区范围：kanji 8-32sp, kana 4-16sp
+     - 子区域范围：definition 12-17sp
+     - Select.selectLayout()连续插值，XML布局按档位映射(0-1→small, 2-3→normal, 4-6→large)
+  2. 弹窗选择器：点击工具栏字体按钮弹出PopupWindow
+     - "词头大小"/"其他大小"两组7个离散按钮(1-7)
+     - 选中深蓝底白字，未选中白底蓝边蓝字，实时调用setWordFontLevel/setSubFontLevel
+  3. 双独立level：wordFontLevel/subFontLevel各自MutableLiveData+SharedPreferences持久化
+     - 子区域Fragment获取subFontLevel，主词区Fragment获取wordFontLevel
+     - 删除旧fontSizeLevel/cycleFontSize/@Deprecated方法
+  4. UI优化：
+     - 词头居中：word_container加gravity=center_horizontal，BasicWordView改WRAP_CONTENT
+     - 弹窗95%屏宽水平居中，Y轴跟随点击词+8dp偏移，去掉标题，词头用wordFontLevel
+     - 例句区域CardView圆角包裹(12dp)，释义Flow流式换行，弹窗模式不限行
+     - 释义弹窗间距优化(日文12dp顶，例句12dp左右+4dp顶+8dp底)
+  5. 文字宽度精确测量：Paint.measureText()+DEFAULT_BOLD替代sp×字符数
+     - estimateWordWidth/estimateCharWidthPx改为Paint测量，正确sp→px转换
+     - BasicWordView.estimateWordWidth同步修改
+  6. calcMarginPx修复：
+     - 改为kanaPaint.measureText()-kanjiPaint.measureText()，可产生负值
+     - marginPx>0改为marginPx!=0，负margin正确应用
+
+效果：
+  - 7档精细调节，词头和子区域独立控制
+  - 弹窗直观选择，不再循环切换
+  - 例句换行准确，不再溢出
+  - 异号margin生效，假名宽→汉字宽过渡更自然
+
+意义：
+  - 字体大小是阅读体验的核心，3档→7档是质的提升
+  - 独立控制满足不同用户对词头/释义的不同偏好
+  - Paint.measureText()是Android文字渲染底层，比sp×字符数模型根本性更准确
+
+新理解：
+  - Paint.measureText()和TextView渲染用同一字体引擎(Skia/HarfBuzz)，对CJK字符误差<1px
+  - 旧估算bug本质：把sp值当dp用(kanjiLength*kanjiSize然后dpToPx)，sp和dp在非1.0字体缩放下不等
+  - calcMarginPx异号分支从初始提交就是死代码：marginPx>0过滤了所有负值
+  - FlowLayout适合释义流式排列，但例句换行需要标点前瞻/单词内拆分等复杂逻辑，不适合用FlexboxLayout替代
+
+========================
+
 【更新9】例句换行优化：单词内拆分+跨行高亮联动+标点前瞻预留
 日期：2026-07-26
 涉及文件：SentenceView.java, WordComponentView.java
