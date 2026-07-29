@@ -79,7 +79,7 @@ public class SentenceView extends LinearLayout {
     }
 
     private boolean isNonClickableWordId(String wordId) {
-        return wordId.equals(String.valueOf(99)) || wordId.equals("0");
+        return wordId.equals("0");
     }
 
     private float measureWordWidth(List<String> kanjiList, List<String> kanaList) {

@@ -355,30 +355,23 @@ public class WordComponentView extends LinearLayout {
             isDataInitialized = true;
         }
 
-        // 显示弹窗前设置按压状态
         setPressed(true);
 
-        // 用 PopupWindow 替代 AlertDialog
         PopupWindow popupWindow = new PopupWindow(context);
-        popupWindow.setOutsideTouchable(true); // 点击外部自动关闭
-        popupWindow.setElevation(16); // 添加 Material 风格阴影
-        popupWindow.setFocusable(false);  // 防止抢夺焦点导致状态丢失
-        popupWindow.setTouchable(true);    // 保持触摸交互
-
-
-        // 设置背景透明（避免默认变暗）
+        popupWindow.setOutsideTouchable(true);
+        popupWindow.setElevation(16);
+        popupWindow.setFocusable(false);
+        popupWindow.setTouchable(true);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
 
-        // 创建带圆角的 Material 风格容器
         MaterialCardView cardView = new MaterialCardView(context);
-        cardView.setRadius(16); // 圆角半径
+        cardView.setRadius(16);
         cardView.setCardBackgroundColor(ContextCompat.getColor(context, R.color.md_card_background));
         cardView.setLayoutParams(new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
         ));
 
-        // 滚动容器（应对长列表）
         NestedScrollView scrollView = new NestedScrollView(context);
         LinearLayout container = new LinearLayout(context);
         container.setOrientation(LinearLayout.VERTICAL);
@@ -388,62 +381,16 @@ public class WordComponentView extends LinearLayout {
         LinearLayout basicWordPart = new LinearLayout(context);
         basicWordPart.setOrientation(LinearLayout.VERTICAL);
         basicWordPart.setGravity(Gravity.CENTER_HORIZONTAL);
-        final Observer<BasicWord> basicWordObserver = basicWord -> {
-            if (basicWord == null || basicWord.getWordId().equals("null")) {
-                TextView emptyView = new TextView(context);
-                emptyView.setText("暂无单词信息");
-                basicWordPart.addView(emptyView);
-                return;
-            }
-            AudioManager audioManager = AudioManager.getInstance(context);
-            if (audioManager.isPlaying()) {
-                audioManager.stopAudio();
-            }
-            audioManager.playAudio(basicWord.getAudioUrl());
-            SharedPreferences fontPrefs = context.getSharedPreferences("FontSizePrefs", Context.MODE_PRIVATE);
-            int wordLevel = fontPrefs.getInt("word_font_level", Constants.FONT_SIZE_NORMAL);
-            BasicWordView basicWordView = new BasicWordView(getContext(), lifecycleOwner, wordLevel, basicWord);
-            basicWordPart.addView(basicWordView);
-            // 查看单词详情
-        };
-        // 绑定生命周期观察
-        basicWordLiveData.observe(lifecycleOwner, basicWordObserver);
 
         LinearLayout meaningPart = new LinearLayout(context);
         meaningPart.setOrientation(LinearLayout.VERTICAL);
-        final Observer<List<WordMeaning>> wordMeaningObserver = wordMeanings -> {
-            if (wordMeanings == null) {
-                TextView emptyView = new TextView(context);
-                emptyView.setText("暂无单词信息");
-                meaningPart.addView(emptyView);
-                return;
-            }
 
-            MeaningView meaningView = new MeaningView(getContext(), lifecycleOwner, layoutType, wordMeanings,Constants.SHOW_SENTENCE_POPUP);
-            meaningPart.addView(meaningView);
-        };
-
-        // 绑定生命周期观察
-        wordMeaningsLiveData.observe(lifecycleOwner, wordMeaningObserver);
-
-        // 查看单词详情
         LinearLayout buttonPart = new LinearLayout(context);
         buttonPart.setOrientation(LinearLayout.HORIZONTAL);
-
         Button wordDetails = new Button(context);
         wordDetails.setText("查看详情➡");
         buttonPart.addView(wordDetails);
 
-
-        // 设置弹窗关闭监听
-        popupWindow.setOnDismissListener(() -> {
-            setPressed(false); // 弹窗关闭时恢复状态
-            basicWordLiveData.removeObserver(basicWordObserver);
-            wordMeaningsLiveData.removeObserver(wordMeaningObserver);
-        });
-
-
-        // 组装视图
         container.addView(basicWordPart);
         container.addView(meaningPart);
         container.addView(buttonPart);
@@ -451,20 +398,68 @@ public class WordComponentView extends LinearLayout {
         cardView.addView(scrollView);
         popupWindow.setContentView(cardView);
 
-        // 弹窗宽度95%屏宽（宽于主页面卡片），水平居中
         int screenWidth = context.getResources().getDisplayMetrics().widthPixels;
         int popupWidth = (int) (screenWidth * 0.95);
         popupWindow.setWidth(popupWidth);
         popupWindow.setHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
 
-        // Y轴：点击词位置 + 固定偏移，X轴：居中
         int[] location = new int[2];
         this.getLocationOnScreen(location);
         int yOffset = location[1] + this.getHeight() + (int) TypedValue.applyDimension(
                 TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics());
         int xOffset = (screenWidth - popupWidth) / 2;
 
-        popupWindow.showAtLocation(this, Gravity.NO_GRAVITY, xOffset, yOffset);
+        final boolean[] basicWordReady = {false};
+        final boolean[] meaningReady = {false};
+
+        final Observer<BasicWord> basicWordObserver = basicWord -> {
+            basicWordPart.removeAllViews();
+            if (basicWord == null || basicWord.getWordId().equals("null")) {
+                TextView emptyView = new TextView(context);
+                emptyView.setText("暂无单词信息");
+                basicWordPart.addView(emptyView);
+            } else {
+                AudioManager audioManager = AudioManager.getInstance(context);
+                if (audioManager.isPlaying()) {
+                    audioManager.stopAudio();
+                }
+                audioManager.playAudio(basicWord.getAudioUrl());
+                SharedPreferences fontPrefs = context.getSharedPreferences("FontSizePrefs", Context.MODE_PRIVATE);
+                int wordLevel = fontPrefs.getInt("word_font_level", Constants.FONT_SIZE_NORMAL);
+                BasicWordView basicWordView = new BasicWordView(getContext(), lifecycleOwner, wordLevel, basicWord);
+                basicWordPart.addView(basicWordView);
+            }
+            basicWordReady[0] = true;
+            if (meaningReady[0] && !popupWindow.isShowing()) {
+                popupWindow.showAtLocation(this, Gravity.NO_GRAVITY, xOffset, yOffset);
+            }
+        };
+
+        final Observer<List<WordMeaning>> wordMeaningObserver = wordMeanings -> {
+            meaningPart.removeAllViews();
+            if (wordMeanings == null) {
+                TextView emptyView = new TextView(context);
+                emptyView.setText("暂无单词信息");
+                meaningPart.addView(emptyView);
+            } else {
+                MeaningView meaningView = new MeaningView(getContext(), lifecycleOwner, layoutType, wordMeanings, Constants.SHOW_SENTENCE_POPUP);
+                meaningPart.addView(meaningView);
+            }
+            meaningReady[0] = true;
+            if (basicWordReady[0] && !popupWindow.isShowing()) {
+                popupWindow.showAtLocation(this, Gravity.NO_GRAVITY, xOffset, yOffset);
+            }
+        };
+
+        popupWindow.setOnDismissListener(() -> {
+            setPressed(false);
+            basicWordLiveData.removeObserver(basicWordObserver);
+            wordMeaningsLiveData.removeObserver(wordMeaningObserver);
+        });
+
+        basicWordLiveData.observe(lifecycleOwner, basicWordObserver);
+        wordMeaningsLiveData.observe(lifecycleOwner, wordMeaningObserver);
     }
+
 
 }

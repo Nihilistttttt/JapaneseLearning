@@ -136,24 +136,20 @@ public class MeaningView extends LinearLayout {
         sentenceLiveData = repository.getWordSentenceByWordMeaningId(meaning.getWordMeaningId());
         sentenceLiveData.getValue();
 
-        // 创建弹窗容器
         final MaterialCardView cardView = new MaterialCardView(context);
         cardView.setRadius(Convert.dpToPx(getContext(), 12));
         cardView.setCardElevation(Convert.dpToPx(getContext(), 4));
         cardView.setCardBackgroundColor(ContextCompat.getColor(context, R.color.md_card_background));
 
-        // 内容容器
         final LinearLayout container = new LinearLayout(context);
         container.setOrientation(LinearLayout.VERTICAL);
 
-        // 弹窗配置
         final PopupWindow popupWindow = new PopupWindow(context);
         popupWindow.setContentView(cardView);
         popupWindow.setOutsideTouchable(true);
         popupWindow.setFocusable(true);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
 
-        // 日文翻译
         TextView originalDefinition = new TextView(context);
         originalDefinition.setText(String.format("日: %s", meaning.getOriginalDefinition()));
         originalDefinition.setTextSize(TypedValue.COMPLEX_UNIT_SP, definitionTextSize);
@@ -161,7 +157,6 @@ public class MeaningView extends LinearLayout {
         originalDefinition.setPadding(Convert.dpToPx(getContext(), 16), Convert.dpToPx(getContext(), 12), Convert.dpToPx(getContext(), 16), Convert.dpToPx(getContext(), 4));
         container.addView(originalDefinition);
 
-        // 中文翻译
         TextView translationDefinition = new TextView(context);
         translationDefinition.setText(String.format("中: %s", meaning.getTranslationDefinition()));
         translationDefinition.setTextSize(TypedValue.COMPLEX_UNIT_SP, definitionTextSize);
@@ -171,38 +166,31 @@ public class MeaningView extends LinearLayout {
 
         cardView.addView(container);
 
-        // 获取LiveData并观察
-
+        View anchor = findAnchorView(meaning);
 
         final Observer<List<WordSentence>> observer = sentences -> {
             if (sentences == null || sentences.isEmpty()) {
                 TextView emptyView = new TextView(context);
                 emptyView.setText("暂无可用例句");
                 container.addView(emptyView);
-                return;
+            } else {
+                SentenceView sentenceView = new SentenceView(context, lifecycleOwner, layoutType, sentences);
+                sentenceView.setPadding(Convert.dpToPx(getContext(), 12), Convert.dpToPx(getContext(), 4), Convert.dpToPx(getContext(), 12), Convert.dpToPx(getContext(), 8));
+                container.addView(sentenceView);
             }
-
-            SentenceView sentenceView = new SentenceView(context, lifecycleOwner, layoutType, sentences);
-            sentenceView.setPadding(Convert.dpToPx(getContext(), 12), Convert.dpToPx(getContext(), 4), Convert.dpToPx(getContext(), 12), Convert.dpToPx(getContext(), 8));
-            container.addView(sentenceView);
+            if (!popupWindow.isShowing()) {
+                if (anchor != null && anchor.isAttachedToWindow()) {
+                    popupWindow.showAsDropDown(anchor, 0, Convert.dpToPx(getContext(), 4));
+                } else {
+                    View rootView = ((Activity) getContext()).getWindow().getDecorView().findViewById(android.R.id.content);
+                    popupWindow.showAtLocation(rootView, Gravity.CENTER, 0, 0);
+                }
+            }
         };
 
-        // 绑定生命周期观察
-        sentenceLiveData.observe(lifecycleOwner, observer);
-
-        // 确保弹窗关闭时移除观察
         popupWindow.setOnDismissListener(() -> sentenceLiveData.removeObserver(observer));
 
-        // 定位显示
-        View anchor = findAnchorView(meaning);
-        if (anchor != null && anchor.isAttachedToWindow()) {
-            // 确保锚点视图可见且已附加到窗口
-            popupWindow.showAsDropDown(anchor, 0, Convert.dpToPx(getContext(), 4));
-        } else {
-            // 回退到中心显示
-            View rootView = ((Activity) getContext()).getWindow().getDecorView().findViewById(android.R.id.content);
-            popupWindow.showAtLocation(rootView, Gravity.CENTER, 0, 0);
-        }
+        sentenceLiveData.observe(lifecycleOwner, observer);
     }
 
     private View findAnchorView(WordMeaning meaning) {

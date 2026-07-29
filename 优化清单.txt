@@ -37,17 +37,14 @@ LearnWord 项目优化清单
 2.2 热路径微分配（单次开销小但调用频次高）
 ────────────────────────────────────
 16. [✓] Rect在onTouchEvent中每次new 2个 → 提取为成员变量drawingBounds/clickableArea复用（WordComponentView.getClickableArea()）
-17. [ ] selectLayout()无缓存，每次new layoutParams → 按layoutType缓存（Select.selectLayout()，7档最多7个实例）
-18. [ ] getKanaLength()每次toCharArray分配新数组 → 改为codePointCount或缓存长度（Constants.getKanaLength()）
-19. [ ] isSmallKana在同一数据上重复调用 → initComponents中计算一次传入configureMargins（当前initComponents和configureMargins各调一次）
-20. [ ] isNonClickableWordId()每次String.valueOf(99) → 改为字面量"99"（SentenceView）
-21. [ ] dpToPx()每次走context→resources→displayMetrics链 → 热路径中缓存density值（Convert.dpToPx()）
+
 
 2.3 渲染架构
 ────────────────────────────────────
 22. [ ] MainLearnPageFragment改为更新现有View数据而非每次重建View树
 23. [ ] 移除所有调试日志（Log.d遍布WordComponentView、NestedScrollableHost、BasicWordView、Constants等；calculateMargin中Log.d字符串拼接即使不输出仍求值）
 24. [ ] 硬编码颜色/尺寸提取到资源文件（WordComponentView中setRadius(16)、setPadding(32,32,32,32)、parseColor("#2196F3")等）
+25. [✓] 弹窗先构建后显示 — showInfoDialog等basicWord+meaning两个LiveData都回调后才popupWindow.show()，showSentencePopup等sentence回调后才show()，消除先弹空壳再填内容的闪烁
 
 ================================================================================
 三、数据层（Room数据库 + 数据管道）
@@ -55,29 +52,29 @@ LearnWord 项目优化清单
 
 3.1 数据库配置与安全
 ────────────────────────────────────
-25. [ ] Room改用WRITE_AHEAD_LOGING模式（当前TRUNCATE模式并发性能差）
-26. [ ] Room实现正式Migration策略（当前fallbackToDestructiveMigration升级会丢数据）
-27. [ ] WordDatabase.databaseExecutor改为private，提供execute方法封装（当前public暴露可被误调shutdown）
-28. [ ] WordRepository.deleteAll()和批量插入添加事务支持（中途失败会导致数据不一致）
-29. [ ] AndroidManifest.xml中allowBackup设为false（当前true，adb可提取数据库）
-30. [ ] 数据库加密（SQLCipher），防止root设备直接读取
+26. [ ] Room改用WRITE_AHEAD_LOGING模式（当前TRUNCATE模式并发性能差）
+27. [ ] Room实现正式Migration策略（当前fallbackToDestructiveMigration升级会丢数据）
+28. [ ] WordDatabase.databaseExecutor改为private，提供execute方法封装（当前public暴露可被误调shutdown）
+29. [ ] WordRepository.deleteAll()和批量插入添加事务支持（中途失败会导致数据不一致）
+30. [ ] AndroidManifest.xml中allowBackup设为false（当前true，adb可提取数据库）
+31. [ ] 数据库加密（SQLCipher），防止root设备直接读取
 
 3.2 Repository/数据模型
 ────────────────────────────────────
-31. [ ] WordRepository构造函数参数从Context改为Application（防止传入Activity Context）
-32. [ ] JavaBean（Word/BasicWord等）添加equals/hashCode方法
-33. [ ] 添加自定义Application类初始化全局单例（当前懒初始化导致首次使用延迟）
+32. [ ] WordRepository构造函数参数从Context改为Application（防止传入Activity Context）
+33. [ ] JavaBean（Word/BasicWord等）添加equals/hashCode方法
+34. [ ] 添加自定义Application类初始化全局单例（当前懒初始化导致首次使用延迟）
 
 ================================================================================
 四、功能完善（用户体验直接相关）
 ================================================================================
 
-34. [ ] 实现学习进度持久化（已学/未学/复习状态，不仅保存wordId）
-35. [ ] 实现间隔重复算法（艾宾浩斯/SM-2复习调度）
-36. [ ] 实现练习/测试模块（当前addPracticePage()空实现）
-37. [ ] 完善搜索功能（SearchPageFragment功能不完整）
-38. [ ] AudioManager添加音频焦点管理（与后台音乐冲突）
-39. [ ] Activity添加screenOrientation配置（横竖屏切换状态恢复问题）
+35. [ ] 实现学习进度持久化（已学/未学/复习状态，不仅保存wordId）
+36. [ ] 实现间隔重复算法（艾宾浩斯/SM-2复习调度）
+37. [ ] 实现练习/测试模块（当前addPracticePage()空实现）
+38. [ ] 完善搜索功能（SearchPageFragment功能不完整）
+39. [ ] AudioManager添加音频焦点管理（与后台音乐冲突）
+40. [ ] Activity添加screenOrientation配置（横竖屏切换状态恢复问题）
 
 ================================================================================
 五、代码质量与架构
@@ -85,32 +82,33 @@ LearnWord 项目优化清单
 
 5.1 重复代码消除
 ────────────────────────────────────
-40. [✓] 逐类提取基类消除重复代码 — JavaBean继承体系+WordView泛型基类+Fragment泛型基类+ConverterHelper，共消除约970行重复代码
+41. [✓] 逐类提取基类消除重复代码 — JavaBean继承体系+WordView泛型基类+Fragment泛型基类+ConverterHelper，共消除约970行重复代码
 
 5.2 API设计与可读性
 ────────────────────────────────────
-41. [ ] WordComponentView三个构造函数改为工厂方法或Builder（当前通过参数数量区分，可读性差）
-42. [ ] Constants中布局类型从int常量改为enum（SMALL/NORMAL/LARGE）
-43. [ ] Select.layoutParams类名改为大写开头，selectLayout添加default分支
+42. [ ] WordComponentView三个构造函数改为工厂方法或Builder（当前通过参数数量区分，可读性差）
+43. [ ] Constants中布局类型从int常量改为enum（SMALL/NORMAL/LARGE）
+44. [ ] Select.layoutParams类名改为大写开头，selectLayout添加default分支
+45. [✓] isNonClickableWordId()中String.valueOf(99)死代码删除，简化为wordId.equals("0")（SentenceView）
 
 5.3 线程安全
 ────────────────────────────────────
-44. [ ] AudioManager线程安全（pendingAudioUrl/currentAudioUrl/isPreparing无同步保护）
+46. [ ] AudioManager线程安全（pendingAudioUrl/currentAudioUrl/isPreparing无同步保护）
 
 5.4 可测试性
 ────────────────────────────────────
-45. [ ] 引入依赖注入框架（Hilt/Dagger），使ViewModel可单元测试
-46. [ ] 添加Android单元测试和集成测试
+47. [ ] 引入依赖注入框架（Hilt/Dagger），使ViewModel可单元测试
+48. [ ] 添加Android单元测试和集成测试
 
 ================================================================================
 六、构建与发布
 ================================================================================
 
-47. [ ] 升级compileSdk/targetSdk从28到34+（Google Play要求≥33）
-48. [ ] 升级Room从2.2.5到2.6+
-49. [ ] 升级AppCompat/Material/ConstraintLayout/Gson等依赖到最新稳定版
-50. [ ] 移除多余的multidex依赖（minSdk 28不需要）
-51. [ ] 启用release构建ProGuard/R8混淆（当前minifyEnabled false）
+49. [ ] 升级compileSdk/targetSdk从28到34+（Google Play要求≥33）
+50. [ ] 升级Room从2.2.5到2.6+
+51. [ ] 升级AppCompat/Material/ConstraintLayout/Gson等依赖到最新稳定版
+52. [ ] 移除多余的multidex依赖（minSdk 28不需要）
+53. [ ] 启用release构建ProGuard/R8混淆（当前minifyEnabled false）
 
 ================================================================================
 七、Python数据处理脚本
@@ -118,15 +116,15 @@ LearnWord 项目优化清单
 
 7.1 工程规范
 ────────────────────────────────────
-52. [ ] Python脚本提取公共模块（词转化为字/获取音便汉字/新时代获取音便字中重复的字典构建和回溯算法）
-53. [ ] Python脚本统一路径配置（10个文件全部硬编码D:\Libraries\Documents\绝对路径）
-54. [ ] Python脚本添加if __name__保护（8/10个文件导入即执行）
-55. [ ] Python脚本添加requirements.txt
-56. [ ] Python脚本添加logging模块替换print
-57. [ ] Python脚本添加pytest单元测试
-58. [ ] Python脚本添加输入验证和异常处理
+54. [ ] Python脚本提取公共模块（词转化为字/获取音便汉字/新时代获取音便字中重复的字典构建和回溯算法）
+55. [ ] Python脚本统一路径配置（10个文件全部硬编码D:\Libraries\Documents\绝对路径）
+56. [ ] Python脚本添加if __name__保护（8/10个文件导入即执行）
+57. [ ] Python脚本添加requirements.txt
+58. [ ] Python脚本添加logging模块替换print
+59. [ ] Python脚本添加pytest单元测试
+60. [ ] Python脚本添加输入验证和异常处理
 
 7.2 算法性能
 ────────────────────────────────────
-59. [ ] 回溯算法添加最大递归深度限制和预排序（防止指数级爆炸）
-60. [ ] 获取音便汉字.py中copy.deepcopy改为手动浅拷贝（高频回溯中开销巨大）
+61. [ ] 回溯算法添加最大递归深度限制和预排序（防止指数级爆炸）
+62. [ ] 获取音便汉字.py中copy.deepcopy改为手动浅拷贝（高频回溯中开销巨大）

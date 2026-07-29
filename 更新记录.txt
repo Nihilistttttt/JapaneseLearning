@@ -5,6 +5,22 @@ LearnWord 项目更新记录
 
 ========================
 
+【更新15】弹窗先构建后显示 + isNonClickableWordId简化 + 热路径微分配清理
+日期：2026-07-29
+涉及文件：WordComponentView.java, MeaningView.java, SentenceView.java, 优化清单.txt
+
+1. 弹窗先构建后显示：showInfoDialog等basicWord+meaning两个LiveData都回调后才popupWindow.show()，
+   showSentencePopup等sentence回调后才show()，消除先弹空壳再填内容的闪烁
+2. isNonClickableWordId简化：String.valueOf(99)是死代码(数据管道中不存在wordId=99)，删除后简化为wordId.equals("0")
+3. 热路径微分配清理：经逐项分析，selectLayout/getKanaLength/isSmallKana/dpToPx均不在热路径(构造时一次性调用)，
+   从渲染性能类移除，仅Rect一项是真正热路径(已优化)
+
+意义：
+  - 弹窗闪烁是用户可感知的体验问题，先构建后显示后弹窗出现即内容完整
+  - 热路径微分配误判纠正：避免在非热路径上做无效优化
+
+========================
+
 【更新14】Rect复用 + Paint复用 + XML inflate→代码创建
 日期：2026-07-29
 涉及文件：WordComponentView.java, SentenceView.java, WrappedPhraseView.java, BasicWordView.java, Select.java, 优化清单.txt
