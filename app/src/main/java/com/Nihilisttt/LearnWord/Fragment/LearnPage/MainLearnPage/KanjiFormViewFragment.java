@@ -1,55 +1,21 @@
 package com.Nihilisttt.LearnWord.Fragment.LearnPage.MainLearnPage;
 
-import android.os.Bundle;
-import android.view.LayoutInflater;
+import android.content.Context;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.LinearLayout;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
+import androidx.lifecycle.LifecycleOwner;
 
 import com.Nihilisttt.LearnWord.JavaBean.KanjiFormWord;
-import com.Nihilisttt.LearnWord.Page.ViewModel.LearnPageStateViewModel;
-import com.Nihilisttt.LearnWord.R;
-import com.Nihilisttt.LearnWord.UtilityClass.Constants;
 import com.Nihilisttt.LearnWord.WordView.KanjiFormWordView;
 
 import java.util.List;
 
-import androidx.lifecycle.ViewModelProvider;
-
-public class KanjiFormViewFragment extends Fragment {
-    private List<KanjiFormWord> kanjiFormWords;
-
+public class KanjiFormViewFragment extends WordViewFragment<KanjiFormWord> {
     public KanjiFormViewFragment() {}
-
-    public KanjiFormViewFragment(List<KanjiFormWord> kanjiFormWords) {
-        this.kanjiFormWords = kanjiFormWords;
-    }
+    public KanjiFormViewFragment(List<KanjiFormWord> kanjiFormWords) { super(kanjiFormWords); }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_integrated_part, container, false);
-    }
-
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        LearnPageStateViewModel stateViewModel = new ViewModelProvider(requireActivity(),
-                ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().getApplication()))
-                .get(LearnPageStateViewModel.class);
-        Integer subFontLevel = stateViewModel.getSubFontLevel().getValue();
-        if (subFontLevel == null) subFontLevel = Constants.FONT_SIZE_NORMAL;
-
-        LinearLayout containerLayout = view.findViewById(R.id.word_fragment_container);
-        KanjiFormWordView kanjiFormWordView = new KanjiFormWordView(requireContext(), this, subFontLevel, kanjiFormWords);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.MATCH_PARENT
-        );
-        kanjiFormWordView.setLayoutParams(params);
-        containerLayout.addView(kanjiFormWordView);
+    protected View createContentView(Context context, LifecycleOwner lifecycleOwner, int layoutType, List<KanjiFormWord> data) {
+        return new KanjiFormWordView(context, lifecycleOwner, layoutType, data);
     }
 }

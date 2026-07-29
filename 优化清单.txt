@@ -124,7 +124,8 @@ View层级树（从外到内）：
 
 【P2 — 不修就不专业】
 
-32. [ ] 引入依赖注入框架（Hilt/Dagger），使ViewModel可单元测试
+32. [✓] 逐类提取基类消除重复代码 — (1)JavaBean: WordComponent抽象基类(wordId+kanjiComponents+kanaComponents+getCompositeKanji/Kana+hasComponentCountMatch)+CorrespondingWord基类(+correspondingWordId)+PhraseComponent基类(嵌套List结构+deepCopy/deepUnmodifiable)，9个JavaBean改为extend基类；(2)WordView: WordComponentListView<T>泛型基类(构造初始化+initViews循环+applyFirstComponentMargin)，AntonymWordView/SynonymWordView/KanjiFormWordView从77行精简至15行；(3)Fragment: WordViewFragment<T>泛型基类(ViewModelProvider获取+subFontLevel读取+容器添加)，9个Fragment从52-67行精简至20行；(4)Converter: ConverterHelper静态工具类(Function+Supplier消除null检查+try/catch样板)，13个Converter移除未使用Gson+DEFAULT内联化。共消除约970行重复代码，外部API无变化
+33. [ ] 引入依赖注入框架（Hilt/Dagger），使ViewModel可单元测试
 33. [ ] 添加Android单元测试和集成测试
 34. [ ] 启用release构建ProGuard/R8混淆（当前minifyEnabled false）
 35. [ ] AndroidManifest.xml中allowBackup设为false（当前true，adb可提取数据库）
