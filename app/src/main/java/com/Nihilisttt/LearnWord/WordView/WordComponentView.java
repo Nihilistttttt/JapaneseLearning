@@ -11,7 +11,7 @@ import android.util.Log;
 import android.util.TypedValue;
 import androidx.core.content.ContextCompat;
 import android.view.Gravity;
-import android.view.LayoutInflater;
+
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -62,6 +62,8 @@ public class WordComponentView extends LinearLayout {
     private LiveData<List<WordMeaning>> wordMeaningsLiveData;
     private WordComponentView linkedView;
     private boolean isSyncingPress = false;
+    private final Rect drawingBounds = new Rect();
+    private final Rect clickableArea = new Rect();
 
     public void setLinkedView(WordComponentView view) {
         this.linkedView = view;
@@ -166,28 +168,46 @@ public class WordComponentView extends LinearLayout {
     // endregion
     // region 初始化方法
 
-    /**
-     * 初始化子项布局（核心逻辑）
-     */
     private void initComponents() {
         if (kanjiComponents == null || kanaComponents == null || kanjiComponents.isEmpty()) {
             Log.e("WordComponentsLayout", "Components data is null or empty!");
             return;
         }
 
+        int textColor = ContextCompat.getColor(getContext(), R.color.md_on_surface);
+
         for (int i = 0; i < kanjiComponents.size(); i++) {
-            // 动态选择布局文件
             String curKanji = kanjiComponents.get(i);
             String curKana = kanaComponents.get(i);
-            boolean isSmallKana = Judge.isSmallKana(curKanji);
 
-            int layoutRes = isSmallKana ? layoutParams.getLayout_2() : layoutParams.getLayout_1();
-            int kanjiId = isSmallKana ? layoutParams.getKanjiId_2() : layoutParams.getKanjiId_1();
-            int kanaId = isSmallKana ? layoutParams.getKanaId_2() : layoutParams.getKanaId_1();
+            LinearLayout itemView = new LinearLayout(getContext());
+            itemView.setOrientation(LinearLayout.VERTICAL);
+            itemView.setGravity(Gravity.CENTER_HORIZONTAL);
+            itemView.setLayoutParams(new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
 
-            // 填充子项布局
-            View itemView = LayoutInflater.from(getContext()).inflate(layoutRes, this, false);
-            configureTextViews(itemView, kanjiId, kanaId, curKanji, curKana);
+            TextView kanaTextView = new TextView(getContext());
+            kanaTextView.setGravity(Gravity.CENTER);
+            kanaTextView.setTypeface(null, android.graphics.Typeface.BOLD);
+            kanaTextView.setIncludeFontPadding(false);
+            kanaTextView.setTextColor(textColor);
+            kanaTextView.setClickable(false);
+
+            TextView kanjiTextView = new TextView(getContext());
+            kanjiTextView.setGravity(Gravity.CENTER);
+            kanjiTextView.setTypeface(null, android.graphics.Typeface.BOLD);
+            kanjiTextView.setIncludeFontPadding(false);
+            kanjiTextView.setTextColor(textColor);
+            kanjiTextView.setClickable(false);
+
+            kanaTextView.setText(curKana);
+            kanjiTextView.setText(curKanji);
+            kanaTextView.setTextSize(layoutParams.getKanaSize());
+            kanjiTextView.setTextSize(layoutParams.getKanjiSize());
+
+            itemView.addView(kanaTextView);
+            itemView.addView(kanjiTextView);
+            itemView.setClickable(false);
+
             configureMargins(itemView, i);
             addView(itemView);
         }
@@ -197,21 +217,7 @@ public class WordComponentView extends LinearLayout {
     // region 子项配置
 
     /**
-     * 设置 Kanji 和 Kana 的文本内容
-     */
-    private void configureTextViews(View itemView, int kanjiId, int kanaId, String kanjiText, String kanaText) {
-        TextView kanjiTextView = itemView.findViewById(kanjiId);
-        TextView kanaTextView = itemView.findViewById(kanaId);
-        kanjiTextView.setText(kanjiText);
-        kanaTextView.setText(kanaText);
-        kanjiTextView.setTextSize(layoutParams.getKanjiSize());
-        kanaTextView.setTextSize(layoutParams.getKanaSize());
-        kanjiTextView.setClickable(false);
-        kanaTextView.setClickable(false);
-        itemView.setClickable(false);
-    }
 
-    /**
      * 动态计算并设置子项边距
      */
     private void configureMargins(View itemView, int position) {
@@ -331,13 +337,10 @@ public class WordComponentView extends LinearLayout {
 
 
     private Rect getClickableArea() {
-        Rect bounds = new Rect();
-        getDrawingRect(bounds);
-        int validLeft = bounds.left + marginStart;
-        int validRight = bounds.right - marginEnd;
-        int validTop = bounds.top + bounds.height() / 3;
-        int validBottom = bounds.bottom;
-        return new Rect(validLeft, validTop, validRight, validBottom);
+        getDrawingRect(drawingBounds);
+        clickableArea.set(drawingBounds.left + marginStart, drawingBounds.top + drawingBounds.height() / 3,
+                drawingBounds.right - marginEnd, drawingBounds.bottom);
+        return clickableArea;
     }
 
 

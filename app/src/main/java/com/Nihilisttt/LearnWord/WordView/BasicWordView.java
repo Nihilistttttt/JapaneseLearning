@@ -3,6 +3,7 @@ package com.Nihilisttt.LearnWord.WordView;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Paint;
+import android.util.SparseArray;
 import android.util.TypedValue;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -25,6 +26,19 @@ import java.util.List;
 public class BasicWordView extends LinearLayout {
     private final LifecycleOwner lifecycleOwner;
 
+    private static final SparseArray<Paint> paintCache = new SparseArray<>();
+
+    private static Paint getCachedPaint(int textSizePx) {
+        Paint paint = paintCache.get(textSizePx);
+        if (paint == null) {
+            paint = new Paint();
+            paint.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+            paint.setTextSize(textSizePx);
+            paintCache.put(textSizePx, paint);
+        }
+        return paint;
+    }
+
     public BasicWordView(Context context, @NonNull LifecycleOwner lifecycleOwner, int layoutType, BasicWord basicWord) {
         super(context);
         setLayoutParams(new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
@@ -41,16 +55,15 @@ public class BasicWordView extends LinearLayout {
     }
 
     private float estimateWordWidth(List<String> kanjiComponents, List<String> kanaComponents, Select.layoutParams lp) {
-        Paint kanjiPaint = new Paint();
-        kanjiPaint.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        kanjiPaint.setTextSize(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, lp.getKanjiSize(), getContext().getResources().getDisplayMetrics()));
-        Paint kanaPaint = new Paint();
-        kanaPaint.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        kanaPaint.setTextSize(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, lp.getKanaSize(), getContext().getResources().getDisplayMetrics()));
+        android.util.DisplayMetrics dm = getContext().getResources().getDisplayMetrics();
+        int kanjiTextSizePx = Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, lp.getKanjiSize(), dm));
+        int kanaTextSizePx = Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, lp.getKanaSize(), dm));
+        Paint cachedKanjiPaint = getCachedPaint(kanjiTextSizePx);
+        Paint cachedKanaPaint = getCachedPaint(kanaTextSizePx);
         float total = 0;
         for (int i = 0; i < kanjiComponents.size(); i++) {
-            float kanaW = kanaPaint.measureText(kanaComponents.get(i));
-            float kanjiW = kanjiPaint.measureText(kanjiComponents.get(i));
+            float kanaW = cachedKanaPaint.measureText(kanaComponents.get(i));
+            float kanjiW = cachedKanjiPaint.measureText(kanjiComponents.get(i));
             total += Math.max(kanaW, kanjiW);
         }
         return total;

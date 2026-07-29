@@ -25,6 +25,14 @@ public class Judge {
         SMALL_KANA_SET = Collections.unmodifiableSet(set);
     }
 
+    public static boolean isKana(char c) {
+        return (c >= '\u3040' && c <= '\u309F') || (c >= '\u30A0' && c <= '\u30FF');
+    }
+
+    public static boolean isKana(String s) {
+        return s != null && s.length() == 1 && isKana(s.charAt(0));
+    }
+
     // 字符串版本直接复用字符判断逻辑
     public static boolean isSmallKana(String s) {
         return s != null &&

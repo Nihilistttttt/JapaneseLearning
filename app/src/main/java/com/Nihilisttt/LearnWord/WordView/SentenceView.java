@@ -28,6 +28,8 @@ public class SentenceView extends LinearLayout {
     private final int layoutType;
     private final Select.layoutParams layoutParams;
     private final LifecycleOwner lifecycleOwner;
+    private final Paint kanjiPaint;
+    private final Paint kanaPaint;
 
     public SentenceView(Context context, @NonNull LifecycleOwner lifecycleOwner, int layoutType, List<WordSentence> sentenceList) {
         super(context);
@@ -36,6 +38,8 @@ public class SentenceView extends LinearLayout {
         this.layoutType = layoutType;
         this.layoutParams = Select.selectLayout(this.layoutType);
         this.lifecycleOwner = lifecycleOwner;
+        this.kanjiPaint = createPaint(this.layoutParams.getKanjiSize());
+        this.kanaPaint = createPaint(this.layoutParams.getKanaSize());
         initViews(sentenceList);
     }
 
@@ -46,7 +50,16 @@ public class SentenceView extends LinearLayout {
         this.layoutType = layoutType;
         this.layoutParams = Select.selectLayout(this.layoutType);
         this.lifecycleOwner = lifecycleOwner;
+        this.kanjiPaint = createPaint(this.layoutParams.getKanjiSize());
+        this.kanaPaint = createPaint(this.layoutParams.getKanaSize());
         initViews(sentence);
+    }
+
+    private Paint createPaint(float textSizeSp) {
+        Paint paint = new Paint();
+        paint.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        paint.setTextSize(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, textSizeSp, getContext().getResources().getDisplayMetrics()));
+        return paint;
     }
 
     private void initViews(WordSentence sentence) {
@@ -69,14 +82,7 @@ public class SentenceView extends LinearLayout {
         return wordId.equals(String.valueOf(99)) || wordId.equals("0");
     }
 
-    private float measureWordWidth(List<String> kanjiList, List<String> kanaList, String wordId) {
-        Paint kanjiPaint = new Paint();
-        kanjiPaint.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        kanjiPaint.setTextSize(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, layoutParams.getKanjiSize(), getContext().getResources().getDisplayMetrics()));
-        Paint kanaPaint = new Paint();
-        kanaPaint.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        kanaPaint.setTextSize(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, layoutParams.getKanaSize(), getContext().getResources().getDisplayMetrics()));
-
+    private float measureWordWidth(List<String> kanjiList, List<String> kanaList) {
         float totalWidth = 0;
         for (int i = 0; i < kanjiList.size(); i++) {
             float kanaW = kanaPaint.measureText(kanaList.get(i));
@@ -115,7 +121,7 @@ public class SentenceView extends LinearLayout {
         singleKanji.add(kanji);
         List<String> singleKana = new ArrayList<>();
         singleKana.add(kana);
-        return measureWordWidth(singleKanji, singleKana, "0");
+        return measureWordWidth(singleKanji, singleKana);
     }
 
     private int findSplitPoint(List<String> kanjiList, List<String> kanaList, float remainingWidthPx) {
@@ -131,12 +137,6 @@ public class SentenceView extends LinearLayout {
     }
 
     private float calcMarginPx(String prevKanji, String prevKana, String curKanji, String curKana) {
-        Paint kanjiPaint = new Paint();
-        kanjiPaint.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        kanjiPaint.setTextSize(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, layoutParams.getKanjiSize(), getContext().getResources().getDisplayMetrics()));
-        Paint kanaPaint = new Paint();
-        kanaPaint.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        kanaPaint.setTextSize(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, layoutParams.getKanaSize(), getContext().getResources().getDisplayMetrics()));
 
         float prev = kanaPaint.measureText(prevKana) - kanjiPaint.measureText(prevKanji);
         float curr = kanaPaint.measureText(curKana) - kanjiPaint.measureText(curKanji);
@@ -200,7 +200,7 @@ public class SentenceView extends LinearLayout {
             String lastKanji = kanjiList.get(kanjiList.size() - 1);
             String lastKana = kanaList.get(kanaList.size() - 1);
 
-            float wordWidthPx = measureWordWidth(kanjiList, kanaList, wordId);
+            float wordWidthPx = measureWordWidth(kanjiList, kanaList);
             float marginPx = 0;
 
             if (prevLastKanji != null) {
@@ -212,7 +212,7 @@ public class SentenceView extends LinearLayout {
                 List<String> nextKanji = originalsKanji.get(i + 1);
                 List<String> nextKana = originalsKana.get(i + 1);
                 if (isClosingPunctuation(nextKanji) && !isEllipsisToken(nextKanji)) {
-                    punctReservePx = measureWordWidth(nextKanji, nextKana, sentence.getWordIdList().get(i + 1));
+                    punctReservePx = measureWordWidth(nextKanji, nextKana);
                     float punctMarginPx = calcMarginPx(lastKanji, lastKana, nextKanji.get(0), nextKana.get(0));
                     if (punctMarginPx > 0) punctReservePx += punctMarginPx;
                 }
@@ -264,7 +264,7 @@ public class SentenceView extends LinearLayout {
                         }
                         part1.setLinkedView(part2);
                         currentRow.addView(part2);
-                        currentRowWidth = measureWordWidth(part2Kanji, part2Kana, wordId);
+                        currentRowWidth = measureWordWidth(part2Kanji, part2Kana);
 
                         prevLastKanji = part2Kanji.get(part2Kanji.size() - 1);
                         prevLastKana = part2Kana.get(part2Kana.size() - 1);

@@ -5,6 +5,97 @@ LearnWord 项目更新记录
 
 ========================
 
+【更新14】Rect复用 + Paint复用 + XML inflate→代码创建
+日期：2026-07-29
+涉及文件：WordComponentView.java, SentenceView.java, WrappedPhraseView.java, BasicWordView.java, Select.java, 优化清单.txt
+
+1. Rect复用：getClickableArea()每次new 2个Rect → 提取drawingBounds/clickableArea成员变量，set()覆盖写入，零分配
+
+2. Paint复用：measureWordWidth/calcMarginPx/estimateWordWidth每次new Paint()+setTypeface()+setTextSize()
+   → SentenceView/WrappedPhraseView用成员变量kanjiPaint/kanaPaint(字体大小固定)
+   → BasicWordView用静态SparseArray<Paint>缓存(while循环中字体大小变化，key=textSizePx)
+
+3. XML inflate→代码创建：WordComponentView.initComponents中LayoutInflater.inflate(6个XML布局)
+   → 直接new LinearLayout+new TextView×2，XML中textSize/margin全被代码覆盖是冗余中间层
+   → Select.layoutParams移除layout_1/2/kanji_id_1/2/kana_id_1/2共6个字段及getter
+
+意义：
+  - 三项优化共同消除渲染热路径中的主要对象分配来源
+  - Rect复用：消除onTouchEvent中的短命对象，减少年轻代GC频率
+  - Paint复用：消除Native Skia资源反复分配，每页面从120+个Paint降为2-14个
+  - XML inflate→代码创建：跳过XmlPullParser+反射，每汉字组件从1次inflate降为3个直接构造
+
+========================
+
+【更新13】XML inflate替换为代码创建
+日期：2026-07-29
+涉及文件：WordComponentView.java, Select.java, 优化清单.txt
+
+问题：
+  WordComponentView.initComponents中每个汉字组件都调用LayoutInflater.inflate()加载XML布局，
+  涉及XmlPullParser解析+反射创建View对象。每个词平均3-5个汉字组件，每个例句约5-10个词，
+  一页面约218个inflate调用。XML inflate比直接代码创建慢3-5倍（XML解析+属性查找+反射开销）。
+
+  更关键的是：XML中定义的textSize被configureTextViews立即覆盖，XML中的marginStart/marginEnd
+  全部为0dp（dimens.xml确认），被configureMargins动态计算覆盖。XML布局完全是冗余的中间层。
+
+解决方案：
+  1. initComponents改为直接new LinearLayout(vertical, center_horizontal) + new TextView(kana) + new TextView(kanji)
+  2. 设置bold typeface、includeFontPadding=false、textColor=md_on_surface等XML中定义的属性
+  3. setText/setTextSize由代码直接设置（原configureTextViews内联）
+  4. 删除configureTextViews方法（不再需要findViewById）
+  5. Select.layoutParams移除layout_1/layout_2/kanji_id_1/kanji_id_2/kana_id_1/kana_id_2共6个字段及getter
+  6. Select.selectLayout移除R.layout/R.id分支和R import
+
+效果：
+  - 每个汉字组件省去一次XML inflate（XmlPullParser+反射），改为3个直接构造函数调用
+  - Select.layoutParams从12个字段精简到6个字段
+  - Select.selectLayout从30行精简到15行
+  - 6个XML布局文件(view_*char.xml)不再被运行时引用（可保留供设计预览用）
+
+意义：
+  - XML inflate是Android渲染管线的已知性能瓶颈，Google官方也推荐热路径用代码创建
+  - 消除"XML定义→代码覆盖"的冗余中间层，逻辑更清晰
+  - 为后续进一步优化（如TextView预分配池）扫清障碍
+
+新理解：
+  - XML布局中定义的textSize/margin全被代码覆盖，XML仅充当View结构模板
+  - 当XML属性全部被代码覆盖时，XML inflate就是纯粹的浪费
+  - Select.layoutParams的layout/kanji_id/kana_id字段只为XML inflate服务，代码创建后完全不需要
+
+========================
+
+【更新12】Paint对象复用优化
+日期：2026-07-29
+涉及文件：SentenceView.java, WrappedPhraseView.java, BasicWordView.java, 优化清单.txt
+
+问题：
+  measureWordWidth/measureCharWidthPx/calcMarginPx/estimateWordWidth每次调用都new Paint()+setTypeface()+setTextSize()，
+  而这些方法在渲染热路径中被频繁调用（每个例句约10-15次measureWordWidth，每个WrappedPhrase约5-8次measureCharWidthPx）。
+  Paint对象创建涉及Native层Skia资源分配，反复创建产生不必要的GC压力。
+
+解决方案：
+  1. SentenceView：字体大小在构造时由layoutParams确定，之后不变 → 提取kanjiPaint/kanaPaint为成员变量，构造时初始化createPaint()，measureWordWidth/calcMarginPx直接使用
+  2. WrappedPhraseView：同理，kanjiPaint/kanaPaint为成员变量
+  3. BasicWordView：estimateWordWidth在while循环中currentLevel--改变字体大小 → 静态SparseArray<Paint>缓存，key=Math.round(textSizePx)，跨实例复用
+
+效果：
+  - SentenceView：每个实例从N次new Paint()降为2次（构造时）
+  - WrappedPhraseView：每个实例从N次new Paint()降为2次（构造时）
+  - BasicWordView：跨所有实例，相同textSizePx的Paint只创建一次（7档字体最多14个Paint对象）
+  - measureWordWidth签名简化：移除不再需要的wordId参数
+
+意义：
+  - 热路径中消除不必要的对象创建是Android性能优化的基本实践
+  - Paint对象持有Native Skia资源，复用减少GC压力和Native内存分配
+
+新理解：
+  - SentenceView/WrappedPhraseView的字体大小在构造时确定不变，适合成员变量方案
+  - BasicWordView的while循环中字体大小变化，但7档字体最多7种textSize，SparseArray缓存是最佳方案
+  - SparseArray<Paint>用int key比HashMap<Float>更高效（避免autoboxing），textSizePx四舍五入到int精度足够
+
+========================
+
 【更新11】逐类提取基类消除重复代码
 日期：2026-07-29
 涉及文件：WordComponent.java, CorrespondingWord.java, PhraseComponent.java(新增),
@@ -271,6 +362,90 @@ LearnWord 项目更新记录
   - 190MB JSON用json.load()会超时，需要用ijson流式解析或分步操作
   - EDRG B行parse_b_line是整个例句系统的核心，任何修改都需要仔细测试边界case
   - Git LFS：超过100MB的文件需要LFS管理，migrate后文件变成指针文件
+
+========================
+
+【架构说明1】ViewPager2嵌套滑动
+对应优化清单第1项
+
+View层级树（从外到内）：
+
+  LearnPage (Activity)
+    └─ 外层VP2 (垂直, id=learn_page_vp2_container)          ← LearnPage.java:45
+         ├─ pos 0: SearchPageFragment (搜索页)               ← LearnPageAdapter:27
+         └─ pos 1: LearnPageFragment (学习页)                ← LearnPageAdapter:30
+              └─ 中层VP2 (水平, id=learn_page_vp2_container)  ← fragment_learn_page.xml:9
+                   ├─ pos 0: MainLearnPageFragment (单词概览)  ← MainLearnPageAdapter:27
+                   │    显示：汉字+假名+释义+搭配+反义/近义词
+                   │    交互：点击空白区域揭示释义 → 启用中层VP2滑动
+                   └─ pos 1: ExtendedLearnPageFragment (详细释义) ← MainLearnPageAdapter:30
+                        └─ 内层VP2 (水平, id=detailed_learn_page_view_pager)
+                             └─ N个 ExtendedMeaningViewFragment (每个释义一个)
+                                  └─ 最内层VP2 (水平, id=detailed_meaning_viewpager)
+                                       └─ N个 ExtendedSentenceFragment (每个例句一个)
+
+切换单词方式：底部按钮（preButton/nextButton）→ ViewModel.navigatePrevious/Next()
+             不是滑动操作，按钮点击后中层VP2重置到pos 0
+
+外层VP2垂直滑动：搜索页↔学习页切换，但ViewPager2ScrollController默认禁用手动滑动
+                (setUserInputEnabled=false)，仅检测到明确垂直手势(dy>3*dx)时临时启用
+
+滑动冲突解决机制（NestedScrollableHostBetween3Layers）：
+
+  level=2 宿主包裹内层VP2，level=3 宿主包裹最内层VP2。
+  核心原理：通过 requestDisallowInterceptTouchEvent 控制父VP2是否允许拦截事件。
+
+  正常滑动时（子VP2能滑）：
+    → requestParentDisallowIntercept(true) → 父VP2禁止拦截 → 子VP2独占事件
+
+  滑到边界时（子VP2不能滑）：
+    → requestParentDisallowIntercept(false) → 父VP2允许拦截 → 事件向上传递
+
+  例句滑到边界→翻释义的关键逻辑（handleMoveEvent第247-250行）：
+    1. level-3 host 调用 requestParentDisallowIntercept(false)
+       → 沿父链传播：释义VP2、中层VP2、外层VP2 全部允许拦截
+    2. level-2 host 调用 requestParentDisallowIntercept(true)
+       → 沿父链传播：中层VP2、外层VP2 禁止拦截
+    3. 净效果：只有释义VP2能拦截 → 翻到下一个释义
+        （中层VP2不抢事件翻回概览页，外层VP2不误触垂直翻页）
+
+========================
+
+【架构说明2】页面导航机制（ViewPager2Navigation）
+对应优化清单第2项
+
+从概览页点击释义跳转到详细页的导航流程：
+  1. MeaningView点击释义 → turnToDetailPage(position)
+  2. overviewDetailVp2.setCurrentItem(1) → 中层VP2切到ExtendedLearnPageFragment
+  3. meaningVp2.setCurrentItem(position) → 内层VP2跳到目标释义
+  4. 如果内层VP2尚未就绪(Fragment未创建) → pendingPosition暂存意图
+  5. Fragment创建后调用onMeaningVp2Ready → 消费pendingPosition
+
+字段命名说明：
+  - overviewDetailVp2 = 中层VP2(概览↔详细)，不是最外层VP2
+  - meaningVp2 = 内层VP2(释义间切换)，不是中层VP2
+  原因：LearnPageFragment:79覆盖了LearnPage.java:50的设置
+
+清理机制：
+  - Fragment.onDestroyView: setMeaningVp2(null) + clearPendingNavigation()
+  - 按钮点击: clearPendingNavigation() 防止切换单词后过期意图
+
+========================
+
+【架构说明3】导航校验机制（LearnPageViewModel.checkAndNavigate）
+对应优化清单第3项
+
+用户点击上一个/下一个按钮时的校验流程：
+  1. navigatePrevious/Next → checkAndNavigate(targetId)
+  2. databaseExecutor.execute → 同步查询wordDao.getWordByWordIdSync
+  3. 单词有效 → currentWordId.postValue(targetId) → 数据管道刷新
+  4. 单词无效 → toastMessage.postValue("已达词库末尾")
+
+为什么用同步查询而非observeForever：
+  - 导航校验是"查一次就走"，不需要观察数据变化
+  - observeForever的removeObserver会因Transformations.map每次创建新实例而失败
+  - 失败后observer永久挂在Room Dao LiveData上，数据库写入时误触发旧导航
+  - 同步查询+postValue：零observer、零泄漏、postValue批处理合并连续点击
 
 ========================
 

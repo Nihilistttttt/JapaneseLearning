@@ -1,146 +1,132 @@
 LearnWord 项目优化清单
 ========================
 
-【ViewPager2 嵌套滑动架构说明】
-================================
 
-View层级树（从外到内）：
+================================================================================
+一、Bug修复（不修就不能用 / 不修就出错）
+================================================================================
 
-  LearnPage (Activity)
-    └─ 外层VP2 (垂直, id=learn_page_vp2_container)          ← LearnPage.java:45
-         ├─ pos 0: SearchPageFragment (搜索页)               ← LearnPageAdapter:27
-         └─ pos 1: LearnPageFragment (学习页)                ← LearnPageAdapter:30
-              └─ 中层VP2 (水平, id=learn_page_vp2_container)  ← fragment_learn_page.xml:9
-                   ├─ pos 0: MainLearnPageFragment (单词概览)  ← MainLearnPageAdapter:27
-                   │    显示：汉字+假名+释义+搭配+反义/近义词
-                   │    交互：点击空白区域揭示释义 → 启用中层VP2滑动
-                   └─ pos 1: ExtendedLearnPageFragment (详细释义) ← MainLearnPageAdapter:30
-                        └─ 内层VP2 (水平, id=detailed_learn_page_view_pager)
-                             └─ N个 ExtendedMeaningViewFragment (每个释义一个)
-                                  └─ 最内层VP2 (水平, id=detailed_meaning_viewpager)
-                                       └─ N个 ExtendedSentenceFragment (每个例句一个)
+1.1 严重Bug（运行时崩溃/数据错误）
+────────────────────────────────────
+1.  [✓] 修复 NestedScrollableHostBetween3Layers.findAllChildViewPagers() 返回值被丢弃 — 删除3个冗余方法，替换为canAnyChildScroll()，修复canDeepChildScroll NPE，移除调试日志
+2.  [✓] 修复 ViewPager2Navigation 无限递归post — 改为事件驱动(pendingPosition+onMeaningVp2Ready回调)，重命名字段消除歧义(outer→overviewDetail, middle→meaning)，添加clearPendingNavigation防止过期意图，Fragment销毁时清理引用和pending
+3.  [✓] 修复 LearnPageViewModel.observeForever 内存泄漏 — 改为同步查询(方案C)：Dao添加getWordByWordIdSync，Repository添加getWordByIdSync，checkAndNavigate改为databaseExecutor+postValue，消除observeForever和匿名Observer泄漏
+4.  [✓] 单例VP2强引用内存泄漏修复 — 方案B(手动清理)：在Fragment.onDestroyView中主动将单例引用设为null，补全3个Fragment的遗漏清理点
+5.  [✓] 修复Converter中"null"字符串反模式 — 回退核心改动，保留Repository空列表检查+Convert null安全两个防御性改进
+6.  [✓] 实现数据导入管道，替换FirstPage中880行硬编码测试数据
+7.  [ ] 修复 分词工具mecab.py 第155-158行 kana变量未赋值就使用的Bug
+8.  [ ] 修复 匹配字典.py 第29行 for title, link in matches1 解包数量不匹配的Bug
 
-切换单词方式：底部按钮（preButton/nextButton）→ ViewModel.navigatePrevious/Next()
-             不是滑动操作，按钮点击后中层VP2重置到pos 0
+1.2 逻辑Bug（功能异常/结果错误）
+────────────────────────────────────
+9.  [ ] 修复LearnPageAdapter.PageTransformer透明度计算（1-3*position导致滑动1/3就全透明）
+10. [ ] 替换废弃API getUserVisibleHint()（LearnPageFragment第38行）
+11. [ ] 词转化为字.py 返回值类型不一致问题（成功返回元组，失败返回字符串）
+12. [ ] FirstPage修复intiViews拼写错误和按钮重复初始化
 
-外层VP2垂直滑动：搜索页↔学习页切换，但ViewPager2ScrollController默认禁用手动滑动
-                (setUserInputEnabled=false)，仅检测到明确垂直手势(dy>3*dx)时临时启用
+================================================================================
+二、渲染性能（汉字-假名渲染管线优化）
+================================================================================
 
-滑动冲突解决机制（NestedScrollableHostBetween3Layers）：
+2.1 热路径对象创建（每页面120+个Paint、60+次inflate、10+个WCV）
+────────────────────────────────────
+13. [✓] Paint对象复用 — SentenceView/WrappedPhraseView用成员变量kanjiPaint/kanaPaint(字体大小固定，构造时初始化)，BasicWordView用静态SparseArray<Paint>缓存(while循环中字体大小变化，key=textSizePx)
+14. [✓] XML inflate替换为代码创建 — WordComponentView.initComponents中LayoutInflater.inflate(6个XML布局)改为直接new LinearLayout+new TextView×2，Select.layoutParams移除6个冗余字段
+15. [ ] WrappedPhraseView逐字符创建完整WCV → 合并为单行WCV（当前每个字符创建一个WCV含3个View，10字符=30View；合并后1个WCV含12View，View数减半）
 
-  level=2 宿主包裹内层VP2，level=3 宿主包裹最内层VP2。
-  核心原理：通过 requestDisallowInterceptTouchEvent 控制父VP2是否允许拦截事件。
+2.2 热路径微分配（单次开销小但调用频次高）
+────────────────────────────────────
+16. [✓] Rect在onTouchEvent中每次new 2个 → 提取为成员变量drawingBounds/clickableArea复用（WordComponentView.getClickableArea()）
+17. [ ] selectLayout()无缓存，每次new layoutParams → 按layoutType缓存（Select.selectLayout()，7档最多7个实例）
+18. [ ] getKanaLength()每次toCharArray分配新数组 → 改为codePointCount或缓存长度（Constants.getKanaLength()）
+19. [ ] isSmallKana在同一数据上重复调用 → initComponents中计算一次传入configureMargins（当前initComponents和configureMargins各调一次）
+20. [ ] isNonClickableWordId()每次String.valueOf(99) → 改为字面量"99"（SentenceView）
+21. [ ] dpToPx()每次走context→resources→displayMetrics链 → 热路径中缓存density值（Convert.dpToPx()）
 
-  正常滑动时（子VP2能滑）：
-    → requestParentDisallowIntercept(true) → 父VP2禁止拦截 → 子VP2独占事件
+2.3 渲染架构
+────────────────────────────────────
+22. [ ] MainLearnPageFragment改为更新现有View数据而非每次重建View树
+23. [ ] 移除所有调试日志（Log.d遍布WordComponentView、NestedScrollableHost、BasicWordView、Constants等；calculateMargin中Log.d字符串拼接即使不输出仍求值）
+24. [ ] 硬编码颜色/尺寸提取到资源文件（WordComponentView中setRadius(16)、setPadding(32,32,32,32)、parseColor("#2196F3")等）
 
-  滑到边界时（子VP2不能滑）：
-    → requestParentDisallowIntercept(false) → 父VP2允许拦截 → 事件向上传递
+================================================================================
+三、数据层（Room数据库 + 数据管道）
+================================================================================
 
-  例句滑到边界→翻释义的关键逻辑（handleMoveEvent第247-250行）：
-    1. level-3 host 调用 requestParentDisallowIntercept(false)
-       → 沿父链传播：释义VP2、中层VP2、外层VP2 全部允许拦截
-    2. level-2 host 调用 requestParentDisallowIntercept(true)
-       → 沿父链传播：中层VP2、外层VP2 禁止拦截
-    3. 净效果：只有释义VP2能拦截 → 翻到下一个释义
-        （中层VP2不抢事件翻回概览页，外层VP2不误触垂直翻页）
+3.1 数据库配置与安全
+────────────────────────────────────
+25. [ ] Room改用WRITE_AHEAD_LOGING模式（当前TRUNCATE模式并发性能差）
+26. [ ] Room实现正式Migration策略（当前fallbackToDestructiveMigration升级会丢数据）
+27. [ ] WordDatabase.databaseExecutor改为private，提供execute方法封装（当前public暴露可被误调shutdown）
+28. [ ] WordRepository.deleteAll()和批量插入添加事务支持（中途失败会导致数据不一致）
+29. [ ] AndroidManifest.xml中allowBackup设为false（当前true，adb可提取数据库）
+30. [ ] 数据库加密（SQLCipher），防止root设备直接读取
 
-================================
+3.2 Repository/数据模型
+────────────────────────────────────
+31. [ ] WordRepository构造函数参数从Context改为Application（防止传入Activity Context）
+32. [ ] JavaBean（Word/BasicWord等）添加equals/hashCode方法
+33. [ ] 添加自定义Application类初始化全局单例（当前懒初始化导致首次使用延迟）
 
-【页面导航机制说明（ViewPager2Navigation）】
-================================
+================================================================================
+四、功能完善（用户体验直接相关）
+================================================================================
 
-从概览页点击释义跳转到详细页的导航流程：
-  1. MeaningView点击释义 → turnToDetailPage(position)
-  2. overviewDetailVp2.setCurrentItem(1) → 中层VP2切到ExtendedLearnPageFragment
-  3. meaningVp2.setCurrentItem(position) → 内层VP2跳到目标释义
-  4. 如果内层VP2尚未就绪(Fragment未创建) → pendingPosition暂存意图
-  5. Fragment创建后调用onMeaningVp2Ready → 消费pendingPosition
+34. [ ] 实现学习进度持久化（已学/未学/复习状态，不仅保存wordId）
+35. [ ] 实现间隔重复算法（艾宾浩斯/SM-2复习调度）
+36. [ ] 实现练习/测试模块（当前addPracticePage()空实现）
+37. [ ] 完善搜索功能（SearchPageFragment功能不完整）
+38. [ ] AudioManager添加音频焦点管理（与后台音乐冲突）
+39. [ ] Activity添加screenOrientation配置（横竖屏切换状态恢复问题）
 
-字段命名说明：
-  - overviewDetailVp2 = 中层VP2(概览↔详细)，不是最外层VP2
-  - meaningVp2 = 内层VP2(释义间切换)，不是中层VP2
-  原因：LearnPageFragment:79覆盖了LearnPage.java:50的设置
+================================================================================
+五、代码质量与架构
+================================================================================
 
-清理机制：
-  - Fragment.onDestroyView: setMeaningVp2(null) + clearPendingNavigation()
-  - 按钮点击: clearPendingNavigation() 防止切换单词后过期意图
+5.1 重复代码消除
+────────────────────────────────────
+40. [✓] 逐类提取基类消除重复代码 — JavaBean继承体系+WordView泛型基类+Fragment泛型基类+ConverterHelper，共消除约970行重复代码
 
-================================
-
-【导航校验机制说明（LearnPageViewModel.checkAndNavigate）】
-================================
-
-用户点击上一个/下一个按钮时的校验流程：
-  1. navigatePrevious/Next → checkAndNavigate(targetId)
-  2. databaseExecutor.execute → 同步查询wordDao.getWordByWordIdSync
-  3. 单词有效 → currentWordId.postValue(targetId) → 数据管道刷新
-  4. 单词无效 → toastMessage.postValue("已达词库末尾")
-
-为什么用同步查询而非observeForever：
-  - 导航校验是"查一次就走"，不需要观察数据变化
-  - observeForever的removeObserver会因Transformations.map每次创建新实例而失败
-  - 失败后observer永久挂在Room Dao LiveData上，数据库写入时误触发旧导航
-  - 同步查询+postValue：零observer、零泄漏、postValue批处理合并连续点击
-
-================================
-
-【P0 — 不修就不能用】
-
-1. [✓] 修复 NestedScrollableHostBetween3Layers.findAllChildViewPagers() 返回值被丢弃 — 删除3个冗余方法，替换为canAnyChildScroll()，修复canDeepChildScroll NPE，移除调试日志
-2. [✓] 修复 ViewPager2Navigation 无限递归post — 改为事件驱动(pendingPosition+onMeaningVp2Ready回调)，重命名字段消除歧义(outer→overviewDetail, middle→meaning)，添加clearPendingNavigation防止过期意图，Fragment销毁时清理引用和pending
-3. [✓] 修复 LearnPageViewModel.observeForever 内存泄漏 — 改为同步查询(方案C)：Dao添加getWordByWordIdSync，Repository添加getWordByIdSync，checkAndNavigate改为databaseExecutor+postValue，消除observeForever和匿名Observer泄漏
-4. [✓] 单例VP2强引用内存泄漏修复 — 方案B(手动清理)：在Fragment.onDestroyView中主动将单例引用设为null，补全3个Fragment的遗漏清理点（LearnPageFragment:overviewDetailVp2+outerViewPager2, ExtendedLearnPageFragment:middle+middleViewPage2, ExtendedMeaningViewFragment:inner），不使用WeakReference（引用关系明确且数量有限，强引用可读性更好）
-5. [✓] 修复Converter中"null"字符串反模式 — 回退核心改动，保留Repository空列表检查+Convert null安全两个防御性改进。DEFAULT对象仍用"null"占位符（Builder校验约束：WordMeaning.validateDefinition拒绝空字符串、AntonymWord/SynonymWord.validateComponents要求至少1个元素）
-6. [✓] 实现数据导入管道，替换FirstPage中880行硬编码测试数据 — (1)jmdict_to_room.py v2：合并xlsx精确拆分(13999/22620词命中)、倒排索引O(1)查找antonym/related、修复JMDict [[text]]格式解析、translationDefinition用"（待翻译）"占位；(2)DataImporter工具类：assets JSON流式读取+Gson解析→直接构造Entity(跳过JavaBean Builder校验)→分批500条事务插入+SharedPreferences版本标记防重复导入；(3)FirstPage从987行精简到91行
-7. [ ] 修复 分词工具mecab.py 第155-158行 kana变量未赋值就使用的Bug
-8. [ ] 修复 匹配字典.py 第29行 for title, link in matches1 解包数量不匹配的Bug
-
-【P1 — 不修就不好用】
-
-9. [ ] 实现学习进度持久化（已学/未学/复习状态，不仅保存wordId）
-10. [ ] 实现间隔重复算法（艾宾浩斯/SM-2复习调度）
-11. [ ] 实现练习/测试模块（当前addPracticePage()空实现）
-12. [ ] 完善搜索功能（SearchPageFragment功能不完整）
-13. [ ] MainLearnPageFragment改为更新现有View数据而非每次重建View树
-14. [ ] 移除所有调试日志（Log.d遍布WordComponentView、NestedScrollableHost、BasicWordView、Constants等）
-15. [ ] 硬编码颜色/尺寸提取到资源文件（WordComponentView中setRadius(16)、setPadding(32,32,32,32)、parseColor("#2196F3")等）
-16. [ ] Room改用WRITE_AHEAD_LOGGING模式（当前TRUNCATE模式并发性能差）
-17. [ ] Room实现正式Migration策略（当前fallbackToDestructiveMigration升级会丢数据）
-18. [ ] WordDatabase.databaseExecutor改为private，提供execute方法封装（当前public暴露可被误调shutdown）
-19. [ ] WordRepository.deleteAll()和批量插入添加事务支持（中途失败会导致数据不一致）
-20. [ ] WordRepository构造函数参数从Context改为Application（防止传入Activity Context）
-21. [ ] JavaBean（Word/BasicWord等）添加equals/hashCode方法
-22. [ ] 替换废弃API getUserVisibleHint()（LearnPageFragment第38行）
-23. [ ] 修复LearnPageAdapter.PageTransformer透明度计算（1-3*position导致滑动1/3就全透明）
-24. [ ] Python脚本提取公共模块（词转化为字/获取音便汉字/新时代获取音便字中重复的字典构建和回溯算法）
-25. [ ] Python脚本统一路径配置（10个文件全部硬编码D:\Libraries\Documents\绝对路径）
-26. [ ] Python脚本添加if __name__保护（8/10个文件导入即执行）
-27. [ ] 词转化为字.py 返回值类型不一致问题（成功返回元组，失败返回字符串）
-28. [ ] 升级compileSdk/targetSdk从28到34+（Google Play要求≥33）
-29. [ ] 升级Room从2.2.5到2.6+
-30. [ ] 升级AppCompat/Material/ConstraintLayout/Gson等依赖到最新稳定版
-31. [ ] 移除多余的multidex依赖（minSdk 28不需要）
-
-【P2 — 不修就不专业】
-
-32. [✓] 逐类提取基类消除重复代码 — (1)JavaBean: WordComponent抽象基类(wordId+kanjiComponents+kanaComponents+getCompositeKanji/Kana+hasComponentCountMatch)+CorrespondingWord基类(+correspondingWordId)+PhraseComponent基类(嵌套List结构+deepCopy/deepUnmodifiable)，9个JavaBean改为extend基类；(2)WordView: WordComponentListView<T>泛型基类(构造初始化+initViews循环+applyFirstComponentMargin)，AntonymWordView/SynonymWordView/KanjiFormWordView从77行精简至15行；(3)Fragment: WordViewFragment<T>泛型基类(ViewModelProvider获取+subFontLevel读取+容器添加)，9个Fragment从52-67行精简至20行；(4)Converter: ConverterHelper静态工具类(Function+Supplier消除null检查+try/catch样板)，13个Converter移除未使用Gson+DEFAULT内联化。共消除约970行重复代码，外部API无变化
-33. [ ] 引入依赖注入框架（Hilt/Dagger），使ViewModel可单元测试
-33. [ ] 添加Android单元测试和集成测试
-34. [ ] 启用release构建ProGuard/R8混淆（当前minifyEnabled false）
-35. [ ] AndroidManifest.xml中allowBackup设为false（当前true，adb可提取数据库）
-36. [ ] 数据库加密（SQLCipher），防止root设备直接读取
-37. [ ] 添加自定义Application类初始化全局单例（当前懒初始化导致首次使用延迟）
-38. [ ] Activity添加screenOrientation配置（横竖屏切换状态恢复问题）
-39. [ ] AudioManager添加音频焦点管理（与后台音乐冲突）
-40. [ ] AudioManager线程安全（pendingAudioUrl/currentAudioUrl/isPreparing无同步保护）
+5.2 API设计与可读性
+────────────────────────────────────
 41. [ ] WordComponentView三个构造函数改为工厂方法或Builder（当前通过参数数量区分，可读性差）
 42. [ ] Constants中布局类型从int常量改为enum（SMALL/NORMAL/LARGE）
 43. [ ] Select.layoutParams类名改为大写开头，selectLayout添加default分支
-44. [ ] FirstPage修复intiViews拼写错误和按钮重复初始化
-45. [ ] Python脚本添加requirements.txt
-46. [ ] Python脚本添加logging模块替换print
-47. [ ] Python脚本添加pytest单元测试
-48. [ ] Python脚本添加输入验证和异常处理
-49. [ ] 回溯算法添加最大递归深度限制和预排序（防止指数级爆炸）
-50. [ ] 获取音便汉字.py中copy.deepcopy改为手动浅拷贝（高频回溯中开销巨大）
+
+5.3 线程安全
+────────────────────────────────────
+44. [ ] AudioManager线程安全（pendingAudioUrl/currentAudioUrl/isPreparing无同步保护）
+
+5.4 可测试性
+────────────────────────────────────
+45. [ ] 引入依赖注入框架（Hilt/Dagger），使ViewModel可单元测试
+46. [ ] 添加Android单元测试和集成测试
+
+================================================================================
+六、构建与发布
+================================================================================
+
+47. [ ] 升级compileSdk/targetSdk从28到34+（Google Play要求≥33）
+48. [ ] 升级Room从2.2.5到2.6+
+49. [ ] 升级AppCompat/Material/ConstraintLayout/Gson等依赖到最新稳定版
+50. [ ] 移除多余的multidex依赖（minSdk 28不需要）
+51. [ ] 启用release构建ProGuard/R8混淆（当前minifyEnabled false）
+
+================================================================================
+七、Python数据处理脚本
+================================================================================
+
+7.1 工程规范
+────────────────────────────────────
+52. [ ] Python脚本提取公共模块（词转化为字/获取音便汉字/新时代获取音便字中重复的字典构建和回溯算法）
+53. [ ] Python脚本统一路径配置（10个文件全部硬编码D:\Libraries\Documents\绝对路径）
+54. [ ] Python脚本添加if __name__保护（8/10个文件导入即执行）
+55. [ ] Python脚本添加requirements.txt
+56. [ ] Python脚本添加logging模块替换print
+57. [ ] Python脚本添加pytest单元测试
+58. [ ] Python脚本添加输入验证和异常处理
+
+7.2 算法性能
+────────────────────────────────────
+59. [ ] 回溯算法添加最大递归深度限制和预排序（防止指数级爆炸）
+60. [ ] 获取音便汉字.py中copy.deepcopy改为手动浅拷贝（高频回溯中开销巨大）
