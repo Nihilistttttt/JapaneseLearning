@@ -104,7 +104,9 @@ public class MainLearnPageFragment extends Fragment {
 
     private void renderWord(LearnPageViewModel.CombinedWordInfo combinedWordInfo) {
         stateViewModel.setViewPagerScrollEnabled(false);
+        wordContainer.setVisibility(View.INVISIBLE);
         meaningContainer.setVisibility(View.INVISIBLE);
+        sentenceContainer.setVisibility(View.INVISIBLE);
         integratedPartContainer.setVisibility(View.GONE);
         blankPart.setVisibility(View.VISIBLE);
         blankText.setVisibility(View.VISIBLE);
@@ -130,6 +132,8 @@ public class MainLearnPageFragment extends Fragment {
         } else {
             sentenceView.update(limitedSentences, subLevel);
         }
+
+        wordContainer.setVisibility(View.VISIBLE);
         sentenceContainer.setVisibility(View.VISIBLE);
 
         if (meaningView == null) {
