@@ -5,6 +5,27 @@ LearnWord 项目更新记录
 
 ========================
 
+【更新16】renderWord重构为update模式 + 弹窗BadTokenException修复
+日期：2026-07-29
+涉及文件：MainLearnPageFragment.java, BasicWordView.java, SentenceView.java, MeaningView.java, IntegratedPartView.java, WordComponentView.java, 优化清单.txt
+
+1. renderWord重构为update模式：
+   - BasicWordView：保留inflate的container为成员变量，update时只清空wordComponentPart/accentMarkPart并重建，省去inflate
+   - SentenceView：update时removeAllViews+重建，layoutType变化时重建Paint
+   - MeaningView：update时调用initViews（已有removeAllViews），layoutType变化时重建layoutParams
+   - IntegratedPartView：复用TabLayout+VP2+host，update时detach mediator→更新adapter→重新attach
+   - MainLearnPageFragment：4个View保留为成员变量，首次创建后addView，后续调update，onDestroyView时置null
+
+2. 弹窗BadTokenException修复：
+   - showInfoDialog中showAtLocation改用Activity的decor view作为anchor（而非PopupWindow内的View）
+   - 3处popupWindow.show都加try-catch BadTokenException防御
+
+意义：
+   - update模式：View有明确生命周期（创建→update→销毁），为后续diff更新/动画/缓存铺路
+   - BadTokenException：弹窗嵌套场景（词弹窗→释义弹窗→词弹窗）下窗口token可能失效
+
+========================
+
 【更新15】弹窗先构建后显示 + isNonClickableWordId简化 + 热路径微分配清理
 日期：2026-07-29
 涉及文件：WordComponentView.java, MeaningView.java, SentenceView.java, 优化清单.txt

@@ -25,6 +25,8 @@ import java.util.List;
 @SuppressLint("ViewConstructor")
 public class BasicWordView extends LinearLayout {
     private final LifecycleOwner lifecycleOwner;
+    private LinearLayout wordComponentPart;
+    private LinearLayout accentMarkPart;
 
     private static final SparseArray<Paint> paintCache = new SparseArray<>();
 
@@ -46,12 +48,22 @@ public class BasicWordView extends LinearLayout {
         setClickable(true);
         setFocusable(true);
         setBackgroundResource(R.drawable.word_layout_selector);
+        View container = View.inflate(context, R.layout.view_basic_word, null);
+        addView(container);
+        wordComponentPart = container.findViewById(R.id.word_component_container);
+        accentMarkPart = container.findViewById(R.id.accent_mark_container);
+        update(basicWord, layoutType);
+    }
+
+    public void update(BasicWord basicWord, int layoutType) {
         setOnClickListener(v -> {
-            AudioManager audioManager = AudioManager.getInstance(context);
+            AudioManager audioManager = AudioManager.getInstance(getContext());
             if (audioManager.isPlaying()) audioManager.stopAudio();
             audioManager.playAudio(basicWord.getAudioUrl());
         });
-        initViews(context, basicWord, layoutType);
+        wordComponentPart.removeAllViews();
+        accentMarkPart.removeAllViews();
+        fillContent(basicWord, layoutType);
     }
 
     private float estimateWordWidth(List<String> kanjiComponents, List<String> kanaComponents, Select.layoutParams lp) {
@@ -69,17 +81,12 @@ public class BasicWordView extends LinearLayout {
         return total;
     }
 
-    private void initViews(Context context, BasicWord basicWord, int layoutType) {
-        View container = View.inflate(context, R.layout.view_basic_word, null);
-        addView(container);
-        LinearLayout word_component_part = container.findViewById(R.id.word_component_container);
-        LinearLayout accent_mark_part = container.findViewById(R.id.accent_mark_container);
-
+    private void fillContent(BasicWord basicWord, int layoutType) {
         List<String> kanjiComponents = basicWord.getKanjiComponents();
         List<String> kanaComponents = basicWord.getKanaComponents();
 
-        int screenWidthPx = context.getResources().getDisplayMetrics().widthPixels;
-        int availableWidthPx = screenWidthPx - Convert.dpToPx(context, 32);
+        int screenWidthPx = getContext().getResources().getDisplayMetrics().widthPixels;
+        int availableWidthPx = screenWidthPx - Convert.dpToPx(getContext(), 32);
 
         Select.layoutParams lp = Select.selectLayout(layoutType);
         float estimatedWidth = estimateWordWidth(kanjiComponents, kanaComponents, lp);
@@ -91,15 +98,14 @@ public class BasicWordView extends LinearLayout {
             estimatedWidth = estimateWordWidth(kanjiComponents, kanaComponents, lp);
         }
 
-
         WordComponentView wordComponentLayout = new WordComponentView(
-                context, lifecycleOwner, lp,
+                getContext(), lifecycleOwner, lp,
                 basicWord.getAudioUrl(),
                 kanjiComponents, kanaComponents
         );
         wordComponentLayout.setClickable(false);
 
-        TextView accentMark = new TextView(context);
+        TextView accentMark = new TextView(getContext());
         String accentStr = basicWord.getAccentMark();
         if (accentStr != null && !accentStr.isEmpty()) {
             try {
@@ -113,7 +119,8 @@ public class BasicWordView extends LinearLayout {
         }
         accentMark.setText(accentStr);
 
-        word_component_part.addView(wordComponentLayout);
-        accent_mark_part.addView(accentMark);
+        wordComponentPart.addView(wordComponentLayout);
+        accentMarkPart.addView(accentMark);
     }
+
 }

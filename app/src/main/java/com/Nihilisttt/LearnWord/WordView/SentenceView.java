@@ -25,34 +25,59 @@ import java.util.List;
 
 @SuppressLint("ViewConstructor")
 public class SentenceView extends LinearLayout {
-    private final int layoutType;
-    private final Select.layoutParams layoutParams;
+    private int layoutType;
+    private Select.layoutParams layoutParams;
     private final LifecycleOwner lifecycleOwner;
-    private final Paint kanjiPaint;
-    private final Paint kanaPaint;
+    private Paint kanjiPaint;
+    private Paint kanaPaint;
 
     public SentenceView(Context context, @NonNull LifecycleOwner lifecycleOwner, int layoutType, List<WordSentence> sentenceList) {
         super(context);
         setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
         setOrientation(LinearLayout.VERTICAL);
-        this.layoutType = layoutType;
-        this.layoutParams = Select.selectLayout(this.layoutType);
         this.lifecycleOwner = lifecycleOwner;
-        this.kanjiPaint = createPaint(this.layoutParams.getKanjiSize());
-        this.kanaPaint = createPaint(this.layoutParams.getKanaSize());
-        initViews(sentenceList);
+        initPaints(layoutType);
+        update(sentenceList, layoutType);
     }
 
     public SentenceView(Context context, @NonNull LifecycleOwner lifecycleOwner, int layoutType, WordSentence sentence) {
         super(context);
         setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
         setOrientation(LinearLayout.VERTICAL);
-        this.layoutType = layoutType;
-        this.layoutParams = Select.selectLayout(this.layoutType);
         this.lifecycleOwner = lifecycleOwner;
+        initPaints(layoutType);
+        update(sentence, layoutType);
+    }
+
+    public void update(List<WordSentence> sentenceList, int layoutType) {
+        if (this.layoutType != layoutType) {
+            initPaints(layoutType);
+        }
+        removeAllViews();
+        LinearLayout sentencePart = new LinearLayout(getContext());
+        sentencePart.setOrientation(LinearLayout.VERTICAL);
+        for (WordSentence sentence : sentenceList) {
+            processSentence(sentence, sentencePart);
+        }
+        addView(sentencePart);
+    }
+
+    public void update(WordSentence sentence, int layoutType) {
+        if (this.layoutType != layoutType) {
+            initPaints(layoutType);
+        }
+        removeAllViews();
+        LinearLayout sentencePart = new LinearLayout(getContext());
+        sentencePart.setOrientation(LinearLayout.VERTICAL);
+        processSentence(sentence, sentencePart);
+        addView(sentencePart);
+    }
+
+    private void initPaints(int layoutType) {
+        this.layoutType = layoutType;
+        this.layoutParams = Select.selectLayout(layoutType);
         this.kanjiPaint = createPaint(this.layoutParams.getKanjiSize());
         this.kanaPaint = createPaint(this.layoutParams.getKanaSize());
-        initViews(sentence);
     }
 
     private Paint createPaint(float textSizeSp) {
@@ -60,22 +85,6 @@ public class SentenceView extends LinearLayout {
         paint.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
         paint.setTextSize(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, textSizeSp, getContext().getResources().getDisplayMetrics()));
         return paint;
-    }
-
-    private void initViews(WordSentence sentence) {
-        LinearLayout sentencePart = new LinearLayout(getContext());
-        sentencePart.setOrientation(LinearLayout.VERTICAL);
-        processSentence(sentence, sentencePart);
-        addView(sentencePart);
-    }
-
-    private void initViews(List<WordSentence> sentenceList) {
-        LinearLayout sentencePart = new LinearLayout(getContext());
-        sentencePart.setOrientation(LinearLayout.VERTICAL);
-        for (WordSentence sentence : sentenceList) {
-            processSentence(sentence, sentencePart);
-        }
-        addView(sentencePart);
     }
 
     private boolean isNonClickableWordId(String wordId) {

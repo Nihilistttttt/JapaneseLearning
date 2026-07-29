@@ -11,8 +11,8 @@ import android.util.Log;
 import android.util.TypedValue;
 import androidx.core.content.ContextCompat;
 import android.view.Gravity;
-
 import android.view.MotionEvent;
+import android.view.WindowManager;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -409,6 +409,8 @@ public class WordComponentView extends LinearLayout {
                 TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics());
         int xOffset = (screenWidth - popupWidth) / 2;
 
+        View activityRoot = ((android.app.Activity) context).getWindow().getDecorView().findViewById(android.R.id.content);
+
         final boolean[] basicWordReady = {false};
         final boolean[] meaningReady = {false};
 
@@ -431,7 +433,8 @@ public class WordComponentView extends LinearLayout {
             }
             basicWordReady[0] = true;
             if (meaningReady[0] && !popupWindow.isShowing()) {
-                popupWindow.showAtLocation(this, Gravity.NO_GRAVITY, xOffset, yOffset);
+                try { popupWindow.showAtLocation(activityRoot, Gravity.NO_GRAVITY, xOffset, yOffset); }
+                catch (WindowManager.BadTokenException ignored) {}
             }
         };
 
@@ -447,7 +450,8 @@ public class WordComponentView extends LinearLayout {
             }
             meaningReady[0] = true;
             if (basicWordReady[0] && !popupWindow.isShowing()) {
-                popupWindow.showAtLocation(this, Gravity.NO_GRAVITY, xOffset, yOffset);
+                try { popupWindow.showAtLocation(activityRoot, Gravity.NO_GRAVITY, xOffset, yOffset); }
+                catch (WindowManager.BadTokenException ignored) {}
             }
         };
 

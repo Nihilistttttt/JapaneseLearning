@@ -41,7 +41,7 @@ LearnWord 项目优化清单
 
 2.3 渲染架构
 ────────────────────────────────────
-22. [ ] MainLearnPageFragment改为更新现有View数据而非每次重建View树
+22. ["✓] MainLearnPageFragment改为update模式 — 4个View(BasicWordView/SentenceView/MeaningView/IntegratedPartView)保留为成员变量，首次创建后addView，后续调update()刷新数据，IntegratedPartView复用TabLayout+VP2只更新adapter
 23. [ ] 移除所有调试日志（Log.d遍布WordComponentView、NestedScrollableHost、BasicWordView、Constants等；calculateMargin中Log.d字符串拼接即使不输出仍求值）
 24. [ ] 硬编码颜色/尺寸提取到资源文件（WordComponentView中setRadius(16)、setPadding(32,32,32,32)、parseColor("#2196F3")等）
 25. [✓] 弹窗先构建后显示 — showInfoDialog等basicWord+meaning两个LiveData都回调后才popupWindow.show()，showSentencePopup等sentence回调后才show()，消除先弹空壳再填内容的闪烁

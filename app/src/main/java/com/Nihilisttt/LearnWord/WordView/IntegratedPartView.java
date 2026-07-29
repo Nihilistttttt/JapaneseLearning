@@ -29,6 +29,10 @@ import java.util.List;
 @SuppressLint("ViewConstructor")
 public class IntegratedPartView extends LinearLayout {
     private List<Fragment> fragmentList;
+    private TabLayout tabLayout;
+    private ViewPager2 viewPager2;
+    private TabLayoutMediator mediator;
+    private NestedScrollableHostBetween2Layers host;
 
     public IntegratedPartView(Context context, List<WordCollocation> collocations,
                               List<AntonymWord> antonymWords, List<SynonymWord> synonymWords) {
@@ -39,15 +43,38 @@ public class IntegratedPartView extends LinearLayout {
                 LinearLayout.LayoutParams.MATCH_PARENT
         );
         setLayoutParams(params);
-        initViews(collocations, antonymWords, synonymWords);
+        initContainers();
+        update(collocations, antonymWords, synonymWords);
     }
 
-    private void initViews(List<WordCollocation> collocations, List<AntonymWord> antonymWords, List<SynonymWord> synonymWords) {
-        List<String> tabTitles = new ArrayList<>();
-        TabLayout tabLayout = new TabLayout(getContext());
-        tabLayout.setTabGravity(TabLayout.GRAVITY_START); // 关键设置：对齐方式
-        tabLayout.setTabMode(TabLayout.MODE_SCROLLABLE);  // 关键设置：滚动模式
+    private void initContainers() {
+        tabLayout = new TabLayout(getContext());
+        tabLayout.setTabGravity(TabLayout.GRAVITY_START);
+        tabLayout.setTabMode(TabLayout.MODE_SCROLLABLE);
+
+        host = new NestedScrollableHostBetween2Layers(getContext());
+        host.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                0,
+                1f
+        ));
+        viewPager2 = new ViewPager2(getContext());
+        View childAt = viewPager2.getChildAt(0);
+        if (childAt instanceof RecyclerView) {
+            childAt.setOverScrollMode(View.OVER_SCROLL_NEVER);
+        }
+        host.addView(viewPager2);
+        addView(host);
+        addView(tabLayout);
+    }
+
+    public void update(List<WordCollocation> collocations,
+                       List<AntonymWord> antonymWords, List<SynonymWord> synonymWords) {
+        if (mediator != null) {
+            mediator.detach();
+        }
         fragmentList = new ArrayList<>();
+        List<String> tabTitles = new ArrayList<>();
 
         if (!collocations.isEmpty()) {
             tabTitles.add("词组搭配");
@@ -62,21 +89,6 @@ public class IntegratedPartView extends LinearLayout {
             fragmentList.add(new SynonymWordViewFragment(synonymWords));
         }
 
-        NestedScrollableHostBetween2Layers host = new NestedScrollableHostBetween2Layers(getContext());
-        host.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                0, // 高度设为0dp
-                1f  // weight设为1（占满剩余空间）
-        ));
-        ViewPager2 viewPager2 = new ViewPager2(getContext());
-        View childAt = viewPager2.getChildAt(0);
-        if (childAt instanceof RecyclerView){
-            childAt.setOverScrollMode(View.OVER_SCROLL_NEVER);
-        } // 取消滑动到边缘的阴影效果
-        host.addView(viewPager2);
-
-
-        // 创建ViewPager2所使用的适配器，FragmentStateAdapter抽象类的实现类对象
         FragmentStateAdapter adapter = new FragmentStateAdapter((FragmentActivity) getContext()) {
             @NonNull
             @Override
@@ -89,13 +101,10 @@ public class IntegratedPartView extends LinearLayout {
                 return fragmentList.size();
             }
         };
+        viewPager2.setAdapter(adapter);
 
-        viewPager2.setAdapter(adapter); // 给ViewPager2设置适配器
-
-        new TabLayoutMediator(tabLayout, viewPager2, (tab, position) -> {
+        mediator = new TabLayoutMediator(tabLayout, viewPager2, (tab, position) -> {
             tab.setText(tabTitles.get(position));
-
-            // 新增代码：为每个 Tab 设置统一宽度
             View tabView = tab.view;
             int minWidth = (int) TypedValue.applyDimension(
                     TypedValue.COMPLEX_UNIT_DIP,
@@ -103,10 +112,8 @@ public class IntegratedPartView extends LinearLayout {
                     getResources().getDisplayMetrics()
             );
             tabView.setMinimumWidth(minWidth);
-        }).attach();
-        // 添加宿主容器
-        addView(host);
-        addView(tabLayout);
+        });
+        mediator.attach();
     }
 
 

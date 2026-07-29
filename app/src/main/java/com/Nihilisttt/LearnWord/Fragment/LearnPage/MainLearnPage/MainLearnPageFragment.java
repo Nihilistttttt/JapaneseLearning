@@ -32,7 +32,6 @@ import java.util.List;
 
 public class MainLearnPageFragment extends Fragment {
     private static final String TAG = "MainLearnPageFragment";
-    // 界面组件
     private LearnPageToolBar toolBar;
     private LinearLayout wordContainer;
     private LinearLayout meaningContainer;
@@ -41,7 +40,11 @@ public class MainLearnPageFragment extends Fragment {
     private LinearLayout blankPart;
     private TextView blankText;
 
-    // ViewModel
+    private BasicWordView basicWordView;
+    private SentenceView sentenceView;
+    private MeaningView meaningView;
+    private IntegratedPartView integratedPartView;
+
     private LearnPageViewModel viewModel;
     private LearnPageStateViewModel stateViewModel;
 
@@ -111,22 +114,39 @@ public class MainLearnPageFragment extends Fragment {
         Integer subLevel = stateViewModel.getSubFontLevel().getValue();
         if (subLevel == null) subLevel = Constants.FONT_SIZE_NORMAL;
 
-        BasicWordView basicWordView = new BasicWordView(requireContext(), requireActivity(), wordLevel, combinedWordInfo.getBasicWord());
+        if (basicWordView == null) {
+            basicWordView = new BasicWordView(requireContext(), requireActivity(), wordLevel, combinedWordInfo.getBasicWord());
+            wordContainer.addView(basicWordView);
+        } else {
+            basicWordView.update(combinedWordInfo.getBasicWord(), wordLevel);
+        }
 
         List<WordSentence> allSentences = combinedWordInfo.getWordSentenceList();
         int maxSentences = Constants.getSentenceCardMinSentences(subLevel);
         List<WordSentence> limitedSentences = allSentences.subList(0, Math.min(maxSentences, allSentences.size()));
-        SentenceView sentenceView = new SentenceView(requireContext(), requireActivity(), subLevel, limitedSentences);
-        updateView(basicWordView, wordContainer);
-        updateView(sentenceView, sentenceContainer);
+        if (sentenceView == null) {
+            sentenceView = new SentenceView(requireContext(), requireActivity(), subLevel, limitedSentences);
+            sentenceContainer.addView(sentenceView);
+        } else {
+            sentenceView.update(limitedSentences, subLevel);
+        }
         sentenceContainer.setVisibility(View.VISIBLE);
 
-        MeaningView meaningView = new MeaningView(requireContext(), requireActivity(), subLevel, combinedWordInfo.getWordMeaningList(), Constants.TURN_TO_DETAIL_PAGE);
-        updateView(meaningView, meaningContainer);
+        if (meaningView == null) {
+            meaningView = new MeaningView(requireContext(), requireActivity(), subLevel, combinedWordInfo.getWordMeaningList(), Constants.TURN_TO_DETAIL_PAGE);
+            meaningContainer.addView(meaningView);
+        } else {
+            meaningView.update(combinedWordInfo.getWordMeaningList(), subLevel);
+        }
 
-        IntegratedPartView integratedPartView = new IntegratedPartView(requireContext(), combinedWordInfo.getWordCollocationList(),
-                combinedWordInfo.getAntonymWordList(), combinedWordInfo.getSynonymWordList());
-        updateView(integratedPartView, integratedPartContainer);
+        if (integratedPartView == null) {
+            integratedPartView = new IntegratedPartView(requireContext(), combinedWordInfo.getWordCollocationList(),
+                    combinedWordInfo.getAntonymWordList(), combinedWordInfo.getSynonymWordList());
+            integratedPartContainer.addView(integratedPartView);
+        } else {
+            integratedPartView.update(combinedWordInfo.getWordCollocationList(),
+                    combinedWordInfo.getAntonymWordList(), combinedWordInfo.getSynonymWordList());
+        }
 
         final int touchSlop = ViewConfiguration.get(requireContext()).getScaledTouchSlop();
         blankPart.setOnTouchListener(new View.OnTouchListener() {
@@ -181,20 +201,17 @@ public class MainLearnPageFragment extends Fragment {
         });
     }
 
-    // 修改后的updateView方法（统一ViewGroup参数）
-    private void updateView(View view, ViewGroup container) {
-        container.removeAllViews();
-        container.addView(view);
-    }
-
-
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        // 清除所有观察者
+        basicWordView = null;
+        sentenceView = null;
+        meaningView = null;
+        integratedPartView = null;
         viewModel.getBasicWord().removeObservers(getViewLifecycleOwner());
         viewModel.getWordMeaningListLiveData().removeObservers(getViewLifecycleOwner());
         viewModel.getWordCollocationListLiveData().removeObservers(getViewLifecycleOwner());
         viewModel.getToastMessage().removeObservers(getViewLifecycleOwner());
     }
+
 }

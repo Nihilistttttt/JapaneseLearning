@@ -13,6 +13,7 @@ import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
@@ -42,28 +43,38 @@ import java.util.Map;
 @SuppressLint("ViewConstructor")
 public class MeaningView extends LinearLayout {
 
-    private final int layoutType;
+    private int layoutType;
     private final int mode;
-    private final Select.layoutParams layoutParams;
+    private Select.layoutParams layoutParams;
     private final LifecycleOwner lifecycleOwner;
-    private final float definitionTextSize;
-    private final float posTextSize;
+    private float definitionTextSize;
+    private float posTextSize;
     private final LinkedHashMap<Constants.PartOfSpeech, List<WordMeaning>> meaningMap = new LinkedHashMap<>();
     private WordRepository repository;
     private LiveData<List<WordSentence>> sentenceLiveData;
 
-    // 主构造函数（动态创建时使用）
     public MeaningView(Context context, @NonNull LifecycleOwner lifecycleOwner,
-                       int layoutType, List<WordMeaning> meanings,int mode) {
+                       int layoutType, List<WordMeaning> meanings, int mode) {
         super(context);
         setOrientation(LinearLayout.VERTICAL);
-        this.layoutType = layoutType;
         this.mode = mode;
-        this.layoutParams = Select.selectLayout(this.layoutType);
         this.lifecycleOwner = lifecycleOwner;
+        initLayoutParams(layoutType);
+        update(meanings, layoutType);
+    }
+
+    public void update(List<WordMeaning> meanings, int layoutType) {
+        if (this.layoutType != layoutType) {
+            initLayoutParams(layoutType);
+        }
+        initViews(meanings);
+    }
+
+    private void initLayoutParams(int layoutType) {
+        this.layoutType = layoutType;
+        this.layoutParams = Select.selectLayout(layoutType);
         this.definitionTextSize = Constants.getSubDefinitionSize(layoutType);
         this.posTextSize = Constants.getSubDefinitionSize(layoutType);
-        initViews(meanings);
     }
 
     private void initViews(List<WordMeaning> meanings) {
@@ -179,12 +190,14 @@ public class MeaningView extends LinearLayout {
                 container.addView(sentenceView);
             }
             if (!popupWindow.isShowing()) {
-                if (anchor != null && anchor.isAttachedToWindow()) {
-                    popupWindow.showAsDropDown(anchor, 0, Convert.dpToPx(getContext(), 4));
-                } else {
-                    View rootView = ((Activity) getContext()).getWindow().getDecorView().findViewById(android.R.id.content);
-                    popupWindow.showAtLocation(rootView, Gravity.CENTER, 0, 0);
-                }
+                try {
+                    if (anchor != null && anchor.isAttachedToWindow()) {
+                        popupWindow.showAsDropDown(anchor, 0, Convert.dpToPx(getContext(), 4));
+                    } else {
+                        View rootView = ((Activity) getContext()).getWindow().getDecorView().findViewById(android.R.id.content);
+                        popupWindow.showAtLocation(rootView, Gravity.CENTER, 0, 0);
+                    }
+                } catch (WindowManager.BadTokenException ignored) {}
             }
         };
 
