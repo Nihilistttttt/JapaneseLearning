@@ -5,6 +5,45 @@ LearnWord 项目更新记录
 
 ========================
 
+【更新11】逐类提取基类消除重复代码
+日期：2026-07-29
+涉及文件：WordComponent.java, CorrespondingWord.java, PhraseComponent.java(新增),
+  BasicWord/AntonymWord/SynonymWord/ConjugationForm/Idiom/KanjiFormWord/UsageDistinction/WordSentence/WordCollocation.java(9个JavaBean),
+  WordComponentListView.java(新增), AntonymWordView/SynonymWordView/KanjiFormWordView.java,
+  WordViewFragment.java(新增), 9个ViewFragment,
+  ConverterHelper.java(新增), 13个Converter,
+  优化清单.txt
+
+问题：
+  各类之间结构高度相似却未利用Java继承/泛型/接口机制，导致约970行重复代码：
+  1. JavaBean: getCompositeKanji/Kana重复5次，hasComponentCountMatch重复3次，validateComponents重复3次，deepCopy/deepUnmodifiable重复2次
+  2. WordView: AntonymWordView/SynonymWordView/KanjiFormWordView三者的构造初始化+initViews循环+margin计算逻辑完全相同(95%相似)
+  3. Fragment: 9个Fragment的ViewModelProvider获取+subFontLevel读取+容器添加逻辑完全相同
+  4. Converter: null检查+try/catch+日志模式重复26次，8个Converter声明了未使用的Gson实例
+
+解决方案：
+  1. JavaBean继承体系：WordComponent抽象基类(wordId+kanjiComponents+kanaComponents+getCompositeKanji/Kana+hasComponentCountMatch+unmodifiableListOf+validateComponentsNotEmpty)，CorrespondingWord extends WordComponent(+correspondingWordId)，PhraseComponent抽象基类(嵌套List结构+deepCopy+deepUnmodifiable+validatePhraseComponents)，9个JavaBean改为extend对应基类
+  2. WordView泛型基类：WordComponentListView<T extends WordComponent>，提取构造初始化+initViews循环+applyFirstComponentMargin，子类只需实现getClickId(T)一个方法
+  3. Fragment泛型基类：WordViewFragment<T>，提取onCreateView+onViewCreated中的ViewModelProvider获取+subFontLevel读取+容器添加，子类只需实现createContentView()一个方法
+  4. Converter工具类：ConverterHelper静态类(entityToModel+modelToEntity泛型方法，用Function+Supplier消除样板)，13个Converter移除未使用Gson+DEFAULT内联化
+
+效果：
+  - 43 files changed, +1078 / -1282, 净减1026行
+  - 新增同类组件只需实现1个抽象方法，而非复制粘贴整套逻辑
+  - 外部API无变化，所有公共方法签名保持不变
+
+意义：
+  - 重复代码是维护的敌人：改一处漏一处是最常见的bug来源
+  - 继承/泛型是Java的核心OOP机制，项目之前完全未利用，这是架构层面的改进
+  - 为后续新增词性类型(如DerivedForm)提供了可复用的基类框架
+
+新理解：
+  - Java Builder与继承不兼容：Builder是静态内部类，不参与继承链，因此基类只提取公共字段和方法，Builder保持各子类独立
+  - 泛型Fragment(WordViewFragment<T>)中T是元素类型而非List<元素>，data字段已是List<T>，子类写WordViewFragment<AntonymWord>而非WordViewFragment<List<AntonymWord>>
+  - ConverterHelper用Function<E,M>+Supplier<M>比抽象基类更轻量：保持静态方法API不变，调用方无需修改
+
+========================
+
 【更新10】字体大小重构：7档线性插值+弹窗选择+UI优化
 日期：2026-07-27
 涉及文件：Constants.java, Select.java, LearnPageStateViewModel.java, LearnPageToolBar.java,
