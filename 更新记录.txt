@@ -5,6 +5,48 @@ LearnWord 项目更新记录
 
 ========================
 
+【更新21】近义词反义词合并+单词居中修复+假名标注修复+词组翻译间距+测试词wordId修复
+日期：2026-07-30
+B涉及文件：
+  View: SynonymAntonymView(新增), IntegratedPartView(近義/反義→近义词一个Tab),
+        BasicWordView(margin居中+弹窗gravity判断), WordComponentView(cleanKanaAnnotations),
+        SynonymAntonymViewFragment(新增)
+  Layout: view_collocation_column.xml(移除translation marginStart=10dp)
+  Database: WordDatabase(PREBUILT_DB_VERSION 18→19), word_database.db(测试词wordIdList修复)
+  Python: fix_test_wordids.py(新增)
+
+1. 近义词反义词合并：
+   - 新增SynonymAntonymView：上半近义词+下半反义词，各带标题(md_detail_label 14sp粗体)，各三列
+   - 新增SynonymAntonymViewFragment
+   - IntegratedPartView将原"反义词"+"近义词"两个Tab合并为"近义词"一个Tab
+   - 两部分之间8dp间距分隔
+
+2. 单词居中修复：
+   - BasicWordView.fillContent用post()获取实际父容器宽度后计算marginStart
+   - 父容器有CENTER_HORIZONTAL gravity时(弹窗)跳过margin，由容器gravity居中
+   - 父容器无gravity时(主页面wordContainer)用margin居中单词(不考虑重音符号)
+   - margin上限6上限保证重音符号不被截断
+
+3. 假名标注修复：
+   - WordComponentView.initComponents中添加if(Judge.isKana(curKanji)) curKana=""
+   - 假名字符上方不再标注假名(如書く的く上方不再标く)
+
+4. 词组翻译间距：
+   - view_collocation_column.xml移除collocation_translation的marginStart=10dp
+
+5. 测试词wordIdList修复：
+   - fix_test_wordids.py：通过BasicWord的kanjiComponents建立索引，将例句/词组wordIdList中的"0"替换为实际wordId
+   - 修复24个例句+16个词组，大部分词从不可点击变为可点击
+   - PREBUILT_DB_VERSION升至19强制重建预装DB
+
+意义：
+  - 近义词反义词合并减少Tab数量，信息密度更高
+  - 单词居中不考虑重音符号是用户明确需求，弹窗gravity判断避免双重偏移
+  - 假名上方标假名是日语学习App的基本规范错误
+  - wordIdList修复使测试词的例句/词组中大部分词可点击查看详情
+
+========================
+
 【更新20】JLPT等级+词频独立行显示+Tab区域高度调整
 日期：2026-07-30
 涉及文件：

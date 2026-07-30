@@ -3,10 +3,12 @@ package com.Nihilisttt.LearnWord.WordView;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Paint;
+import android.view.Gravity;
 import android.util.SparseArray;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -125,13 +127,25 @@ public class BasicWordView extends LinearLayout {
 
         float accentMarkWidth = accentMark.getPaint().measureText(accentMark.getText().toString());
         int wordWidthPx = Math.round(estimatedWidth);
-        int marginStart = Math.max(0, (availableWidthPx - wordWidthPx) / 2);
-        int maxMarginStart = availableWidthPx - wordWidthPx - Math.round(accentMarkWidth);
-        if (maxMarginStart < 0) maxMarginStart = 0;
-        if (marginStart > maxMarginStart) marginStart = maxMarginStart;
-        MarginLayoutParams mlp = (MarginLayoutParams) getLayoutParams();
-        mlp.setMarginStart(marginStart);
-        setLayoutParams(mlp);
+        float finalAccentMarkWidth = accentMarkWidth;
+        post(() -> {
+            ViewParent parent = getParent();
+            if (parent == null) return;
+            if (parent instanceof LinearLayout) {
+                int gravity = ((LinearLayout) parent).getGravity();
+                boolean hasCenterHorizontal = (gravity & Gravity.HORIZONTAL_GRAVITY_MASK) == Gravity.CENTER_HORIZONTAL;
+                if (hasCenterHorizontal) return;
+            }
+            int parentWidth = ((View) parent).getWidth();
+            if (parentWidth <= 0) return;
+            int marginStart = Math.max(0, (parentWidth - wordWidthPx) / 2);
+            int maxMarginStart = parentWidth - wordWidthPx - Math.round(finalAccentMarkWidth);
+            if (maxMarginStart < 0) maxMarginStart = 0;
+            if (marginStart > maxMarginStart) marginStart = maxMarginStart;
+            MarginLayoutParams mlp = (MarginLayoutParams) getLayoutParams();
+            mlp.setMarginStart(marginStart);
+            setLayoutParams(mlp);
+        });
     }
 
 }

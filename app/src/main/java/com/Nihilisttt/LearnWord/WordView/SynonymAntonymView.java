@@ -3,7 +3,7 @@ package com.Nihilisttt.LearnWord.WordView;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Typeface;
-import android.util.Log;
+
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -26,7 +26,6 @@ public class SynonymAntonymView extends LinearLayout {
         setOrientation(VERTICAL);
         setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
 
-        Log.d("SynAntView", "synonymWords=" + synonymWords.size() + " antonymWords=" + antonymWords.size());
 
         if (!synonymWords.isEmpty()) {
             addSectionTitle("近义词");
@@ -72,7 +71,7 @@ public class SynonymAntonymView extends LinearLayout {
             }
         }
 
-        Log.d("SynAntView", "childCount=" + getChildCount());
+
     }
 
     private void addSectionTitle(String title) {
