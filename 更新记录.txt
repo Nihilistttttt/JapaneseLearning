@@ -5,6 +5,59 @@ LearnWord 项目更新记录
 
 ========================
 
+【更新18】数据模型与UI扩展：6个新属性+2个新字段+预装DB重建
+日期：2026-07-30
+涉及文件：
+  Entity: WordEntity(+6列), BasicWordEntity(+jlptLevel/+wordFrequency), ConjugationFormEntity(+formNameTranslation), KanjiInfoEntity(+translation), EtymologyEntity(新增)
+  Dao: ConjugationFormDao, EtymologyDao(新增), KanjiInfoDao, UsageDistinctionDao, GrammarPointDao, IdiomDao (均+IdList查询)
+  JavaBean: Word(+6列表), BasicWord(+jlptLevel/+wordFrequency), ConjugationForm(+formNameTranslation), KanjiInfo(+translation), Etymology(新增)
+  Converter: BasicWordConverter, WordConverter, ConjugationFormConverter(+formNameTranslation映射), KanjiInfoConverter(+translation映射), EtymologyConverter(新增)
+  Database: WordDatabase(version=2, +6Entity/+7Dao)
+  Repository: WordRepository(+7Dao字段+6查询方法)
+  ViewModel: LearnPageViewModel(+6条switchMap+CombinedWordInfo扩展6个List字段)
+  View: IntegratedPartView(+6个新Tab), IdiomView(2列), AntonymWordView(3列), SynonymWordView(3列)
+  Fragment: EtymologyViewFragment(新增), MainLearnPageFragment(IntegratedPartView调用9参数)
+  DataImporter: WordEntity构造+6个ID列表(默认[]), BasicWordEntity构造+jlptLevel+wordFrequency(默认0)
+  generate_room_db.py: schema更新+identity_hash更新+6个新表CREATE TABLE+数据导入
+  word_database.db: 重建(82.4MB)
+
+1. 数据层扩展：
+   - WordEntity/Word新增6个ID列表字段(conjugationFormIdList/etymologyIdList/kanjiInfoIdList/usageDistinctionIdList/grammarPointIdList/idiomIdList)，defaultValue="[]"
+   - BasicWordEntity/BasicWord新增jlptLevel(int,defaultValue=0)+wordFrequency(int,defaultValue=0)
+   - ConjugationFormEntity/ConjugationForm新增formNameTranslation(String,defaultValue="")
+   - KanjiInfoEntity/KanjiInfo新增translation(String,defaultValue="")
+   - 新增Etymology全套(Entity/Dao/JavaBean/Converter/View/Fragment)
+   - 6个Dao补充IdList查询方法，WordDatabase注册6个新Entity+7个Dao，version升至2
+   - WordRepository扩展7个新Dao字段+6个新查询方法
+   - Converter方法名统一为entityToModel，修复5个方法引用编译错误
+   - DataImporter构造函数同步新字段(默认值占位，避免闪退)
+
+2. ViewModel层：
+   - LearnPageViewModel新增6条switchMap链(conjugationForm/etymology/kanjiInfo/usageDistinction/grammarPoint/idiom)
+   - CombinedWordInfo扩展6个新List字段+getter，updateCombined扩展
+
+3. UI层：
+   - IntegratedPartView动态添加6个新Tab(活用形/語源/漢字情報/用法区分/文法/熟語)
+   - IdiomView改2列布局，AntonymWordView/SynonymWordView改3列布局(不再继承WordComponentListView)
+
+4. 预装DB重建：
+   - generate_room_db.py更新schema(Word+6列,BasicWord+2列,6个新表CREATE TABLE)
+   - identity_hash更新为6778bdab1e7d4911c4fcec776f9f3514
+   - 重新生成word_database.db(82.4MB)，解决预装DB schema不匹配导致的崩溃
+
+意义：
+  - 6个新属性是单词学习的核心维度(活用形/语源/汉字信息/用法区分/文法/熟语)，扩展后单词信息完整度大幅提升
+  - JLPT等级和词频是筛选排序的基础字段，为后续学习计划功能铺路
+  - formNameTranslation/translation为活用形和汉字信息提供中文翻译，提升可读性
+  - 预装DB重建解决createFromAsset的schema校验崩溃，是版本升级的必要步骤
+
+新理解：
+  - Room的createFromAsset路径在onCreate时校验预装DB schema，与fallbackToDestructiveMigration是独立路径
+  - 预装DB的identity_hash必须与编译生成的WordDatabase_Impl中的hash一致，否则Room拒绝加载
+  - 新增Entity后必须同步更新：Entity→Dao→JavaBean→Converter→Database→Repository→ViewModel→View→Fragment→generate_room_db.py→word_database.db，缺一即编译错误或运行时崩溃
+
+========================
+
 【更新17】AppLog环境感知日志 + 单词例句同步渲染
 日期：2026-07-29
 涉及文件：AppLog.java(新增), WordComponentView.java, ConverterHelper.java, DataImporter.java, MainLearnPageFragment.java, 优化清单.txt
