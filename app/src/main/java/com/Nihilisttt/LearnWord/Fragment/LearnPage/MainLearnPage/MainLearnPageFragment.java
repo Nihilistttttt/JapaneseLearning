@@ -111,7 +111,7 @@ public class MainLearnPageFragment extends Fragment {
     private void renderWord(LearnPageViewModel.CombinedWordInfo combinedWordInfo) {
         stateViewModel.setViewPagerScrollEnabled(false);
         wordContainer.setVisibility(View.INVISIBLE);
-        infoRow.setVisibility(View.GONE);
+        infoRow.setVisibility(View.INVISIBLE);
         meaningContainer.setVisibility(View.INVISIBLE);
         sentenceContainer.setVisibility(View.INVISIBLE);
         integratedPartContainer.setVisibility(View.GONE);
@@ -128,16 +128,6 @@ public class MainLearnPageFragment extends Fragment {
             wordContainer.addView(basicWordView);
         } else {
             basicWordView.update(combinedWordInfo.getBasicWord(), wordLevel);
-        }
-
-        List<WordSentence> allSentences = combinedWordInfo.getWordSentenceList();
-        int maxSentences = Constants.getSentenceCardMinSentences(subLevel);
-        List<WordSentence> limitedSentences = allSentences.subList(0, Math.min(maxSentences, allSentences.size()));
-        if (sentenceView == null) {
-            sentenceView = new SentenceView(requireContext(), requireActivity(), subLevel, limitedSentences);
-            sentenceContainer.addView(sentenceView);
-        } else {
-            sentenceView.update(limitedSentences, subLevel);
         }
 
         BasicWord basicWord = combinedWordInfo.getBasicWord();
@@ -168,10 +158,20 @@ public class MainLearnPageFragment extends Fragment {
             infoText.setText(ssb);
             infoText.setTextSize(13);
             infoRow.addView(infoText);
-            infoRow.setVisibility(View.VISIBLE);
+        }
+
+        List<WordSentence> allSentences = combinedWordInfo.getWordSentenceList();
+        int maxSentences = Constants.getSentenceCardMinSentences(subLevel);
+        List<WordSentence> limitedSentences = allSentences.subList(0, Math.min(maxSentences, allSentences.size()));
+        if (sentenceView == null) {
+            sentenceView = new SentenceView(requireContext(), requireActivity(), subLevel, limitedSentences);
+            sentenceContainer.addView(sentenceView);
+        } else {
+            sentenceView.update(limitedSentences, subLevel);
         }
 
         wordContainer.setVisibility(View.VISIBLE);
+        infoRow.setVisibility(jlptLevel > 0 || wordFrequency > 0 ? View.VISIBLE : View.GONE);
         sentenceContainer.setVisibility(View.VISIBLE);
 
         if (meaningView == null) {
@@ -246,9 +246,7 @@ public class MainLearnPageFragment extends Fragment {
                     case MotionEvent.ACTION_UP:
                         if (!isDragging) {
                             stateViewModel.setViewPagerScrollEnabled(true);
-                            if (infoRow.getVisibility() != View.GONE) {
-                                infoRow.setVisibility(View.VISIBLE);
-                            }
+
                             meaningContainer.setVisibility(View.VISIBLE);
                             integratedPartContainer.setVisibility(View.VISIBLE);
                             blankPart.setVisibility(View.GONE);

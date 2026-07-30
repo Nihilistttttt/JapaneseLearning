@@ -388,6 +388,7 @@ public class WordComponentView extends LinearLayout {
         basicWordPart.setOrientation(LinearLayout.VERTICAL);
 
 
+
         LinearLayout infoRow = new LinearLayout(context);
         infoRow.setOrientation(LinearLayout.HORIZONTAL);
         infoRow.setGravity(Gravity.CENTER_HORIZONTAL);
@@ -441,6 +442,20 @@ public class WordComponentView extends LinearLayout {
                 int wordLevel = fontPrefs.getInt("word_font_level", Constants.FONT_SIZE_NORMAL);
                 BasicWordView basicWordView = new BasicWordView(getContext(), lifecycleOwner, wordLevel, basicWord);
                 basicWordPart.addView(basicWordView);
+                basicWordView.setVisibility(View.INVISIBLE);
+                basicWordView.post(() -> {
+                    int parentWidth = basicWordPart.getWidth();
+                    if (parentWidth <= 0) { basicWordView.setVisibility(View.VISIBLE); return; }
+                    int viewWidth = basicWordView.getWidth();
+                    if (viewWidth <= 0) { basicWordView.setVisibility(View.VISIBLE); return; }
+                    int accentWidth = basicWordView.getAccentMarkWidth();
+                    int wordOnlyWidth = viewWidth - accentWidth;
+                    int marginStart = Math.max(0, (parentWidth - wordOnlyWidth) / 2);
+                    MarginLayoutParams mlp = (MarginLayoutParams) basicWordView.getLayoutParams();
+                    mlp.setMarginStart(marginStart);
+                    basicWordView.setLayoutParams(mlp);
+                    basicWordView.setVisibility(View.VISIBLE);
+                });
 
                 infoRow.removeAllViews();
                 int jlptLevel = basicWord.getJlptLevel();

@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -49,10 +50,15 @@ public class SynonymAntonymViewFragment extends Fragment {
         if (subFontLevel == null) subFontLevel = Constants.FONT_SIZE_NORMAL;
 
         LinearLayout containerLayout = view.findViewById(R.id.word_fragment_container);
+        ScrollView scrollView = new ScrollView(requireContext());
+        scrollView.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
+        scrollView.setFillViewport(true);
+
         View contentView = new SynonymAntonymView(requireContext(), this, subFontLevel, synonymWords, antonymWords);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
-        contentView.setLayoutParams(params);
-        containerLayout.addView(contentView);
+        contentView.setLayoutParams(new ScrollView.LayoutParams(
+                ScrollView.LayoutParams.MATCH_PARENT, ScrollView.LayoutParams.WRAP_CONTENT));
+        scrollView.addView(contentView);
+        containerLayout.addView(scrollView);
     }
 }

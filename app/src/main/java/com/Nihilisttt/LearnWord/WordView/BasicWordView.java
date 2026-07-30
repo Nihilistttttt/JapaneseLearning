@@ -30,6 +30,7 @@ public class BasicWordView extends LinearLayout {
     private final LifecycleOwner lifecycleOwner;
     private LinearLayout wordComponentPart;
     private LinearLayout accentMarkPart;
+    private int lastAccentMarkWidthPx = 0;
 
     private static final SparseArray<Paint> paintCache = new SparseArray<>();
 
@@ -126,28 +127,28 @@ public class BasicWordView extends LinearLayout {
         accentMarkPart.addView(accentMark);
 
         float accentMarkWidth = accentMark.getPaint().measureText(accentMark.getText().toString());
+        lastAccentMarkWidthPx = Math.round(accentMarkWidth);
         int wordWidthPx = Math.round(estimatedWidth);
-        float finalAccentMarkWidth = accentMarkWidth;
-        setVisibility(INVISIBLE);
-        post(() -> {
-            ViewParent parent = getParent();
-            if (parent == null) return;
-            if (parent instanceof LinearLayout) {
-                int gravity = ((LinearLayout) parent).getGravity();
-                boolean hasCenterHorizontal = (gravity & Gravity.HORIZONTAL_GRAVITY_MASK) == Gravity.CENTER_HORIZONTAL;
-                if (hasCenterHorizontal) { setVisibility(VISIBLE); return; }
-            }
-            int parentWidth = ((View) parent).getWidth();
-            if (parentWidth <= 0) return;
-            int marginStart = Math.max(0, (parentWidth - wordWidthPx) / 2);
-            int maxMarginStart = parentWidth - wordWidthPx - Math.round(finalAccentMarkWidth);
-            if (maxMarginStart < 0) maxMarginStart = 0;
-            if (marginStart > maxMarginStart) marginStart = maxMarginStart;
-            MarginLayoutParams mlp = (MarginLayoutParams) getLayoutParams();
-            mlp.setMarginStart(marginStart);
-            setLayoutParams(mlp);
-            setVisibility(VISIBLE);
-        });
+
+        ViewParent parent = getParent();
+        if (parent instanceof LinearLayout) {
+            int gravity = ((LinearLayout) parent).getGravity();
+            boolean hasCenterHorizontal = (gravity & Gravity.HORIZONTAL_GRAVITY_MASK) == Gravity.CENTER_HORIZONTAL;
+            if (hasCenterHorizontal) return;
+        }
+
+        int parentWidthPx = availableWidthPx;
+        int marginStart = Math.max(0, (parentWidthPx - wordWidthPx) / 2);
+        int maxMarginStart = parentWidthPx - wordWidthPx - Math.round(accentMarkWidth);
+        if (maxMarginStart < 0) maxMarginStart = 0;
+        if (marginStart > maxMarginStart) marginStart = maxMarginStart;
+        MarginLayoutParams mlp = (MarginLayoutParams) getLayoutParams();
+        mlp.setMarginStart(marginStart);
+        setLayoutParams(mlp);
+    }
+
+    public int getAccentMarkWidth() {
+        return lastAccentMarkWidthPx;
     }
 
 }
