@@ -17,11 +17,8 @@ import com.Nihilisttt.LearnWord.ViewPager2.NestedScrollableHostBetween2Layers;
 import com.Nihilisttt.LearnWord.Fragment.LearnPage.MainLearnPage.CollocationViewFragment;
 import com.Nihilisttt.LearnWord.Fragment.LearnPage.MainLearnPage.SynonymAntonymViewFragment;
 import com.Nihilisttt.LearnWord.Fragment.LearnPage.MainLearnPage.ConjugationFormViewFragment;
-import com.Nihilisttt.LearnWord.Fragment.LearnPage.MainLearnPage.EtymologyViewFragment;
-import com.Nihilisttt.LearnWord.Fragment.LearnPage.MainLearnPage.GrammarPointViewFragment;
-import com.Nihilisttt.LearnWord.Fragment.LearnPage.MainLearnPage.IdiomViewFragment;
+import com.Nihilisttt.LearnWord.Fragment.LearnPage.MainLearnPage.ExtendedInfoViewFragment;
 import com.Nihilisttt.LearnWord.Fragment.LearnPage.MainLearnPage.KanjiInfoViewFragment;
-import com.Nihilisttt.LearnWord.Fragment.LearnPage.MainLearnPage.UsageDistinctionViewFragment;
 import com.Nihilisttt.LearnWord.JavaBean.AntonymWord;
 import com.Nihilisttt.LearnWord.JavaBean.ConjugationForm;
 import com.Nihilisttt.LearnWord.JavaBean.Etymology;
@@ -35,7 +32,7 @@ import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
 import java.util.ArrayList;
-import java.util.ArrayList;
+
 import java.util.List;
 
 @SuppressLint("ViewConstructor")
@@ -108,7 +105,7 @@ public class IntegratedPartView extends LinearLayout {
         }
 
         if (!collocations.isEmpty()) {
-            tabTitles.add("词组搭配");
+            tabTitles.add("词组");
             fragmentList.add(new CollocationViewFragment(collocations));
         }
         if (!synonymWords.isEmpty() || !antonymWords.isEmpty()) {
@@ -119,25 +116,15 @@ public class IntegratedPartView extends LinearLayout {
             tabTitles.add("活用形");
             fragmentList.add(new ConjugationFormViewFragment(conjugationForms));
         }
-        if (!etymologies.isEmpty()) {
-            tabTitles.add("語源");
-            fragmentList.add(new EtymologyViewFragment(etymologies));
-        }
         if (!kanjiInfos.isEmpty()) {
-            tabTitles.add("漢字情報");
+            tabTitles.add("漢字");
             fragmentList.add(new KanjiInfoViewFragment(kanjiInfos));
         }
-        if (!usageDistinctions.isEmpty()) {
-            tabTitles.add("用法区分");
-            fragmentList.add(new UsageDistinctionViewFragment(usageDistinctions));
-        }
-        if (!grammarPoints.isEmpty()) {
-            tabTitles.add("文法");
-            fragmentList.add(new GrammarPointViewFragment(grammarPoints));
-        }
-        if (!validIdioms.isEmpty()) {
-            tabTitles.add("熟語");
-            fragmentList.add(new IdiomViewFragment(validIdioms));
+        boolean hasExtendedInfo = !etymologies.isEmpty() || !usageDistinctions.isEmpty()
+                || !grammarPoints.isEmpty() || !validIdioms.isEmpty();
+        if (hasExtendedInfo) {
+            tabTitles.add("其他");
+            fragmentList.add(new ExtendedInfoViewFragment(etymologies, usageDistinctions, grammarPoints, validIdioms));
         }
 
         FragmentStateAdapter adapter = new FragmentStateAdapter((FragmentActivity) getContext()) {

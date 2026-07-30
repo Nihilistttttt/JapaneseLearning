@@ -5,6 +5,29 @@ LearnWord 项目更新记录
 
 ========================
 
+【更新23】語源/用法区分/文法/熟語四Tab合并为一+漢字情報重复bug修复+integrated_part_container底部间距
+日期：2026-07-30
+涉及文件：
+  View: IntegratedPartView(四Tab合并为一"語源"Tab,漢字情報重复bug修复),
+        ExtendedInfoView(新增,語源/用法区分/文法/熟語合并视图,带标题和分隔线)
+  Fragment: ExtendedInfoViewFragment(新增,承载ExtendedInfoView的Fragment)
+  Layout: fragment_main_learn_page.xml(integrated_part_container marginBottom=12dp)
+
+1. 語源/用法区分/文法/熟語四Tab合并为一个"語源"Tab：
+   - 新增ExtendedInfoView:垂直布局,各section带标题(語源/用法区分/文法/熟語),section间8dp分隔线
+   - 新增ExtendedInfoViewFragment:直接继承Fragment(非WordViewFragment<T>),因需4种数据类型
+   - IntegratedPartView.update()中,四Tab合并为一个"語源"Tab,使用ExtendedInfoViewFragment
+   - 空section自动跳过(不显示标题和内容)
+
+2. 漢字情報重复bug修复：
+   - IntegratedPartView中漢字情報Tab被添加了两次(行122和130),删除重复的
+
+3. integrated_part_container底部间距：
+   - fragment_main_learn_page.xml中integrated_part_container添加layout_marginBottom="12dp"
+   - 与左滑释义卡片底部间距一致
+
+========================
+
 【更新22】近义词反义词可点击+汉字情报可点击+弹窗JLPT/词频+单词居中无跳动+显示时序修复
 日期：2026-07-30
 涉及文件：
