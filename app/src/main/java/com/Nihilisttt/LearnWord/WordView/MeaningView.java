@@ -194,7 +194,18 @@ public class MeaningView extends LinearLayout {
                     if (anchor != null && anchor.isAttachedToWindow()) {
                         popupWindow.showAsDropDown(anchor, 0, Convert.dpToPx(getContext(), 4));
                     } else {
-                        View rootView = ((Activity) getContext()).getWindow().getDecorView().findViewById(android.R.id.content);
+                        View rootView;
+                        Context ctx = getContext();
+                        android.app.Activity act = null;
+                        while (ctx != null) {
+                            if (ctx instanceof android.app.Activity) { act = (android.app.Activity) ctx; break; }
+                            if (ctx instanceof android.content.ContextWrapper) { ctx = ((android.content.ContextWrapper) ctx).getBaseContext(); } else { break; }
+                        }
+                        if (act != null) {
+                            rootView = act.getWindow().getDecorView().findViewById(android.R.id.content);
+                        } else {
+                            rootView = ((View) getParent()).getRootView();
+                        }
                         popupWindow.showAtLocation(rootView, Gravity.CENTER, 0, 0);
                     }
                 } catch (WindowManager.BadTokenException ignored) {}

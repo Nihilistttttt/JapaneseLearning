@@ -349,6 +349,18 @@ public class WordComponentView extends LinearLayout {
         return clickableArea;
     }
 
+    private static android.app.Activity resolveActivity(Context ctx) {
+        Context c = ctx;
+        while (c != null) {
+            if (c instanceof android.app.Activity) return (android.app.Activity) c;
+            if (c instanceof android.content.ContextWrapper) {
+                c = ((android.content.ContextWrapper) c).getBaseContext();
+            } else {
+                return null;
+            }
+        }
+        return null;
+    }
 
     private void showInfoDialog() {
         Context context = getContext();
@@ -400,6 +412,15 @@ public class WordComponentView extends LinearLayout {
         buttonPart.setOrientation(LinearLayout.HORIZONTAL);
         Button wordDetails = new Button(context);
         wordDetails.setText("查看详情➡");
+        wordDetails.setOnClickListener(v -> {
+            popupWindow.dismiss();
+            com.Nihilisttt.LearnWord.Fragment.LearnPage.MainLearnPage.WordDetailBottomSheet bottomSheet =
+                    new com.Nihilisttt.LearnWord.Fragment.LearnPage.MainLearnPage.WordDetailBottomSheet(wordId);
+            android.app.Activity act = resolveActivity(context);
+            if (act != null) {
+                bottomSheet.show(((androidx.fragment.app.FragmentActivity) act).getSupportFragmentManager(), "word_detail");
+            }
+        });
         buttonPart.addView(wordDetails);
 
         container.addView(basicWordPart);
@@ -421,7 +442,9 @@ public class WordComponentView extends LinearLayout {
                 TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics());
         int xOffset = (screenWidth - popupWidth) / 2;
 
-        View activityRoot = ((android.app.Activity) context).getWindow().getDecorView().findViewById(android.R.id.content);
+        View activityRoot = resolveActivity(context) != null
+                ? resolveActivity(context).getWindow().getDecorView().findViewById(android.R.id.content)
+                : ((View) getParent()).getRootView();
 
         final boolean[] basicWordReady = {false};
         final boolean[] meaningReady = {false};

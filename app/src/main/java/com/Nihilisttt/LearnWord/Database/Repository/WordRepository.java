@@ -667,4 +667,5 @@ public class WordRepository {
         return wordDao.getPreviousWordId(currentId);
     }
     // endregion
+
 }
