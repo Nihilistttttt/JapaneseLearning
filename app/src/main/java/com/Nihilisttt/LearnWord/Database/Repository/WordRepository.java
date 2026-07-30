@@ -8,13 +8,25 @@ import androidx.lifecycle.Transformations;
 
 import com.Nihilisttt.LearnWord.Database.Converter.AntonymWordConverter;
 import com.Nihilisttt.LearnWord.Database.Converter.BasicWordConverter;
+import com.Nihilisttt.LearnWord.Database.Converter.ConjugationFormConverter;
+import com.Nihilisttt.LearnWord.Database.Converter.EtymologyConverter;
+import com.Nihilisttt.LearnWord.Database.Converter.GrammarPointConverter;
+import com.Nihilisttt.LearnWord.Database.Converter.IdiomConverter;
+import com.Nihilisttt.LearnWord.Database.Converter.KanjiInfoConverter;
 import com.Nihilisttt.LearnWord.Database.Converter.SynonymWordConverter;
+import com.Nihilisttt.LearnWord.Database.Converter.UsageDistinctionConverter;
 import com.Nihilisttt.LearnWord.Database.Converter.WordCollocationConverter;
 import com.Nihilisttt.LearnWord.Database.Converter.WordMeaningConverter;
 import com.Nihilisttt.LearnWord.Database.Converter.WordSentenceConverter;
 import com.Nihilisttt.LearnWord.Database.Dao.AntonymWordDao;
 import com.Nihilisttt.LearnWord.Database.Dao.BasicWordDao;
+import com.Nihilisttt.LearnWord.Database.Dao.ConjugationFormDao;
+import com.Nihilisttt.LearnWord.Database.Dao.EtymologyDao;
+import com.Nihilisttt.LearnWord.Database.Dao.GrammarPointDao;
+import com.Nihilisttt.LearnWord.Database.Dao.IdiomDao;
+import com.Nihilisttt.LearnWord.Database.Dao.KanjiInfoDao;
 import com.Nihilisttt.LearnWord.Database.Dao.SynonymWordDao;
+import com.Nihilisttt.LearnWord.Database.Dao.UsageDistinctionDao;
 import com.Nihilisttt.LearnWord.Database.Dao.WordCollocationDao;
 import com.Nihilisttt.LearnWord.Database.Dao.WordDao;
 import com.Nihilisttt.LearnWord.Database.Dao.WordMeaningDao;
@@ -22,14 +34,26 @@ import com.Nihilisttt.LearnWord.Database.Dao.WordSentenceDao;
 import com.Nihilisttt.LearnWord.Database.Database.WordDatabase;
 import com.Nihilisttt.LearnWord.Database.Entities.AntonymWordEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.BasicWordEntity;
+import com.Nihilisttt.LearnWord.Database.Entities.ConjugationFormEntity;
+import com.Nihilisttt.LearnWord.Database.Entities.EtymologyEntity;
+import com.Nihilisttt.LearnWord.Database.Entities.GrammarPointEntity;
+import com.Nihilisttt.LearnWord.Database.Entities.IdiomEntity;
+import com.Nihilisttt.LearnWord.Database.Entities.KanjiInfoEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.SynonymWordEntity;
+import com.Nihilisttt.LearnWord.Database.Entities.UsageDistinctionEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.WordCollocationEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.WordMeaningEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.WordEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.WordSentenceEntity;
 import com.Nihilisttt.LearnWord.JavaBean.AntonymWord;
 import com.Nihilisttt.LearnWord.JavaBean.BasicWord;
+import com.Nihilisttt.LearnWord.JavaBean.ConjugationForm;
+import com.Nihilisttt.LearnWord.JavaBean.Etymology;
+import com.Nihilisttt.LearnWord.JavaBean.GrammarPoint;
+import com.Nihilisttt.LearnWord.JavaBean.Idiom;
+import com.Nihilisttt.LearnWord.JavaBean.KanjiInfo;
 import com.Nihilisttt.LearnWord.JavaBean.SynonymWord;
+import com.Nihilisttt.LearnWord.JavaBean.UsageDistinction;
 import com.Nihilisttt.LearnWord.JavaBean.Word;
 import com.Nihilisttt.LearnWord.Database.Converter.WordConverter;
 import com.Nihilisttt.LearnWord.JavaBean.WordCollocation;
@@ -48,6 +72,12 @@ public class WordRepository {
     private final WordCollocationDao wordCollocationDao;
     private final AntonymWordDao antonymWordDao;
     private final SynonymWordDao synonymWordDao;
+    private final ConjugationFormDao conjugationFormDao;
+    private final EtymologyDao etymologyDao;
+    private final KanjiInfoDao kanjiInfoDao;
+    private final UsageDistinctionDao usageDistinctionDao;
+    private final GrammarPointDao grammarPointDao;
+    private final IdiomDao idiomDao;
     private static volatile WordRepository instance;
 
     // 私有构造函数
@@ -60,6 +90,12 @@ public class WordRepository {
         this.wordCollocationDao = database.getWordCollocationDao();
         this.antonymWordDao = database.getAntonymWordDao();
         this.synonymWordDao = database.getSynonymWordDao();
+        this.conjugationFormDao = database.getConjugationFormDao();
+        this.etymologyDao = database.getEtymologyDao();
+        this.kanjiInfoDao = database.getKanjiInfoDao();
+        this.usageDistinctionDao = database.getUsageDistinctionDao();
+        this.grammarPointDao = database.getGrammarPointDao();
+        this.idiomDao = database.getIdiomDao();
     }
 
     // 单例获取方法
@@ -522,6 +558,96 @@ public class WordRepository {
         );
     }
 
+    // endregion
+
+    // region ConjugationForm操作
+    public LiveData<List<ConjugationForm>> getConjugationFormsByConjugationFormIdList(List<String> idList) {
+        if (idList == null || idList.isEmpty()) {
+            MutableLiveData<List<ConjugationForm>> result = new MutableLiveData<>();
+            result.setValue(Collections.emptyList());
+            return result;
+        }
+        return Transformations.map(conjugationFormDao.getConjugationFormsByConjugationFormIdList(idList),
+                entities -> entities.stream()
+                        .map(ConjugationFormConverter::entityToModel)
+                        .collect(Collectors.toList())
+        );
+    }
+    // endregion
+
+    // region Etymology操作
+    public LiveData<List<Etymology>> getEtymologiesByEtymologyIdList(List<String> idList) {
+        if (idList == null || idList.isEmpty()) {
+            MutableLiveData<List<Etymology>> result = new MutableLiveData<>();
+            result.setValue(Collections.emptyList());
+            return result;
+        }
+        return Transformations.map(etymologyDao.getEtymologiesByIdList(idList),
+                entities -> entities.stream()
+                        .map(EtymologyConverter::EtymologyEntityToEtymology)
+                        .collect(Collectors.toList())
+        );
+    }
+    // endregion
+
+    // region KanjiInfo操作
+    public LiveData<List<KanjiInfo>> getKanjiInfosByKanjiInfoIdList(List<String> idList) {
+        if (idList == null || idList.isEmpty()) {
+            MutableLiveData<List<KanjiInfo>> result = new MutableLiveData<>();
+            result.setValue(Collections.emptyList());
+            return result;
+        }
+        return Transformations.map(kanjiInfoDao.getKanjiInfosByKanjiInfoIdList(idList),
+                entities -> entities.stream()
+                        .map(KanjiInfoConverter::entityToModel)
+                        .collect(Collectors.toList())
+        );
+    }
+    // endregion
+
+    // region UsageDistinction操作
+    public LiveData<List<UsageDistinction>> getUsageDistinctionsByUsageDistinctionIdList(List<String> idList) {
+        if (idList == null || idList.isEmpty()) {
+            MutableLiveData<List<UsageDistinction>> result = new MutableLiveData<>();
+            result.setValue(Collections.emptyList());
+            return result;
+        }
+        return Transformations.map(usageDistinctionDao.getUsageDistinctionsByUsageDistinctionIdList(idList),
+                entities -> entities.stream()
+                        .map(UsageDistinctionConverter::entityToModel)
+                        .collect(Collectors.toList())
+        );
+    }
+    // endregion
+
+    // region GrammarPoint操作
+    public LiveData<List<GrammarPoint>> getGrammarPointsByGrammarPointIdList(List<String> idList) {
+        if (idList == null || idList.isEmpty()) {
+            MutableLiveData<List<GrammarPoint>> result = new MutableLiveData<>();
+            result.setValue(Collections.emptyList());
+            return result;
+        }
+        return Transformations.map(grammarPointDao.getGrammarPointsByGrammarPointIdList(idList),
+                entities -> entities.stream()
+                        .map(GrammarPointConverter::entityToModel)
+                        .collect(Collectors.toList())
+        );
+    }
+    // endregion
+
+    // region Idiom操作
+    public LiveData<List<Idiom>> getIdiomsByIdiomIdList(List<String> idList) {
+        if (idList == null || idList.isEmpty()) {
+            MutableLiveData<List<Idiom>> result = new MutableLiveData<>();
+            result.setValue(Collections.emptyList());
+            return result;
+        }
+        return Transformations.map(idiomDao.getIdiomsByIdiomIdList(idList),
+                entities -> entities.stream()
+                        .map(IdiomConverter::entityToModel)
+                        .collect(Collectors.toList())
+        );
+    }
     // endregion
 
     // region 导航查询

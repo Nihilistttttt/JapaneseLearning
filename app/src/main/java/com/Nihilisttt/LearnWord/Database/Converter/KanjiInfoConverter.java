@@ -17,6 +17,7 @@ public class KanjiInfoConverter {
                         .onyomi(Convert.jsonToList(e.getOnyomi()))
                         .kunyomi(Convert.jsonToList(e.getKunyomi()))
                         .sameKanjiWords(Convert.jsonToList(e.getSameKanjiWords()))
+                        .translation(e.getTranslation())
                         .build(), () -> null);
     }
 
@@ -26,6 +27,7 @@ public class KanjiInfoConverter {
                         m.getKanjiInfoId(), m.getWordId(), m.getKanji(),
                         Convert.listToJson(m.getOnyomi()),
                         Convert.listToJson(m.getKunyomi()),
-                        Convert.listToJson(m.getSameKanjiWords())));
+                        Convert.listToJson(m.getSameKanjiWords()),
+                        m.getTranslation()));
     }
 }

@@ -24,6 +24,24 @@ public class WordEntity {
     private String antonymWordIdList;
     @ColumnInfo
     private String collocationIdList;
+    @NonNull
+    @ColumnInfo(defaultValue = "[]")
+    private String conjugationFormIdList;
+    @NonNull
+    @ColumnInfo(defaultValue = "[]")
+    private String etymologyIdList;
+    @NonNull
+    @ColumnInfo(defaultValue = "[]")
+    private String kanjiInfoIdList;
+    @NonNull
+    @ColumnInfo(defaultValue = "[]")
+    private String usageDistinctionIdList;
+    @NonNull
+    @ColumnInfo(defaultValue = "[]")
+    private String grammarPointIdList;
+    @NonNull
+    @ColumnInfo(defaultValue = "[]")
+    private String idiomIdList;
 
     @NonNull
     public String getWordId() {
@@ -74,13 +92,74 @@ public class WordEntity {
         this.collocationIdList = collocationIdList;
     }
 
-    public WordEntity(@NotNull String wordId, String antonymWordIdList, String synonymWordIdList, String collocationIdList, String meaningIdList, String sentenceIdList) {
+    @NonNull
+    public String getConjugationFormIdList() {
+        return conjugationFormIdList;
+    }
+
+    public void setConjugationFormIdList(@NonNull String conjugationFormIdList) {
+        this.conjugationFormIdList = conjugationFormIdList;
+    }
+
+    @NonNull
+    public String getEtymologyIdList() {
+        return etymologyIdList;
+    }
+
+    public void setEtymologyIdList(@NonNull String etymologyIdList) {
+        this.etymologyIdList = etymologyIdList;
+    }
+
+    @NonNull
+    public String getKanjiInfoIdList() {
+        return kanjiInfoIdList;
+    }
+
+    public void setKanjiInfoIdList(@NonNull String kanjiInfoIdList) {
+        this.kanjiInfoIdList = kanjiInfoIdList;
+    }
+
+    @NonNull
+    public String getUsageDistinctionIdList() {
+        return usageDistinctionIdList;
+    }
+
+    public void setUsageDistinctionIdList(@NonNull String usageDistinctionIdList) {
+        this.usageDistinctionIdList = usageDistinctionIdList;
+    }
+
+    @NonNull
+    public String getGrammarPointIdList() {
+        return grammarPointIdList;
+    }
+
+    public void setGrammarPointIdList(@NonNull String grammarPointIdList) {
+        this.grammarPointIdList = grammarPointIdList;
+    }
+
+    @NonNull
+    public String getIdiomIdList() {
+        return idiomIdList;
+    }
+
+    public void setIdiomIdList(@NonNull String idiomIdList) {
+        this.idiomIdList = idiomIdList;
+    }
+
+    public WordEntity(@NotNull String wordId, String antonymWordIdList, String synonymWordIdList, String collocationIdList, String meaningIdList, String sentenceIdList,
+                      @NonNull String conjugationFormIdList, @NonNull String etymologyIdList, @NonNull String kanjiInfoIdList, @NonNull String usageDistinctionIdList, @NonNull String grammarPointIdList, @NonNull String idiomIdList) {
         this.wordId = wordId;
         this.meaningIdList = meaningIdList;
         this.sentenceIdList = sentenceIdList;
         this.synonymWordIdList = synonymWordIdList;
         this.antonymWordIdList = antonymWordIdList;
         this.collocationIdList = collocationIdList;
+        this.conjugationFormIdList = conjugationFormIdList;
+        this.etymologyIdList = etymologyIdList;
+        this.kanjiInfoIdList = kanjiInfoIdList;
+        this.usageDistinctionIdList = usageDistinctionIdList;
+        this.grammarPointIdList = grammarPointIdList;
+        this.idiomIdList = idiomIdList;
     }
 
     @Override

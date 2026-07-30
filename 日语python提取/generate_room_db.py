@@ -25,7 +25,7 @@ OUTPUT_PATH = os.path.join(BASE, 'app', 'src', 'main', 'assets', 'databases', 'w
 # Room identity_hash - 从编译生成的WordDatabase_Impl.java中获取
 # 需要先构建一次项目，然后从build/generated/source/kapt/debug/中找到
 # 暂时用占位符，构建后替换
-IDENTITY_HASH = "76252537c461c611882c982c1f2d0225"
+IDENTITY_HASH = "6778bdab1e7d4911c4fcec776f9f3514"
 
 BATCH_SIZE = 2000
 
@@ -45,7 +45,13 @@ def create_tables(cursor):
             sentenceIdList TEXT,
             synonymWordIdList TEXT,
             antonymWordIdList TEXT,
-            collocationIdList TEXT
+            collocationIdList TEXT,
+            conjugationFormIdList TEXT NOT NULL DEFAULT '[]',
+            etymologyIdList TEXT NOT NULL DEFAULT '[]',
+            kanjiInfoIdList TEXT NOT NULL DEFAULT '[]',
+            usageDistinctionIdList TEXT NOT NULL DEFAULT '[]',
+            grammarPointIdList TEXT NOT NULL DEFAULT '[]',
+            idiomIdList TEXT NOT NULL DEFAULT '[]'
         )
     """)
 
@@ -56,7 +62,9 @@ def create_tables(cursor):
             kanaComponents TEXT,
             audioUrl TEXT,
             accentMark TEXT,
-            mnemonic TEXT
+            mnemonic TEXT,
+            jlptLevel INTEGER NOT NULL DEFAULT 0,
+            wordFrequency INTEGER NOT NULL DEFAULT 0
         )
     """)
 
@@ -117,6 +125,78 @@ def create_tables(cursor):
         )
     """)
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS ConjugationForm (
+            conjugationFormId TEXT NOT NULL PRIMARY KEY,
+            wordId TEXT,
+            formName TEXT,
+            kanjiComponents TEXT,
+            kanaComponents TEXT,
+            formNameTranslation TEXT NOT NULL DEFAULT ''
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS Etymology (
+            etymologyId TEXT NOT NULL PRIMARY KEY,
+            wordId TEXT,
+            etymologyType TEXT,
+            kanjiComponents TEXT,
+            kanaComponents TEXT,
+            wordIdList TEXT,
+            translation TEXT NOT NULL DEFAULT ''
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS KanjiInfo (
+            kanjiInfoId TEXT NOT NULL PRIMARY KEY,
+            wordId TEXT,
+            kanji TEXT,
+            onyomi TEXT,
+            kunyomi TEXT,
+            sameKanjiWords TEXT,
+            translation TEXT NOT NULL DEFAULT ''
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS UsageDistinction (
+            usageDistinctionId TEXT NOT NULL PRIMARY KEY,
+            wordId TEXT,
+            distinctionText TEXT,
+            comparedWordIds TEXT,
+            kanjiComponents TEXT NOT NULL DEFAULT '',
+            kanaComponents TEXT NOT NULL DEFAULT ''
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS GrammarPoint (
+            grammarPointId TEXT NOT NULL PRIMARY KEY,
+            wordId TEXT,
+            grammarName TEXT,
+            grammarDescription TEXT,
+            exampleKanji TEXT,
+            exampleKana TEXT,
+            nameKanjiComponents TEXT NOT NULL DEFAULT '',
+            nameKanaComponents TEXT NOT NULL DEFAULT '',
+            descKanjiComponents TEXT NOT NULL DEFAULT '',
+            descKanaComponents TEXT NOT NULL DEFAULT ''
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS Idiom (
+            idiomId TEXT NOT NULL PRIMARY KEY,
+            wordId TEXT,
+            kanjiComponents TEXT,
+            kanaComponents TEXT,
+            translation TEXT,
+            wordIdList TEXT
+        )
+    """)
+
 
 def create_indexes(cursor):
     cursor.execute("CREATE INDEX IF NOT EXISTS index_WordMeaning_wordId ON WordMeaning(wordId)")
@@ -173,15 +253,19 @@ def main():
     # 批量导入数据
     print("Importing data...")
 
-    word_columns = ['wordId', 'antonymWordIdList', 'synonymWordIdList', 'collocationIdList', 'meaningIdList', 'sentenceIdList']
+    word_columns = ['wordId', 'antonymWordIdList', 'synonymWordIdList', 'collocationIdList', 'meaningIdList', 'sentenceIdList',
+                     'conjugationFormIdList', 'etymologyIdList', 'kanjiInfoIdList', 'usageDistinctionIdList', 'grammarPointIdList', 'idiomIdList']
     word_rows = [(w['wordId'], w.get('antonymWordIdList', '[]'), w.get('synonymWordIdList', '[]'),
-                  w.get('collocationIdList', '[]'), w.get('meaningIdList', '[]'), w.get('sentenceIdList', '[]'))
+                  w.get('collocationIdList', '[]'), w.get('meaningIdList', '[]'), w.get('sentenceIdList', '[]'),
+                  w.get('conjugationFormIdList', '[]'), w.get('etymologyIdList', '[]'), w.get('kanjiInfoIdList', '[]'),
+                  w.get('usageDistinctionIdList', '[]'), w.get('grammarPointIdList', '[]'), w.get('idiomIdList', '[]'))
                  for w in data.get('words', [])]
     batch_insert(cursor, conn, 'Word', word_columns, word_rows)
 
-    basic_columns = ['wordId', 'kanjiComponents', 'kanaComponents', 'audioUrl', 'accentMark', 'mnemonic']
+    basic_columns = ['wordId', 'kanjiComponents', 'kanaComponents', 'audioUrl', 'accentMark', 'mnemonic', 'jlptLevel', 'wordFrequency']
     basic_rows = [(b['wordId'], b.get('kanjiComponents', '[]'), b.get('kanaComponents', '[]'),
-                   b.get('audioUrl', ''), b.get('accentMark', ''), b.get('mnemonic', ''))
+                   b.get('audioUrl', ''), b.get('accentMark', ''), b.get('mnemonic', ''),
+                   b.get('jlptLevel', 0), b.get('wordFrequency', 0))
                   for b in data.get('basicWords', [])]
     batch_insert(cursor, conn, 'BasicWord', basic_columns, basic_rows)
 
@@ -219,6 +303,45 @@ def main():
                           c.get('source', ''), c.get('audioUrl', ''))
                          for c in data.get('wordCollocations', [])]
     batch_insert(cursor, conn, 'WordCollocation', collocation_columns, collocation_rows)
+
+    conjugation_columns = ['conjugationFormId', 'wordId', 'formName', 'kanjiComponents', 'kanaComponents', 'formNameTranslation']
+    conjugation_rows = [(c['conjugationFormId'], c.get('wordId', ''), c.get('formName', ''),
+                         c.get('kanjiComponents', '[]'), c.get('kanaComponents', '[]'), c.get('formNameTranslation', ''))
+                        for c in data.get('conjugationForms', [])]
+    batch_insert(cursor, conn, 'ConjugationForm', conjugation_columns, conjugation_rows)
+
+    etymology_columns = ['etymologyId', 'wordId', 'etymologyType', 'kanjiComponents', 'kanaComponents', 'wordIdList', 'translation']
+    etymology_rows = [(e['etymologyId'], e.get('wordId', ''), e.get('etymologyType', ''),
+                       e.get('kanjiComponents', '[]'), e.get('kanaComponents', '[]'), e.get('wordIdList', '[]'), e.get('translation', ''))
+                      for e in data.get('etymologies', [])]
+    batch_insert(cursor, conn, 'Etymology', etymology_columns, etymology_rows)
+
+    kanjiinfo_columns = ['kanjiInfoId', 'wordId', 'kanji', 'onyomi', 'kunyomi', 'sameKanjiWords', 'translation']
+    kanjiinfo_rows = [(k['kanjiInfoId'], k.get('wordId', ''), k.get('kanji', ''),
+                       k.get('onyomi', '[]'), k.get('kunyomi', '[]'), k.get('sameKanjiWords', '[]'), k.get('translation', ''))
+                      for k in data.get('kanjiInfos', [])]
+    batch_insert(cursor, conn, 'KanjiInfo', kanjiinfo_columns, kanjiinfo_rows)
+
+    usage_columns = ['usageDistinctionId', 'wordId', 'distinctionText', 'comparedWordIds', 'kanjiComponents', 'kanaComponents']
+    usage_rows = [(u['usageDistinctionId'], u.get('wordId', ''), u.get('distinctionText', ''),
+                   u.get('comparedWordIds', '[]'), u.get('kanjiComponents', ''), u.get('kanaComponents', ''))
+                  for u in data.get('usageDistinctions', [])]
+    batch_insert(cursor, conn, 'UsageDistinction', usage_columns, usage_rows)
+
+    grammar_columns = ['grammarPointId', 'wordId', 'grammarName', 'grammarDescription', 'exampleKanji', 'exampleKana',
+                       'nameKanjiComponents', 'nameKanaComponents', 'descKanjiComponents', 'descKanaComponents']
+    grammar_rows = [(g['grammarPointId'], g.get('wordId', ''), g.get('grammarName', ''), g.get('grammarDescription', ''),
+                     g.get('exampleKanji', ''), g.get('exampleKana', ''),
+                     g.get('nameKanjiComponents', ''), g.get('nameKanaComponents', ''),
+                     g.get('descKanjiComponents', ''), g.get('descKanaComponents', ''))
+                    for g in data.get('grammarPoints', [])]
+    batch_insert(cursor, conn, 'GrammarPoint', grammar_columns, grammar_rows)
+
+    idiom_columns = ['idiomId', 'wordId', 'kanjiComponents', 'kanaComponents', 'translation', 'wordIdList']
+    idiom_rows = [(i['idiomId'], i.get('wordId', ''), i.get('kanjiComponents', '[]'),
+                   i.get('kanaComponents', '[]'), i.get('translation', ''), i.get('wordIdList', '[]'))
+                  for i in data.get('idioms', [])]
+    batch_insert(cursor, conn, 'Idiom', idiom_columns, idiom_rows)
 
     MAX_SENTENCES_PER_WORD = 6
 

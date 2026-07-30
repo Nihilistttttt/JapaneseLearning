@@ -12,7 +12,11 @@ public class WordConverter {
             .addWordId("null")
             .withAntonymIdList(Collections.singletonList("null")).withSynonymIdList(Collections.singletonList("null"))
             .withMeaningIdList(Collections.singletonList("null")).withCollocationIdList(Collections.singletonList("null"))
-            .withSentenceIdList(Collections.singletonList("null")).build();
+            .withSentenceIdList(Collections.singletonList("null"))
+            .withConjugationFormIdList(Collections.emptyList()).withEtymologyIdList(Collections.emptyList())
+            .withKanjiInfoIdList(Collections.emptyList()).withUsageDistinctionIdList(Collections.emptyList())
+            .withGrammarPointIdList(Collections.emptyList()).withIdiomIdList(Collections.emptyList())
+            .build();
     private WordConverter() {}
 
     public static Word WordEntityToWord(WordEntity entity) {
@@ -24,6 +28,12 @@ public class WordConverter {
                         .withCollocationIdList(Convert.jsonToList(e.getCollocationIdList()))
                         .withMeaningIdList(Convert.jsonToList(e.getMeaningIdList()))
                         .withSentenceIdList(Convert.jsonToList(e.getSentenceIdList()))
+                        .withConjugationFormIdList(Convert.jsonToList(e.getConjugationFormIdList()))
+                        .withEtymologyIdList(Convert.jsonToList(e.getEtymologyIdList()))
+                        .withKanjiInfoIdList(Convert.jsonToList(e.getKanjiInfoIdList()))
+                        .withUsageDistinctionIdList(Convert.jsonToList(e.getUsageDistinctionIdList()))
+                        .withGrammarPointIdList(Convert.jsonToList(e.getGrammarPointIdList()))
+                        .withIdiomIdList(Convert.jsonToList(e.getIdiomIdList()))
                         .build(), () -> DEFAULT);
     }
 
@@ -32,6 +42,9 @@ public class WordConverter {
                 new WordEntity(m.getWordId(),
                         Convert.listToJson(m.getAntonymIdList()), Convert.listToJson(m.getSynonymIdList()),
                         Convert.listToJson(m.getCollocationIdList()), Convert.listToJson(m.getMeaningIdList()),
-                        Convert.listToJson(m.getSentenceIdList())));
+                        Convert.listToJson(m.getSentenceIdList()),
+                        Convert.listToJson(m.getConjugationFormIdList()), Convert.listToJson(m.getEtymologyIdList()),
+                        Convert.listToJson(m.getKanjiInfoIdList()), Convert.listToJson(m.getUsageDistinctionIdList()),
+                        Convert.listToJson(m.getGrammarPointIdList()), Convert.listToJson(m.getIdiomIdList())));
     }
 }

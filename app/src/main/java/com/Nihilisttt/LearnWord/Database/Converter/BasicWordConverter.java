@@ -10,7 +10,7 @@ public class BasicWordConverter {
     private static final String TAG = "BasicWordConverter";
     private static final BasicWord DEFAULT = new BasicWord.Builder()
             .wordId("null").kanjiComponents(Collections.singletonList("null")).kanaComponents(Collections.singletonList("null"))
-            .audioUrl("null").accentMark("null").mnemonic("null").build();
+            .audioUrl("null").accentMark("null").mnemonic("null").jlptLevel(0).wordFrequency(0).build();
     private BasicWordConverter() {}
 
     public static BasicWord BasicWordEntityToBasicWord(BasicWordEntity entity) {
@@ -20,6 +20,7 @@ public class BasicWordConverter {
                         .kanjiComponents(Convert.jsonToList(e.getKanjiComponents()))
                         .kanaComponents(Convert.jsonToList(e.getKanaComponents()))
                         .audioUrl(e.getAudioUrl()).accentMark(e.getAccentMark()).mnemonic(e.getMnemonic())
+                        .jlptLevel(e.getJlptLevel()).wordFrequency(e.getWordFrequency())
                         .build(), () -> DEFAULT);
     }
 
@@ -27,6 +28,6 @@ public class BasicWordConverter {
         return ConverterHelper.modelToEntity(model, TAG, "BasicWord", m ->
                 new BasicWordEntity(m.getWordId(),
                         Convert.listToJson(m.getKanjiComponents()), Convert.listToJson(m.getKanaComponents()),
-                        m.getAudioUrl(), m.getAccentMark(), m.getMnemonic()));
+                        m.getAudioUrl(), m.getAccentMark(), m.getMnemonic(), m.getJlptLevel(), m.getWordFrequency()));
     }
 }

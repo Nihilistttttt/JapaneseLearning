@@ -144,12 +144,27 @@ public class MainLearnPageFragment extends Fragment {
         }
 
         if (integratedPartView == null) {
-            integratedPartView = new IntegratedPartView(requireContext(), combinedWordInfo.getWordCollocationList(),
-                    combinedWordInfo.getAntonymWordList(), combinedWordInfo.getSynonymWordList());
+            integratedPartView = new IntegratedPartView(requireContext(),
+                    combinedWordInfo.getWordCollocationList(),
+                    combinedWordInfo.getAntonymWordList(),
+                    combinedWordInfo.getSynonymWordList(),
+                    combinedWordInfo.getConjugationFormList(),
+                    combinedWordInfo.getEtymologyList(),
+                    combinedWordInfo.getKanjiInfoList(),
+                    combinedWordInfo.getUsageDistinctionList(),
+                    combinedWordInfo.getGrammarPointList(),
+                    combinedWordInfo.getIdiomList());
             integratedPartContainer.addView(integratedPartView);
         } else {
             integratedPartView.update(combinedWordInfo.getWordCollocationList(),
-                    combinedWordInfo.getAntonymWordList(), combinedWordInfo.getSynonymWordList());
+                    combinedWordInfo.getAntonymWordList(),
+                    combinedWordInfo.getSynonymWordList(),
+                    combinedWordInfo.getConjugationFormList(),
+                    combinedWordInfo.getEtymologyList(),
+                    combinedWordInfo.getKanjiInfoList(),
+                    combinedWordInfo.getUsageDistinctionList(),
+                    combinedWordInfo.getGrammarPointList(),
+                    combinedWordInfo.getIdiomList());
         }
 
         final int touchSlop = ViewConfiguration.get(requireContext()).getScaledTouchSlop();

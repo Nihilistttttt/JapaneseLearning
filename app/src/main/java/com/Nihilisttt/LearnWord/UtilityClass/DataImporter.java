@@ -132,7 +132,13 @@ public class DataImporter {
                     obj.get("synonymWordIdList").getAsString(),
                     obj.get("collocationIdList").getAsString(),
                     obj.get("meaningIdList").getAsString(),
-                    obj.get("sentenceIdList").getAsString()
+                    obj.get("sentenceIdList").getAsString(),
+                    getAsStringOrDefault(obj, "conjugationFormIdList", "[]"),
+                    getAsStringOrDefault(obj, "etymologyIdList", "[]"),
+                    getAsStringOrDefault(obj, "kanjiInfoIdList", "[]"),
+                    getAsStringOrDefault(obj, "usageDistinctionIdList", "[]"),
+                    getAsStringOrDefault(obj, "grammarPointIdList", "[]"),
+                    getAsStringOrDefault(obj, "idiomIdList", "[]")
             ));
             if (batch.size() >= BATCH_SIZE) {
                 dao.insertWords(batch.toArray(new WordEntity[0]));
@@ -156,7 +162,9 @@ public class DataImporter {
                     obj.get("kanaComponents").getAsString(),
                     getAsStringOrDefault(obj, "audioUrl", ""),
                     getAsStringOrDefault(obj, "accentMark", ""),
-                    getAsStringOrDefault(obj, "mnemonic", "")
+                    getAsStringOrDefault(obj, "mnemonic", ""),
+                    obj.has("jlptLevel") && !obj.get("jlptLevel").isJsonNull() ? obj.get("jlptLevel").getAsInt() : 0,
+                    obj.has("wordFrequency") && !obj.get("wordFrequency").isJsonNull() ? obj.get("wordFrequency").getAsInt() : 0
             ));
             if (batch.size() >= BATCH_SIZE) {
                 dao.insertBasicWords(batch.toArray(new BasicWordEntity[0]));

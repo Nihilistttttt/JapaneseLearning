@@ -23,14 +23,20 @@ public class BasicWordEntity {
     private String accentMark;
     @ColumnInfo
     private String mnemonic;
+    @ColumnInfo(defaultValue = "0")
+    private int jlptLevel;
+    @ColumnInfo(defaultValue = "0")
+    private int wordFrequency;
 
-    public BasicWordEntity(String wordId, String kanjiComponents, String kanaComponents, String audioUrl, String accentMark, String mnemonic) {
+    public BasicWordEntity(String wordId, String kanjiComponents, String kanaComponents, String audioUrl, String accentMark, String mnemonic, int jlptLevel, int wordFrequency) {
         this.wordId = wordId;
         this.kanjiComponents = kanjiComponents;
         this.kanaComponents = kanaComponents;
         this.audioUrl = audioUrl;
         this.accentMark = accentMark;
         this.mnemonic = mnemonic;
+        this.jlptLevel = jlptLevel;
+        this.wordFrequency = wordFrequency;
     }
 
     public String getWordId() {
@@ -79,6 +85,22 @@ public class BasicWordEntity {
 
     public void setMnemonic(String mnemonic) {
         this.mnemonic = mnemonic;
+    }
+
+    public int getJlptLevel() {
+        return jlptLevel;
+    }
+
+    public void setJlptLevel(int jlptLevel) {
+        this.jlptLevel = jlptLevel;
+    }
+
+    public int getWordFrequency() {
+        return wordFrequency;
+    }
+
+    public void setWordFrequency(int wordFrequency) {
+        this.wordFrequency = wordFrequency;
     }
 
     @Override

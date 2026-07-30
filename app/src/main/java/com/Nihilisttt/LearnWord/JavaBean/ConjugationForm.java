@@ -7,37 +7,42 @@ import java.util.List;
 public class ConjugationForm extends WordComponent {
     private final String conjugationFormId;
     private final String formName;
+    private final String formNameTranslation;
 
     public static class Builder {
         private String conjugationFormId;
         private String wordId;
         private String formName;
+        private String formNameTranslation;
         private List<String> kanjiComponents;
         private List<String> kanaComponents;
 
         public Builder conjugationFormId(String id) { this.conjugationFormId = id; return this; }
         public Builder wordId(String wordId) { this.wordId = wordId; return this; }
         public Builder formName(String formName) { this.formName = formName; return this; }
+        public Builder formNameTranslation(String formNameTranslation) { this.formNameTranslation = formNameTranslation; return this; }
         public Builder kanjiComponents(List<String> components) { this.kanjiComponents = new ArrayList<>(components); return this; }
         public Builder kanaComponents(List<String> components) { this.kanaComponents = new ArrayList<>(components); return this; }
 
         public ConjugationForm build() {
             return new ConjugationForm(
-                    conjugationFormId, wordId, formName,
+                    conjugationFormId, wordId, formName, formNameTranslation != null ? formNameTranslation : "",
                     unmodifiableListOf(kanjiComponents), unmodifiableListOf(kanaComponents)
             );
         }
     }
 
-    private ConjugationForm(String conjugationFormId, String wordId, String formName,
+    private ConjugationForm(String conjugationFormId, String wordId, String formName, String formNameTranslation,
                             List<String> kanjiComponents, List<String> kanaComponents) {
         super(wordId, kanjiComponents, kanaComponents);
         this.conjugationFormId = conjugationFormId;
         this.formName = formName;
+        this.formNameTranslation = formNameTranslation;
     }
 
     public String getConjugationFormId() { return conjugationFormId; }
     public String getFormName() { return formName; }
+    public String getFormNameTranslation() { return formNameTranslation; }
 
     @Override
     public String toString() {

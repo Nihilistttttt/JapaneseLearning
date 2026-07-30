@@ -14,6 +14,7 @@ public class ConjugationFormConverter {
                         .conjugationFormId(e.getConjugationFormId())
                         .wordId(e.getWordId())
                         .formName(e.getFormName())
+                        .formNameTranslation(e.getFormNameTranslation())
                         .kanjiComponents(Convert.jsonToList(e.getKanjiComponents()))
                         .kanaComponents(Convert.jsonToList(e.getKanaComponents()))
                         .build(), () -> null);
@@ -24,6 +25,7 @@ public class ConjugationFormConverter {
                 new ConjugationFormEntity(
                         m.getConjugationFormId(), m.getWordId(), m.getFormName(),
                         Convert.listToJson(m.getKanjiComponents()),
-                        Convert.listToJson(m.getKanaComponents())));
+                        Convert.listToJson(m.getKanaComponents()),
+                        m.getFormNameTranslation()));
     }
 }

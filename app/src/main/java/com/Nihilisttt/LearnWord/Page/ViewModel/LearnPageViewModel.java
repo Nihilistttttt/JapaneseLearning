@@ -15,7 +15,13 @@ import com.Nihilisttt.LearnWord.Database.Database.WordDatabase;
 import com.Nihilisttt.LearnWord.Database.Repository.WordRepository;
 import com.Nihilisttt.LearnWord.JavaBean.AntonymWord;
 import com.Nihilisttt.LearnWord.JavaBean.BasicWord;
+import com.Nihilisttt.LearnWord.JavaBean.ConjugationForm;
+import com.Nihilisttt.LearnWord.JavaBean.Etymology;
+import com.Nihilisttt.LearnWord.JavaBean.GrammarPoint;
+import com.Nihilisttt.LearnWord.JavaBean.Idiom;
+import com.Nihilisttt.LearnWord.JavaBean.KanjiInfo;
 import com.Nihilisttt.LearnWord.JavaBean.SynonymWord;
+import com.Nihilisttt.LearnWord.JavaBean.UsageDistinction;
 import com.Nihilisttt.LearnWord.JavaBean.Word;
 import com.Nihilisttt.LearnWord.JavaBean.WordCollocation;
 import com.Nihilisttt.LearnWord.JavaBean.WordMeaning;
@@ -26,20 +32,16 @@ import java.util.List;
 import java.util.concurrent.Future;
 
 public class LearnPageViewModel extends AndroidViewModel {
-    // 配置常量
     private static final String PREFS_NAME = "WordProgressPrefs";
     private static final String KEY_CURRENT_ID = "current_word_id";
     private static final String DEFAULT_WORD_ID = "";
 
-    // 数据存储
     private final SharedPreferences prefs;
     private final WordRepository repository;
 
-    // LiveData控制
     private final MutableLiveData<String> currentWordId = new MutableLiveData<>();
     private final MutableLiveData<String> toastMessage = new MutableLiveData<>();
 
-    // 数据转换链
     private final LiveData<Word> currentWord;
     private final LiveData<BasicWord> basicWordLiveData;
     private final LiveData<List<WordMeaning>> wordMeaningListLiveData;
@@ -47,16 +49,20 @@ public class LearnPageViewModel extends AndroidViewModel {
     private final LiveData<List<WordSentence>> wordSentenceListLiveData;
     private final LiveData<List<AntonymWord>> antonymWordListLiveData;
     private final LiveData<List<SynonymWord>> synonymWordListLiveData;
+    private final LiveData<List<ConjugationForm>> conjugationFormListLiveData;
+    private final LiveData<List<Etymology>> etymologyListLiveData;
+    private final LiveData<List<KanjiInfo>> kanjiInfoListLiveData;
+    private final LiveData<List<UsageDistinction>> usageDistinctionListLiveData;
+    private final LiveData<List<GrammarPoint>> grammarPointListLiveData;
+    private final LiveData<List<Idiom>> idiomListLiveData;
     private final MediatorLiveData<CombinedWordInfo> combinedWordInfo = new MediatorLiveData<>();
 
     public LearnPageViewModel(@NonNull Application application) {
         super(application);
 
-        // 初始化组件
         prefs = application.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         repository = WordRepository.getInstance(application);
 
-        // 加载保存的ID或使用默认值
         String savedId;
         try {
             savedId = prefs.getString(KEY_CURRENT_ID, DEFAULT_WORD_ID);
@@ -75,7 +81,6 @@ public class LearnPageViewModel extends AndroidViewModel {
         }
         currentWordId.setValue(savedId);
 
-        // 构建数据管道
         currentWord = Transformations.switchMap(currentWordId, id ->
                 repository.getWordById(id));
 
@@ -97,61 +102,64 @@ public class LearnPageViewModel extends AndroidViewModel {
         synonymWordListLiveData = Transformations.switchMap(currentWord, word ->
                 repository.getSynonymWordsBySynonymWordsIdList(word.getSynonymIdList()));
 
+        conjugationFormListLiveData = Transformations.switchMap(currentWord, word ->
+                repository.getConjugationFormsByConjugationFormIdList(word.getConjugationFormIdList()));
+
+        etymologyListLiveData = Transformations.switchMap(currentWord, word ->
+                repository.getEtymologiesByEtymologyIdList(word.getEtymologyIdList()));
+
+        kanjiInfoListLiveData = Transformations.switchMap(currentWord, word ->
+                repository.getKanjiInfosByKanjiInfoIdList(word.getKanjiInfoIdList()));
+
+        usageDistinctionListLiveData = Transformations.switchMap(currentWord, word ->
+                repository.getUsageDistinctionsByUsageDistinctionIdList(word.getUsageDistinctionIdList()));
+
+        grammarPointListLiveData = Transformations.switchMap(currentWord, word ->
+                repository.getGrammarPointsByGrammarPointIdList(word.getGrammarPointIdList()));
+
+        idiomListLiveData = Transformations.switchMap(currentWord, word ->
+                repository.getIdiomsByIdiomIdList(word.getIdiomIdList()));
+
         combinedWordInfo.addSource(basicWordLiveData, value -> updateCombined());
         combinedWordInfo.addSource(wordMeaningListLiveData, value -> updateCombined());
         combinedWordInfo.addSource(wordSentenceListLiveData, value -> updateCombined());
         combinedWordInfo.addSource(wordCollocationListLiveData, value -> updateCombined());
         combinedWordInfo.addSource(antonymWordListLiveData, value -> updateCombined());
         combinedWordInfo.addSource(synonymWordListLiveData, value -> updateCombined());
+        combinedWordInfo.addSource(conjugationFormListLiveData, value -> updateCombined());
+        combinedWordInfo.addSource(etymologyListLiveData, value -> updateCombined());
+        combinedWordInfo.addSource(kanjiInfoListLiveData, value -> updateCombined());
+        combinedWordInfo.addSource(usageDistinctionListLiveData, value -> updateCombined());
+        combinedWordInfo.addSource(grammarPointListLiveData, value -> updateCombined());
+        combinedWordInfo.addSource(idiomListLiveData, value -> updateCombined());
     }
 
     // region 公开的LiveData访问方法
-    public LiveData<Word> getCurrentWord() {
-        return currentWord;
-    }
-
-    public LiveData<BasicWord> getBasicWord() {
-        return basicWordLiveData;
-    }
-
-    public LiveData<List<WordMeaning>> getWordMeaningListLiveData() {
-        return wordMeaningListLiveData;
-    }
-
-    public LiveData<List<WordCollocation>> getWordCollocationListLiveData() {
-        return wordCollocationListLiveData;
-    }
-
-    public LiveData<List<AntonymWord>> getAntonymWordListLiveData() {
-        return antonymWordListLiveData;
-    }
-
-    public LiveData<List<SynonymWord>> getSynonymWordListLiveData() {
-        return synonymWordListLiveData;
-    }
-
-    public LiveData<String> getToastMessage() {
-        return toastMessage;
-    }
-
-    public LiveData<CombinedWordInfo> getCombinedWordInfo() {
-        return combinedWordInfo;
-    }
+    public LiveData<Word> getCurrentWord() { return currentWord; }
+    public LiveData<BasicWord> getBasicWord() { return basicWordLiveData; }
+    public LiveData<List<WordMeaning>> getWordMeaningListLiveData() { return wordMeaningListLiveData; }
+    public LiveData<List<WordCollocation>> getWordCollocationListLiveData() { return wordCollocationListLiveData; }
+    public LiveData<List<AntonymWord>> getAntonymWordListLiveData() { return antonymWordListLiveData; }
+    public LiveData<List<SynonymWord>> getSynonymWordListLiveData() { return synonymWordListLiveData; }
+    public LiveData<List<ConjugationForm>> getConjugationFormListLiveData() { return conjugationFormListLiveData; }
+    public LiveData<List<Etymology>> getEtymologyListLiveData() { return etymologyListLiveData; }
+    public LiveData<List<KanjiInfo>> getKanjiInfoListLiveData() { return kanjiInfoListLiveData; }
+    public LiveData<List<UsageDistinction>> getUsageDistinctionListLiveData() { return usageDistinctionListLiveData; }
+    public LiveData<List<GrammarPoint>> getGrammarPointListLiveData() { return grammarPointListLiveData; }
+    public LiveData<List<Idiom>> getIdiomListLiveData() { return idiomListLiveData; }
+    public LiveData<String> getToastMessage() { return toastMessage; }
+    public LiveData<CombinedWordInfo> getCombinedWordInfo() { return combinedWordInfo; }
     // endregion
 
     // region 导航控制
     public void navigatePrevious() {
         String currentId = currentWordId.getValue();
-        if (currentId != null) {
-            checkAndNavigatePrevious(currentId);
-        }
+        if (currentId != null) checkAndNavigatePrevious(currentId);
     }
 
     public void navigateNext() {
         String currentId = currentWordId.getValue();
-        if (currentId != null) {
-            checkAndNavigateNext(currentId);
-        }
+        if (currentId != null) checkAndNavigateNext(currentId);
     }
 
     private void checkAndNavigatePrevious(String currentId) {
@@ -187,82 +195,82 @@ public class LearnPageViewModel extends AndroidViewModel {
         private final List<WordCollocation> wordCollocationList;
         private final List<AntonymWord> antonymWordList;
         private final List<SynonymWord> synonymWordList;
+        private final List<ConjugationForm> conjugationFormList;
+        private final List<Etymology> etymologyList;
+        private final List<KanjiInfo> kanjiInfoList;
+        private final List<UsageDistinction> usageDistinctionList;
+        private final List<GrammarPoint> grammarPointList;
+        private final List<Idiom> idiomList;
 
         public CombinedWordInfo(BasicWord basicWord,
                                 List<WordMeaning> wordMeaningList,
                                 List<WordSentence> wordSentenceList,
                                 List<WordCollocation> wordCollocationList,
                                 List<AntonymWord> antonymWordList,
-                                List<SynonymWord> synonymWordList) {
+                                List<SynonymWord> synonymWordList,
+                                List<ConjugationForm> conjugationFormList,
+                                List<Etymology> etymologyList,
+                                List<KanjiInfo> kanjiInfoList,
+                                List<UsageDistinction> usageDistinctionList,
+                                List<GrammarPoint> grammarPointList,
+                                List<Idiom> idiomList) {
             this.basicWord = basicWord;
             this.wordMeaningList = wordMeaningList != null ? wordMeaningList : Collections.emptyList();
             this.wordSentenceList = wordSentenceList != null ? wordSentenceList : Collections.emptyList();
             this.wordCollocationList = wordCollocationList != null ? wordCollocationList : Collections.emptyList();
             this.antonymWordList = antonymWordList != null ? antonymWordList : Collections.emptyList();
             this.synonymWordList = synonymWordList != null ? synonymWordList : Collections.emptyList();
+            this.conjugationFormList = conjugationFormList != null ? conjugationFormList : Collections.emptyList();
+            this.etymologyList = etymologyList != null ? etymologyList : Collections.emptyList();
+            this.kanjiInfoList = kanjiInfoList != null ? kanjiInfoList : Collections.emptyList();
+            this.usageDistinctionList = usageDistinctionList != null ? usageDistinctionList : Collections.emptyList();
+            this.grammarPointList = grammarPointList != null ? grammarPointList : Collections.emptyList();
+            this.idiomList = idiomList != null ? idiomList : Collections.emptyList();
         }
 
-        // Getter 方法
-        public BasicWord getBasicWord() {
-            return basicWord;
-        }
-
-        public List<WordMeaning> getWordMeaningList() {
-            return wordMeaningList;
-        }
-
-        public List<WordSentence> getWordSentenceList() {
-            return wordSentenceList;
-        }
-
-        public List<WordCollocation> getWordCollocationList() {
-            return wordCollocationList;
-        }
-
-        public List<AntonymWord> getAntonymWordList() {
-            return antonymWordList;
-        }
-
-        public List<SynonymWord> getSynonymWordList() {
-            return synonymWordList;
-        }
-
-
+        public BasicWord getBasicWord() { return basicWord; }
+        public List<WordMeaning> getWordMeaningList() { return wordMeaningList; }
+        public List<WordSentence> getWordSentenceList() { return wordSentenceList; }
+        public List<WordCollocation> getWordCollocationList() { return wordCollocationList; }
+        public List<AntonymWord> getAntonymWordList() { return antonymWordList; }
+        public List<SynonymWord> getSynonymWordList() { return synonymWordList; }
+        public List<ConjugationForm> getConjugationFormList() { return conjugationFormList; }
+        public List<Etymology> getEtymologyList() { return etymologyList; }
+        public List<KanjiInfo> getKanjiInfoList() { return kanjiInfoList; }
+        public List<UsageDistinction> getUsageDistinctionList() { return usageDistinctionList; }
+        public List<GrammarPoint> getGrammarPointList() { return grammarPointList; }
+        public List<Idiom> getIdiomList() { return idiomList; }
     }
 
-    // 添加私有方法
     private void updateCombined() {
         BasicWord basicWord = basicWordLiveData.getValue();
-        List<WordMeaning> meanings = wordMeaningListLiveData.getValue();
-        List<WordSentence> sentences = wordSentenceListLiveData.getValue();
-        List<WordCollocation> collocations = wordCollocationListLiveData.getValue();
-        List<AntonymWord> antonyms = antonymWordListLiveData.getValue();
-        List<SynonymWord> synonyms = synonymWordListLiveData.getValue();
         if (basicWord == null) return;
 
         combinedWordInfo.setValue(new CombinedWordInfo(
                 basicWord,
-                meanings,
-                sentences,
-                collocations,
-                antonyms,
-                synonyms
+                wordMeaningListLiveData.getValue(),
+                wordSentenceListLiveData.getValue(),
+                wordCollocationListLiveData.getValue(),
+                antonymWordListLiveData.getValue(),
+                synonymWordListLiveData.getValue(),
+                conjugationFormListLiveData.getValue(),
+                etymologyListLiveData.getValue(),
+                kanjiInfoListLiveData.getValue(),
+                usageDistinctionListLiveData.getValue(),
+                grammarPointListLiveData.getValue(),
+                idiomListLiveData.getValue()
         ));
     }
     // endregion
 
     // region 持久化方法
     private void saveCurrentId(String id) {
-        prefs.edit()
-                .putString(KEY_CURRENT_ID, id)
-                .apply();
+        prefs.edit().putString(KEY_CURRENT_ID, id).apply();
     }
     // endregion
 
     @Override
     protected void onCleared() {
         super.onCleared();
-        // 清理可能存在的资源
     }
 }
-
