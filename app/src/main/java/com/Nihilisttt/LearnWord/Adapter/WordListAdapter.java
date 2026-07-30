@@ -8,7 +8,6 @@ import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LifecycleOwner;
-import androidx.lifecycle.LiveData;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.Nihilisttt.LearnWord.Database.Repository.WordRepository;
@@ -28,6 +27,7 @@ public class WordListAdapter extends RecyclerView.Adapter<WordListAdapter.WordIt
     private final LifecycleOwner lifecycleOwner;
     private final int layoutType;
     private List<Word> wordList = new ArrayList<>();
+    private WordRepository wordRepository;
 
     public WordListAdapter(LifecycleOwner lifecycleOwner, int layoutType) {
         this.lifecycleOwner = lifecycleOwner;
@@ -50,23 +50,25 @@ public class WordListAdapter extends RecyclerView.Adapter<WordListAdapter.WordIt
 
     @Override
     public void onBindViewHolder(@NonNull WordItemViewHolder holder, int position) {
-        WordRepository wordRepository = WordRepository.getInstance(holder.itemView.getContext());
+        if (wordRepository == null) {
+            wordRepository = WordRepository.getInstance(holder.itemView.getContext());
+        }
 
-        // 使用构造函数传入的lifecycleOwner
-        LiveData<BasicWord> basicWordLiveData = wordRepository.getBasicWordById(wordList.get(position).getWordId());
-        basicWordLiveData.observe(lifecycleOwner, basicWord -> {
-            BasicWordView basicWordView = new BasicWordView(holder.itemView.getContext(),lifecycleOwner, layoutType, basicWord);
+        String wordId = wordList.get(position).getWordId();
+        BasicWord basicWord = wordRepository.getBasicWordByIdSync(wordId);
+        if (basicWord != null) {
+            BasicWordView basicWordView = new BasicWordView(holder.itemView.getContext(), lifecycleOwner, layoutType, basicWord);
+            holder.wordItemContainer.removeAllViews();
+            holder.wordItemContainer.addView(basicWordView);
+        }
 
-            holder.word_item_container.removeAllViews();
-            holder.word_item_container.addView(basicWordView);
-        });
-
-        LiveData<List<WordMeaning>> wordDMeaningsLiveData = wordRepository.getWordMeaningsByWordMeaningIdList(wordList.get(position).getMeaningIdList());
-        wordDMeaningsLiveData.observe(lifecycleOwner, wordMeanings -> {
-            MeaningView meaningView = new MeaningView(holder.itemView.getContext(),lifecycleOwner, layoutType, wordMeanings,Constants.SHOW_SENTENCE_POPUP);
-            holder.meaning_item_container.removeAllViews();
-            holder.meaning_item_container.addView(meaningView);
-        });
+        List<String> meaningIds = wordList.get(position).getMeaningIdList();
+        List<WordMeaning> wordMeanings = wordRepository.getWordMeaningsByWordMeaningIdListSync(meaningIds);
+        if (wordMeanings != null && !wordMeanings.isEmpty()) {
+            MeaningView meaningView = new MeaningView(holder.itemView.getContext(), lifecycleOwner, layoutType, wordMeanings, Constants.SHOW_SENTENCE_POPUP);
+            holder.meaningItemContainer.removeAllViews();
+            holder.meaningItemContainer.addView(meaningView);
+        }
     }
 
     @Override
@@ -75,12 +77,12 @@ public class WordListAdapter extends RecyclerView.Adapter<WordListAdapter.WordIt
     }
 
     static class WordItemViewHolder extends RecyclerView.ViewHolder {
-        LinearLayout word_item_container, meaning_item_container;
+        LinearLayout wordItemContainer, meaningItemContainer;
 
         public WordItemViewHolder(@NonNull View itemView) {
             super(itemView);
-            word_item_container = itemView.findViewById(R.id.word_item_container);
-            meaning_item_container = itemView.findViewById(R.id.meaning_item_container);
+            wordItemContainer = itemView.findViewById(R.id.word_item_container);
+            meaningItemContainer = itemView.findViewById(R.id.meaning_item_container);
         }
     }
 }

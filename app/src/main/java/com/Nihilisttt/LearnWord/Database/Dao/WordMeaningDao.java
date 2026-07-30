@@ -37,4 +37,7 @@ public interface WordMeaningDao {
 
     @Query("SELECT * FROM WordMeaning WHERE wordMeaningId IN (:wordMeaningIdList)")
     LiveData<List<WordMeaningEntity>> getWordMeaningsByWordMeaningIdList(List<String> wordMeaningIdList);
+
+    @Query("SELECT * FROM WordMeaning WHERE wordMeaningId IN (:wordMeaningIdList)")
+    List<WordMeaningEntity> getWordMeaningsByWordMeaningIdListSync(List<String> wordMeaningIdList);
 }

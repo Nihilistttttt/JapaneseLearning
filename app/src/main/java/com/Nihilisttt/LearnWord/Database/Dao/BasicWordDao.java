@@ -26,4 +26,6 @@ public interface BasicWordDao {
     LiveData<List<BasicWordEntity>> getAllBasicWords();
     @Query("SELECT * FROM BasicWord WHERE wordId = :word_id")
     LiveData<BasicWordEntity> getBasicWordByWordId(String word_id);
+    @Query("SELECT * FROM BasicWord WHERE wordId = :word_id")
+    BasicWordEntity getBasicWordByWordIdSync(String word_id);
 }

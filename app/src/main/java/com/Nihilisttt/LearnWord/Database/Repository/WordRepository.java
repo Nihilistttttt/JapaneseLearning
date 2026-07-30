@@ -295,6 +295,21 @@ public class WordRepository {
         return WordConverter.WordEntityToWord(entity);
     }
 
+    public BasicWord getBasicWordByIdSync(String wordId) {
+        BasicWordEntity entity = basicWordDao.getBasicWordByWordIdSync(wordId);
+        return BasicWordConverter.BasicWordEntityToBasicWord(entity);
+    }
+
+    public List<WordMeaning> getWordMeaningsByWordMeaningIdListSync(List<String> meaningIdList) {
+        if (meaningIdList == null || meaningIdList.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<WordMeaningEntity> entities = wordMeaningDao.getWordMeaningsByWordMeaningIdListSync(meaningIdList);
+        return entities.stream()
+                .map(WordMeaningConverter::WordMeaningEntityToWordMeaning)
+                .collect(Collectors.toList());
+    }
+
     public LiveData<List<Word>> getAllWords() {
         return Transformations.map(wordDao.getAllWords(), entities ->
                 entities.stream()
