@@ -82,7 +82,7 @@ public class WordDetailBottomSheet extends BottomSheetDialogFragment {
             BottomSheetBehavior<?> behavior = (BottomSheetBehavior<?>) params.getBehavior();
             if (behavior != null) {
                 int screenHeight = getResources().getDisplayMetrics().heightPixels;
-                behavior.setPeekHeight((int) (screenHeight * 0.8));
+                behavior.setPeekHeight((int) (screenHeight * 0.9));
                 behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
                 behavior.setSkipCollapsed(true);
                 Log.d(TAG, "onStart: peekH=" + behavior.getPeekHeight() + " screenHeight=" + screenHeight);
@@ -99,7 +99,7 @@ public class WordDetailBottomSheet extends BottomSheetDialogFragment {
         LinearLayout root = new LinearLayout(requireContext());
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(0, (int) (8 * getResources().getDisplayMetrics().density), 0, 0);
-        int minH = (int) (getResources().getDisplayMetrics().heightPixels * 0.8);
+        int minH = (int) (getResources().getDisplayMetrics().heightPixels * 0.9);
         root.setMinimumHeight(minH);
 
         LinearLayout headerPart = new LinearLayout(requireContext());

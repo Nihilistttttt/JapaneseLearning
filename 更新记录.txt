@@ -5,6 +5,42 @@ LearnWord 项目更新记录
 
 ========================
 
+【更新24】BottomSheet详情页+弹窗查看详情按钮+BottomSheet内点击闪退修复+PopupWindow显示修复
+日期：2026-07-30
+涉及文件：
+  Fragment: WordDetailBottomSheet(新增,BottomSheetDialogFragment详情页),
+            SentenceViewFragment(新增,例句Fragment包装SentenceView)
+  View: WordComponentView(查看详情按钮+resolveActivity()+activityRoot改getRootView()),
+        MeaningView(activityRoot改getRootView()),
+        BasicWordView(BottomSheet中居中减去padding)
+  ViewPager2: NestedScrollableHostBetween2Layers(getParentViewPager改ViewParent遍历)
+  Database: WordRepository(新增getBasicWordById方法)
+
+1. BottomSheet详情页：
+   - 新增WordDetailBottomSheet: BottomSheetDialogFragment,点击弹窗"查看详情➡"按钮后从底部弹出
+   - LiveData方式加载全数据: basicWord/meanings/word(sentences/collocations/antonyms/synonyms/conjugations/etymologies/kanjiInfos/usageDistinctions/grammarPoints/idioms)
+   - observe switchMap LiveData等数据ready后再buildTabs,解决数据时序问题
+   - header区: 单词(居中)+JLPT/词频+释义(MeaningView异步observe添加)
+   - tab区: TabLayout+ViewPager2,与主页面IntegratedPartView一致
+   - ScrollView包裹+setMinimumHeight(90%屏幕高)+peekHeight=90%屏幕高+STATE_EXPANDED+skipCollapsed
+   - tabPart padding 20dp左右+8dp上下,与主页面例句卡片间距一致(margin12dp+contentPadding8dp)
+   - 居中: contentWidth=parentWidth-paddingLeft-paddingRight,排除headerPart的16dp左右padding
+
+2. 弹窗查看详情按钮：
+   - WordComponentView.showInfoDialog()中"查看详情➡"按钮点击→弹出WordDetailBottomSheet
+
+3. BottomSheet内点击闪退修复：
+   - WordComponentView: resolveActivity()安全获取Activity,遍历ContextWrapper链,避免ContextThemeWrapper强转ClassCastException
+   - MeaningView: 同样修复Activity强转
+   - NestedScrollableHostBetween2Layers: getParentViewPager()改用ViewParent接口遍历,避免ViewRootImpl强转ClassCastException
+   - BottomSheet中无外层ViewPager2,getParentViewPager()返回null,handleInterceptTouchEvent安全退出
+
+4. PopupWindow显示修复：
+   - WordComponentView: activityRoot改为this.getRootView(),在BottomSheet中取到Dialog的decorView,PopupWindow在Dialog窗口中正常显示
+   - MeaningView: 同样改用getRootView()
+
+========================
+
 【更新23】語源/用法区分/文法/熟語四Tab合并为一+漢字情報重复bug修复+integrated_part_container底部间距
 日期：2026-07-30
 涉及文件：

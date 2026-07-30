@@ -442,9 +442,7 @@ public class WordComponentView extends LinearLayout {
                 TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics());
         int xOffset = (screenWidth - popupWidth) / 2;
 
-        View activityRoot = resolveActivity(context) != null
-                ? resolveActivity(context).getWindow().getDecorView().findViewById(android.R.id.content)
-                : ((View) getParent()).getRootView();
+        View activityRoot = this.getRootView();
 
         final boolean[] basicWordReady = {false};
         final boolean[] meaningReady = {false};
