@@ -5,6 +5,30 @@ LearnWord 项目更新记录
 
 ========================
 
+【更新20】JLPT等级+词频独立行显示+Tab区域高度调整
+日期：2026-07-30
+涉及文件：
+  Fragment: MainLearnPageFragment(+infoRow字段+JLPT/词频渲染+SpannableStringBuilder着色)
+  Layout: fragment_main_learn_page.xml(+info_row LinearLayout, integrated_part_container底部约束改为parent, 移除guideline1)
+
+1. JLPT等级和词频独立行显示：
+   - 在wordContainer和meaningContainer之间新增info_row LinearLayout
+   - 格式"N5 · 800"：N5蓝色(md_primary)，中点和词频灰色(md_on_surface_variant)
+   - jlptLevel=0或wordFrequency=0时隐藏对应部分，两者都为0时隐藏整行
+   - textSize=13sp，居中显示
+   - 点击blankPart显示释义时同步显示infoRow
+
+2. Tab区域高度调整：
+   - integrated_part_container底部约束从guideline1(0.9)改为parent底部
+   - 移除不再使用的guideline1
+   - Tab区域现在延伸到fragment底部，与左滑释义卡片底部到操作按钮距离一致
+
+意义：
+  - JLPT等级和词频是单词重要属性，独立行显示比挤在重音符号旁更清晰
+  - Tab区域高度调整使页面布局更均衡，Tab底部与按钮间距=左滑卡片底部与按钮间距
+
+========================
+
 【更新19】UI布局修复+假名标注修复+测试数据插入+预装DB重建
 日期：2026-07-30
 涉及文件：

@@ -7,6 +7,9 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
+
+import android.text.SpannableStringBuilder;
+import android.text.style.ForegroundColorSpan;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -17,6 +20,7 @@ import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.Nihilisttt.LearnWord.JavaBean.BasicWord;
 import com.Nihilisttt.LearnWord.JavaBean.WordSentence;
 import com.Nihilisttt.LearnWord.Page.ViewModel.LearnPageStateViewModel;
 import com.Nihilisttt.LearnWord.Page.ViewModel.LearnPageViewModel;
@@ -34,6 +38,7 @@ public class MainLearnPageFragment extends Fragment {
     private static final String TAG = "MainLearnPageFragment";
     private LearnPageToolBar toolBar;
     private LinearLayout wordContainer;
+    private LinearLayout infoRow;
     private LinearLayout meaningContainer;
     private CardView integratedPartContainer;
     private CardView sentenceContainer;
@@ -58,6 +63,7 @@ public class MainLearnPageFragment extends Fragment {
     private void initViews(View view) {
         toolBar = view.findViewById(R.id.learn_page_tool_bar);
         wordContainer = view.findViewById(R.id.word_container);
+        infoRow = view.findViewById(R.id.info_row);
         meaningContainer = view.findViewById(R.id.meaning_container);
         sentenceContainer = view.findViewById(R.id.sentence_container);
         integratedPartContainer = view.findViewById(R.id.integrated_part_container);
@@ -105,6 +111,7 @@ public class MainLearnPageFragment extends Fragment {
     private void renderWord(LearnPageViewModel.CombinedWordInfo combinedWordInfo) {
         stateViewModel.setViewPagerScrollEnabled(false);
         wordContainer.setVisibility(View.INVISIBLE);
+        infoRow.setVisibility(View.GONE);
         meaningContainer.setVisibility(View.INVISIBLE);
         sentenceContainer.setVisibility(View.INVISIBLE);
         integratedPartContainer.setVisibility(View.GONE);
@@ -134,6 +141,38 @@ public class MainLearnPageFragment extends Fragment {
         }
 
         wordContainer.setVisibility(View.VISIBLE);
+
+        BasicWord basicWord = combinedWordInfo.getBasicWord();
+        int jlptLevel = basicWord.getJlptLevel();
+        int wordFrequency = basicWord.getWordFrequency();
+        infoRow.removeAllViews();
+        if (jlptLevel > 0 || wordFrequency > 0) {
+            SpannableStringBuilder ssb = new SpannableStringBuilder();
+            int primaryColor = getResources().getColor(R.color.md_primary);
+            int variantColor = getResources().getColor(R.color.md_on_surface_variant);
+            if (jlptLevel > 0) {
+                String jlptText = "N" + jlptLevel;
+                int start = ssb.length();
+                ssb.append(jlptText);
+                ssb.setSpan(new ForegroundColorSpan(primaryColor), start, ssb.length(), 0);
+            }
+            if (jlptLevel > 0 && wordFrequency > 0) {
+                int start = ssb.length();
+                ssb.append(" · ");
+                ssb.setSpan(new ForegroundColorSpan(variantColor), start, ssb.length(), 0);
+            }
+            if (wordFrequency > 0) {
+                int start = ssb.length();
+                ssb.append(String.valueOf(wordFrequency));
+                ssb.setSpan(new ForegroundColorSpan(variantColor), start, ssb.length(), 0);
+            }
+            TextView infoText = new TextView(requireContext());
+            infoText.setText(ssb);
+            infoText.setTextSize(13);
+            infoRow.addView(infoText);
+            infoRow.setVisibility(View.VISIBLE);
+        }
+
         sentenceContainer.setVisibility(View.VISIBLE);
 
         if (meaningView == null) {
@@ -208,6 +247,9 @@ public class MainLearnPageFragment extends Fragment {
                     case MotionEvent.ACTION_UP:
                         if (!isDragging) {
                             stateViewModel.setViewPagerScrollEnabled(true);
+                            if (infoRow.getVisibility() != View.GONE) {
+                                infoRow.setVisibility(View.VISIBLE);
+                            }
                             meaningContainer.setVisibility(View.VISIBLE);
                             integratedPartContainer.setVisibility(View.VISIBLE);
                             blankPart.setVisibility(View.GONE);

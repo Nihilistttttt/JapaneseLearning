@@ -14,14 +14,13 @@ import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.Nihilisttt.LearnWord.ViewPager2.NestedScrollableHostBetween2Layers;
-import com.Nihilisttt.LearnWord.Fragment.LearnPage.MainLearnPage.AntonymWordViewFragment;
 import com.Nihilisttt.LearnWord.Fragment.LearnPage.MainLearnPage.CollocationViewFragment;
+import com.Nihilisttt.LearnWord.Fragment.LearnPage.MainLearnPage.SynonymAntonymViewFragment;
 import com.Nihilisttt.LearnWord.Fragment.LearnPage.MainLearnPage.ConjugationFormViewFragment;
 import com.Nihilisttt.LearnWord.Fragment.LearnPage.MainLearnPage.EtymologyViewFragment;
 import com.Nihilisttt.LearnWord.Fragment.LearnPage.MainLearnPage.GrammarPointViewFragment;
 import com.Nihilisttt.LearnWord.Fragment.LearnPage.MainLearnPage.IdiomViewFragment;
 import com.Nihilisttt.LearnWord.Fragment.LearnPage.MainLearnPage.KanjiInfoViewFragment;
-import com.Nihilisttt.LearnWord.Fragment.LearnPage.MainLearnPage.SynonymWordViewFragment;
 import com.Nihilisttt.LearnWord.Fragment.LearnPage.MainLearnPage.UsageDistinctionViewFragment;
 import com.Nihilisttt.LearnWord.JavaBean.AntonymWord;
 import com.Nihilisttt.LearnWord.JavaBean.ConjugationForm;
@@ -112,13 +111,9 @@ public class IntegratedPartView extends LinearLayout {
             tabTitles.add("词组搭配");
             fragmentList.add(new CollocationViewFragment(collocations));
         }
-        if (!antonymWords.isEmpty()) {
-            tabTitles.add("反义词");
-            fragmentList.add(new AntonymWordViewFragment(antonymWords));
-        }
-        if (!synonymWords.isEmpty()) {
-            tabTitles.add("近义词");
-            fragmentList.add(new SynonymWordViewFragment(synonymWords));
+        if (!synonymWords.isEmpty() || !antonymWords.isEmpty()) {
+            tabTitles.add("近義/反義");
+            fragmentList.add(new SynonymAntonymViewFragment(synonymWords, antonymWords));
         }
         if (!conjugationForms.isEmpty()) {
             tabTitles.add("活用形");

@@ -6,6 +6,7 @@ import android.graphics.Paint;
 import android.util.SparseArray;
 import android.util.TypedValue;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -121,6 +122,16 @@ public class BasicWordView extends LinearLayout {
 
         wordComponentPart.addView(wordComponentLayout);
         accentMarkPart.addView(accentMark);
+
+        float accentMarkWidth = accentMark.getPaint().measureText(accentMark.getText().toString());
+        int wordWidthPx = Math.round(estimatedWidth);
+        int marginStart = Math.max(0, (availableWidthPx - wordWidthPx) / 2);
+        int maxMarginStart = availableWidthPx - wordWidthPx - Math.round(accentMarkWidth);
+        if (maxMarginStart < 0) maxMarginStart = 0;
+        if (marginStart > maxMarginStart) marginStart = maxMarginStart;
+        MarginLayoutParams mlp = (MarginLayoutParams) getLayoutParams();
+        mlp.setMarginStart(marginStart);
+        setLayoutParams(mlp);
     }
 
 }

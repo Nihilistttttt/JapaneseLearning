@@ -24,9 +24,22 @@
         android:layout_marginTop="8dp"
         android:layout_marginEnd="16dp"
         android:orientation="vertical"
-        android:gravity="center_horizontal"
+
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/learn_page_tool_bar" />
+
+    <LinearLayout
+        android:id="@+id/info_row"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="invisible"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="2dp"
+        android:layout_marginEnd="16dp"
+        android:orientation="horizontal"
+        android:gravity="center_horizontal"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/word_container" />
 
     <LinearLayout
         android:id="@+id/meaning_container"
@@ -34,11 +47,11 @@
         android:layout_height="wrap_content"
         android:visibility="invisible"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="4dp"
         android:layout_marginEnd="16dp"
         android:orientation="vertical"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/word_container" />
+        app:layout_constraintTop_toBottomOf="@id/info_row" />
 
     <androidx.cardview.widget.CardView
         android:id="@+id/sentence_container"
@@ -55,12 +68,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/meaning_container" />
 
-    <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/guideline1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.9" />
 
     <androidx.cardview.widget.CardView
         android:id="@+id/integrated_part_container"
@@ -74,7 +81,7 @@
         app:cardElevation="1dp"
         app:cardBackgroundColor="@color/md_card_background"
         app:contentPadding="8dp"
-        app:layout_constraintBottom_toBottomOf="@id/guideline1"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/sentence_container" />
 
