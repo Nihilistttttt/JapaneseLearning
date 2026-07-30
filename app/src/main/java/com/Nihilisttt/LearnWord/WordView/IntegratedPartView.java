@@ -36,6 +36,7 @@ import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
 import java.util.ArrayList;
+import java.util.ArrayList;
 import java.util.List;
 
 @SuppressLint("ViewConstructor")
@@ -102,6 +103,11 @@ public class IntegratedPartView extends LinearLayout {
         fragmentList = new ArrayList<>();
         List<String> tabTitles = new ArrayList<>();
 
+        List<Idiom> validIdioms = new ArrayList<>();
+        for (Idiom idiom : idioms) {
+            if (idiom != null) validIdioms.add(idiom);
+        }
+
         if (!collocations.isEmpty()) {
             tabTitles.add("词组搭配");
             fragmentList.add(new CollocationViewFragment(collocations));
@@ -134,9 +140,9 @@ public class IntegratedPartView extends LinearLayout {
             tabTitles.add("文法");
             fragmentList.add(new GrammarPointViewFragment(grammarPoints));
         }
-        if (!idioms.isEmpty()) {
+        if (!validIdioms.isEmpty()) {
             tabTitles.add("熟語");
-            fragmentList.add(new IdiomViewFragment(idioms));
+            fragmentList.add(new IdiomViewFragment(validIdioms));
         }
 
         FragmentStateAdapter adapter = new FragmentStateAdapter((FragmentActivity) getContext()) {

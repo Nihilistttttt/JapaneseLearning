@@ -202,7 +202,7 @@ public class SentenceView extends LinearLayout {
         for (int i = 0; i < originalsKanji.size(); i++) {
             String wordId = sentence.getWordIdList().get(i);
             List<String> kanjiList = originalsKanji.get(i);
-            List<String> kanaList = originalsKana.get(i);
+            List<String> kanaList = cleanKanaAnnotations(originalsKanji.get(i), originalsKana.get(i));
 
             String firstKanji = kanjiList.get(0);
             String firstKana = kanaList.get(0);
@@ -313,5 +313,18 @@ public class SentenceView extends LinearLayout {
         }
 
         translation.setText(sentence.getTranslation());
+    }
+
+    private static List<String> cleanKanaAnnotations(List<String> kanjiComponents, List<String> kanaComponents) {
+        List<String> cleaned = new ArrayList<>();
+        for (int i = 0; i < kanjiComponents.size(); i++) {
+            String kanji = kanjiComponents.get(i);
+            if (Judge.isKana(kanji)) {
+                cleaned.add("");
+            } else {
+                cleaned.add(i < kanaComponents.size() ? kanaComponents.get(i) : "");
+            }
+        }
+        return cleaned;
     }
 }

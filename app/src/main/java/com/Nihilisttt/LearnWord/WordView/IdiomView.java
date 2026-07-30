@@ -12,6 +12,7 @@ import androidx.lifecycle.LifecycleOwner;
 import com.Nihilisttt.LearnWord.JavaBean.Idiom;
 import com.Nihilisttt.LearnWord.R;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @SuppressLint("ViewConstructor")
@@ -22,14 +23,19 @@ public class IdiomView extends LinearLayout {
         setOrientation(VERTICAL);
         setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
 
-        for (int idx = 0; idx < idioms.size(); idx += 2) {
+        List<Idiom> validIdioms = new ArrayList<>();
+        for (Idiom idiom : idioms) {
+            if (idiom != null) validIdioms.add(idiom);
+        }
+
+        for (int idx = 0; idx < validIdioms.size(); idx += 2) {
             LinearLayout row = new LinearLayout(context);
             row.setOrientation(HORIZONTAL);
             row.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
             addView(row);
 
-            for (int c = 0; c < 2 && idx + c < idioms.size(); c++) {
-                Idiom idiom = idioms.get(idx + c);
+            for (int c = 0; c < 2 && idx + c < validIdioms.size(); c++) {
+                Idiom idiom = validIdioms.get(idx + c);
                 View cell = View.inflate(context, R.layout.view_integrated_part_row, null);
                 LinearLayout.LayoutParams cellParams = new LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f);
                 cell.setLayoutParams(cellParams);
@@ -42,6 +48,12 @@ public class IdiomView extends LinearLayout {
                 rowContainer.addView(phrase);
                 translation.setText(idiom.getTranslation());
                 row.addView(cell);
+            }
+            int count = Math.min(2, validIdioms.size() - idx);
+            if (count < 2) {
+                View spacer = new View(context);
+                spacer.setLayoutParams(new LayoutParams(0, 1, 1f));
+                row.addView(spacer);
             }
         }
     }

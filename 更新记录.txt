@@ -5,6 +5,54 @@ LearnWord 项目更新记录
 
 ========================
 
+【更新19】UI布局修复+假名标注修复+测试数据插入+预装DB重建
+日期：2026-07-30
+涉及文件：
+  View: CollocationView(2列+cleanKana), ConjugationFormView(3列对齐+null过滤),
+        IdiomView(2列对齐+null过滤), KanjiInfoView(sameKanjiWords trailing spacer),
+        IntegratedPartView(idiom null过滤), SentenceView(cleanKanaAnnotations)
+  Database: WordDatabase(PREBUILT_DB_VERSION 17->18)
+  DB: word_database.db(4个测试词完整数据+sameKanjiWords JSON字符串格式+GrammarPoint example JSON格式)
+  Python: insert_test_words.py(新增), fix_test_data.py(新增), fix_samewords.py(新增)
+
+1. 布局修复：
+   - CollocationView改为2列网格布局，去掉collocationRow的marginStart计算，间距与例句卡片一致
+   - ConjugationFormView最后一行不足3个时补trailing spacer，确保元素对齐在第一列
+   - IdiomView最后一行不足2个时补trailing spacer
+   - KanjiInfoView sameKanjiWords最后一行不足列数时补trailing spacer
+
+2. 假名标注修复：
+   - SentenceView加cleanKanaAnnotations方法，假名字符上方不再标注假名
+   - CollocationView加cleanKanaAnnotations，搭配词中假名上方不再标注假名
+   - KanjiInfoView sameKanjiWords数据格式改为JSON字符串数组，每个元素包含kj+kn信息
+   - GrammarPoint exampleKanji/exampleKana改为JSON数组格式，通过WrappedPhraseView渲染
+
+3. 空列表/null防护：
+   - IdiomView/ConjugationFormView加null元素过滤，防止Converter转换失败导致的NPE崩溃
+   - IntegratedPartView对idiom列表做null过滤后再判断isEmpty，空熟语不显示Tab
+
+4. 测试数据：
+   - 4个代表性词插入DB：書く(五段动词,14活用形), 高い(イ形容詞,8活用形), 静か(ナ形容詞,7活用形), 友達(名詞)
+   - wordId使用7位数字(0000001-0000004)确保字符串排序在最前且连续
+   - BasicWord kanjiComponents/kanaComponents使用1D格式(与现有数据一致)
+   - sameKanjiWords使用JSON字符串数组格式(Convert.jsonToList可解析)
+
+5. PREBUILT_DB_VERSION升至18，强制删除设备旧DB重新从assets复制
+
+意义：
+  - 假名上方不标注假名是日语学习App的基本规范，cleanKanaAnnotations统一处理7个View
+  - 多列布局trailing spacer确保网格对齐，避免元素跑到中间位置
+  - null过滤防止Converter转换失败时崩溃，提升稳定性
+  - 测试数据覆盖4种词性，验证6个新Tab页的完整渲染链路
+
+新理解：
+  - Convert.jsonToList只能解析JSON字符串数组，JSON对象数组会导致Gson的ExpectedStringButWasObject异常
+  - sameKanjiWords需存储为JSON字符串数组(每个元素是JSON对象的字符串表示)，KanjiInfoView再逐个new JSONObject解析
+  - BasicWord的kanjiComponents/kanaComponents在DB中是1D格式(与AntonymWord/SynonymWord一致)，不是2D
+  - PREBUILT_DB_VERSION控制设备上预装DB的更新，仅升version不够，必须同时升PREBUILT_DB_VERSION
+
+========================
+
 【更新18】数据模型与UI扩展：6个新属性+2个新字段+预装DB重建
 日期：2026-07-30
 涉及文件：

@@ -114,6 +114,14 @@ public class KanjiInfoView extends LinearLayout {
                     }
                     wordsColsRow.addView(wordCell);
                 }
+                int remaining = info.getSameKanjiWords().size() % colCount;
+                if (remaining != 0) {
+                    for (int s = 0; s < colCount - remaining; s++) {
+                        View spacer = new View(context);
+                        spacer.setLayoutParams(new LayoutParams(0, 1, 1f / colCount));
+                        wordsColsRow.addView(spacer);
+                    }
+                }
                 wordsContainer.addView(wordsColsRow);
                 wordsTranslation.setText("");
                 addView(wordsRow);
