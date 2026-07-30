@@ -15,6 +15,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.cardview.widget.CardView;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LifecycleOwner;
@@ -82,10 +83,14 @@ public class WordDetailBottomSheet extends BottomSheetDialogFragment {
             BottomSheetBehavior<?> behavior = (BottomSheetBehavior<?>) params.getBehavior();
             if (behavior != null) {
                 int screenHeight = getResources().getDisplayMetrics().heightPixels;
-                behavior.setPeekHeight((int) (screenHeight * 0.9));
+                int statusBarH = 0;
+                int resId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+                if (resId > 0) statusBarH = getResources().getDimensionPixelSize(resId);
+                int toolbarH = (int) (56 * getResources().getDisplayMetrics().density);
+                int peekH = screenHeight - statusBarH - toolbarH;
+                behavior.setPeekHeight(peekH);
                 behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
                 behavior.setSkipCollapsed(true);
-                Log.d(TAG, "onStart: peekH=" + behavior.getPeekHeight() + " screenHeight=" + screenHeight);
             }
         }
     }
@@ -93,46 +98,41 @@ public class WordDetailBottomSheet extends BottomSheetDialogFragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        ScrollView scrollView = new ScrollView(requireContext());
-        scrollView.setFillViewport(true);
+        Context context = requireContext();
+        float density = getResources().getDisplayMetrics().density;
 
-        LinearLayout root = new LinearLayout(requireContext());
+        LinearLayout root = new LinearLayout(context);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(0, (int) (8 * getResources().getDisplayMetrics().density), 0, 0);
-        int minH = (int) (getResources().getDisplayMetrics().heightPixels * 0.9);
+        int minH = (int) (getResources().getDisplayMetrics().heightPixels * 0.92);
         root.setMinimumHeight(minH);
+        int rootPad = (int) (8 * density);
+        root.setPadding(0, rootPad, 0, 0);
 
-        LinearLayout headerPart = new LinearLayout(requireContext());
+        LinearLayout headerPart = new LinearLayout(context);
         headerPart.setOrientation(LinearLayout.VERTICAL);
-        int hPadding = (int) (16 * getResources().getDisplayMetrics().density);
-        headerPart.setPadding(hPadding, 0, hPadding, 0);
+        int hPad = (int) (16 * density);
+        headerPart.setPadding(hPad, 0, hPad, (int) (4 * density));
 
-        LinearLayout tabPart = new LinearLayout(requireContext());
+        CardView tabCard = new CardView(context);
+        tabCard.setRadius(12 * density);
+        tabCard.setCardElevation(1 * density);
+        tabCard.setCardBackgroundColor(context.getResources().getColor(R.color.md_card_background));
+        tabCard.setContentPadding((int) (8 * density), (int) (8 * density), (int) (8 * density), (int) (8 * density));
+        LinearLayout.LayoutParams tabCardLp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f);
+        int cardMargin = (int) (12 * density);
+        tabCardLp.setMargins(cardMargin, (int) (8 * density), cardMargin, cardMargin);
+        tabCard.setLayoutParams(tabCardLp);
+
+        LinearLayout tabPart = new LinearLayout(context);
         tabPart.setOrientation(LinearLayout.VERTICAL);
-        int tabPaddingH = (int) (20 * getResources().getDisplayMetrics().density);
-        int tabPaddingV = (int) (8 * getResources().getDisplayMetrics().density);
-        tabPart.setPadding(tabPaddingH, tabPaddingV, tabPaddingH, tabPaddingV);
+        tabCard.addView(tabPart);
 
         root.addView(headerPart);
-        root.addView(tabPart);
+        root.addView(tabCard);
 
-        scrollView.addView(root);
         loadAndRender(headerPart, tabPart);
-
-        scrollView.post(() -> {
-            Log.d(TAG, "onCreateView post: scrollView w=" + scrollView.getWidth() + " h=" + scrollView.getHeight()
-                    + " root w=" + root.getWidth() + " h=" + root.getHeight()
-                    + " header h=" + headerPart.getHeight() + " tab h=" + tabPart.getHeight());
-            View bs = requireDialog().findViewById(com.google.android.material.R.id.design_bottom_sheet);
-            if (bs != null) {
-                Log.d(TAG, "onCreateView post: bottomSheet w=" + bs.getWidth() + " h=" + bs.getHeight());
-                CoordinatorLayout.LayoutParams p = (CoordinatorLayout.LayoutParams) bs.getLayoutParams();
-                BottomSheetBehavior<?> b = (BottomSheetBehavior<?>) p.getBehavior();
-                Log.d(TAG, "onCreateView post: behavior state=" + b.getState() + " peekH=" + b.getPeekHeight());
-            }
-        });
-
-        return scrollView;
+        return root;
     }
 
     private void loadAndRender(LinearLayout headerPart, LinearLayout tabPart) {
@@ -201,11 +201,12 @@ public class WordDetailBottomSheet extends BottomSheetDialogFragment {
 
         final Runnable tryBuildTabs = () -> {
             if (tabsBuilt[0] || !headerRendered[0] || !wordReady[0]) return;
-            List<WordSentence> sv = sentencesLiveData.getValue();
-            List<WordCollocation> cv = collocationsLiveData.getValue();
-            Log.d(TAG, "tryBuildTabs: sentences=" + (sv != null ? sv.size() : "null")
-                    + " collocations=" + (cv != null ? cv.size() : "null"));
-            if (sv == null || cv == null) return;
+            if (sentencesLiveData.getValue() == null || collocationsLiveData.getValue() == null
+                    || antonymsLiveData.getValue() == null || synonymsLiveData.getValue() == null
+                    || conjugationsLiveData.getValue() == null || etymologiesLiveData.getValue() == null
+                    || kanjiInfosLiveData.getValue() == null || usageDistinctionsLiveData.getValue() == null
+                    || grammarPointsLiveData.getValue() == null || idiomsLiveData.getValue() == null) return;
+            Log.d(TAG, "tryBuildTabs: all data ready");
             buildTabs(tabPart, subFontLevel, sentencesLiveData, collocationsLiveData,
                     antonymsLiveData, synonymsLiveData, conjugationsLiveData,
                     etymologiesLiveData, kanjiInfosLiveData, usageDistinctionsLiveData,
@@ -218,6 +219,14 @@ public class WordDetailBottomSheet extends BottomSheetDialogFragment {
         wordLiveData.observe(lifecycleOwner, wordObserver);
         sentencesLiveData.observe(lifecycleOwner, s -> tryBuildTabs.run());
         collocationsLiveData.observe(lifecycleOwner, c -> tryBuildTabs.run());
+        antonymsLiveData.observe(lifecycleOwner, a -> tryBuildTabs.run());
+        synonymsLiveData.observe(lifecycleOwner, s -> tryBuildTabs.run());
+        conjugationsLiveData.observe(lifecycleOwner, c -> tryBuildTabs.run());
+        etymologiesLiveData.observe(lifecycleOwner, e -> tryBuildTabs.run());
+        kanjiInfosLiveData.observe(lifecycleOwner, k -> tryBuildTabs.run());
+        usageDistinctionsLiveData.observe(lifecycleOwner, u -> tryBuildTabs.run());
+        grammarPointsLiveData.observe(lifecycleOwner, g -> tryBuildTabs.run());
+        idiomsLiveData.observe(lifecycleOwner, i -> tryBuildTabs.run());
     }
 
     private void renderHeader(LinearLayout headerPart, BasicWord basicWord, int wordLevel, int subFontLevel,
@@ -329,10 +338,7 @@ public class WordDetailBottomSheet extends BottomSheetDialogFragment {
             tabTitles.add("例句");
             fragmentList.add(new SentenceViewFragment(sentences));
         }
-        if (!collocations.isEmpty()) {
-            tabTitles.add("词组");
-            fragmentList.add(new CollocationViewFragment(collocations));
-        }
+
         if (!synonyms.isEmpty() || !antonyms.isEmpty()) {
             tabTitles.add("近义词");
             fragmentList.add(new SynonymAntonymViewFragment(synonyms, antonyms));
@@ -370,7 +376,7 @@ public class WordDetailBottomSheet extends BottomSheetDialogFragment {
 
         NestedScrollableHostBetween2Layers host = new NestedScrollableHostBetween2Layers(context);
         host.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+                LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f));
         ViewPager2 viewPager2 = new ViewPager2(context);
         View childAt = viewPager2.getChildAt(0);
         if (childAt instanceof RecyclerView) {
@@ -398,5 +404,13 @@ public class WordDetailBottomSheet extends BottomSheetDialogFragment {
             tab.setText(tabTitles.get(position));
         });
         mediator.attach();
+
+        int tabMinWidth = (int) (40 * getResources().getDisplayMetrics().density);
+        for (int i = 0; i < tabLayout.getTabCount(); i++) {
+            TabLayout.Tab tab = tabLayout.getTabAt(i);
+            if (tab != null && tab.view != null) {
+                tab.view.setMinimumWidth(tabMinWidth);
+            }
+        }
     }
 }

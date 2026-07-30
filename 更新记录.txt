@@ -5,6 +5,28 @@ LearnWord 项目更新记录
 
 ========================
 
+【更新25】BottomSheet UI美化+数据时序修复+高度调整
+日期：2026-07-31
+涉及文件：
+  Fragment: WordDetailBottomSheet(CardView包裹Tab区+TabLayout在上+去掉词组搭配Tab+observe所有LiveData+peekHeight动态计算+minimumHeight 0.92)
+
+1. BottomSheet UI美化：
+   - Tab区域用CardView包裹: 圆角12dp, 阴影1dp, md_card_background, contentPadding 8dp, margin 12dp
+   - TabLayout在上, ViewPager2在下(与主页面IntegratedPartView一致)
+   - tabMinWidth=40dp
+   - tabCard和VP2 host用weight=1f占满header以下空间
+   - headerPart底部padding 4dp
+
+2. Tab内容调整：
+   - 去掉词组搭配Tab, 只保留: 例句/近义词/活用形/漢字/其他
+   - observe所有10个switchMap LiveData, 全部有值后才buildTabs, 解决只显示例句的问题
+
+3. 高度调整：
+   - peekHeight动态计算: screenHeight - statusBarHeight - toolbarHeight(56dp), 刚好顶到标题栏下方
+   - minimumHeight改为0.92屏幕高度
+
+========================
+
 【更新24】BottomSheet详情页+弹窗查看详情按钮+BottomSheet内点击闪退修复+PopupWindow显示修复
 日期：2026-07-30
 涉及文件：
