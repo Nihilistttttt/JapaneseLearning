@@ -2,7 +2,7 @@ package com.Nihilisttt.LearnWord.UtilityClass;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.util.Log;
+
 
 import com.Nihilisttt.LearnWord.Database.Dao.AntonymWordDao;
 import com.Nihilisttt.LearnWord.Database.Dao.BasicWordDao;
@@ -15,6 +15,7 @@ import com.Nihilisttt.LearnWord.Database.Entities.BasicWordEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.SynonymWordEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.WordEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.WordMeaningEntity;
+import com.Nihilisttt.LearnWord.UtilityClass.AppLog;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -47,7 +48,7 @@ public class DataImporter {
 
     public static void importIfNeeded(Context context) {
         if (isImported(context)) {
-            Log.d(TAG, "Data already imported, skipping");
+            AppLog.d(TAG, "Already imported v" + CURRENT_VERSION + ", skipping");
             return;
         }
         importDataSync(context);
@@ -64,12 +65,12 @@ public class DataImporter {
 
         WordDatabase.databaseExecutor.execute(() -> {
             long startTime = System.currentTimeMillis();
-            Log.d(TAG, "Starting data import...");
+            AppLog.d(TAG, "Starting import v" + CURRENT_VERSION + "...");
 
             try {
                 JsonObject root = loadJson(context);
                 if (root == null) {
-                    Log.e(TAG, "Failed to load JSON from assets");
+                    AppLog.e(TAG, "Failed to load JSON from assets");
                     return;
                 }
 
@@ -91,10 +92,10 @@ public class DataImporter {
                 prefs.edit().putInt(KEY_VERSION, CURRENT_VERSION).apply();
 
                 long elapsed = System.currentTimeMillis() - startTime;
-                Log.d(TAG, "Data import completed in " + elapsed + "ms");
+                AppLog.d(TAG, "Import completed: " + elapsed + "ms");
 
             } catch (Exception e) {
-                Log.e(TAG, "Data import failed", e);
+                AppLog.e(TAG, "Data import failed", e);
             } finally {
                 latch.countDown();
             }
@@ -102,9 +103,9 @@ public class DataImporter {
 
         try {
             latch.await();
-            Log.d(TAG, "Import latch released, data ready");
+            AppLog.d(TAG, "Import latch released");
         } catch (InterruptedException e) {
-            Log.e(TAG, "Import interrupted", e);
+            AppLog.e(TAG, "Import interrupted", e);
             Thread.currentThread().interrupt();
         }
     }
@@ -115,7 +116,7 @@ public class DataImporter {
              InputStreamReader reader = new InputStreamReader(gzis, StandardCharsets.UTF_8)) {
             return new Gson().fromJson(reader, JsonObject.class);
         } catch (Exception e) {
-            Log.e(TAG, "Error reading room_import_gzipped", e);
+            AppLog.e(TAG, "Error reading room_import_gzipped", e);
             return null;
         }
     }
@@ -141,7 +142,7 @@ public class DataImporter {
         if (!batch.isEmpty()) {
             dao.insertWords(batch.toArray(new WordEntity[0]));
         }
-        Log.d(TAG, "Inserted " + array.size() + " words");
+        AppLog.d(TAG, "Inserted " + array.size() + " words");
     }
 
     private static void batchInsertBasicWords(BasicWordDao dao, JsonArray array) {
@@ -165,7 +166,7 @@ public class DataImporter {
         if (!batch.isEmpty()) {
             dao.insertBasicWords(batch.toArray(new BasicWordEntity[0]));
         }
-        Log.d(TAG, "Inserted " + array.size() + " basicWords");
+        AppLog.d(TAG, "Inserted " + array.size() + " basicWords");
     }
 
     private static void batchInsertWordMeanings(WordMeaningDao dao, JsonArray array) {
@@ -188,7 +189,7 @@ public class DataImporter {
         if (!batch.isEmpty()) {
             dao.insertWords(batch.toArray(new WordMeaningEntity[0]));
         }
-        Log.d(TAG, "Inserted " + array.size() + " wordMeanings");
+        AppLog.d(TAG, "Inserted " + array.size() + " wordMeanings");
     }
 
     private static void batchInsertAntonymWords(AntonymWordDao dao, JsonArray array) {
@@ -211,7 +212,7 @@ public class DataImporter {
         if (!batch.isEmpty()) {
             dao.insertAntonymWords(batch.toArray(new AntonymWordEntity[0]));
         }
-        Log.d(TAG, "Inserted " + array.size() + " antonymWords");
+        AppLog.d(TAG, "Inserted " + array.size() + " antonymWords");
     }
 
     private static void batchInsertSynonymWords(SynonymWordDao dao, JsonArray array) {
@@ -234,7 +235,7 @@ public class DataImporter {
         if (!batch.isEmpty()) {
             dao.insertSynonymWords(batch.toArray(new SynonymWordEntity[0]));
         }
-        Log.d(TAG, "Inserted " + array.size() + " synonymWords");
+        AppLog.d(TAG, "Inserted " + array.size() + " synonymWords");
     }
 
     private static String getAsStringOrDefault(JsonObject obj, String key, String defaultValue) {

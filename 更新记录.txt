@@ -5,6 +5,22 @@ LearnWord 项目更新记录
 
 ========================
 
+【更新17】AppLog环境感知日志 + 单词例句同步渲染
+日期：2026-07-29
+涉及文件：AppLog.java(新增), WordComponentView.java, ConverterHelper.java, DataImporter.java, MainLearnPageFragment.java, 优化清单.txt
+
+1. AppLog工具类：d()方法基于BuildConfig.DEBUG控制输出，e()方法始终输出（错误不应被抑制）
+2. WordComponentView：4处Log.d→AppLog.d，日志改为结构化格式(pos=N type=X margin=Y)
+3. ConverterHelper：3处Log.d→AppLog.d/AppLog.e（转换失败用e级别）
+4. DataImporter：6处Log.d→AppLog.d，2处Log.e→AppLog.e，日志补充版本号
+5. 单词与例句同步渲染：wordContainer和sentenceContainer在renderWord开始时都设INVISIBLE，两者都渲染完后同时设VISIBLE
+
+意义：
+  - release构建时BuildConfig.DEBUG=false，AppLog.d在if判断处直接跳过，零开销（含字符串拼接）
+  - 同步渲染消除单词先出、例句后出的视觉割裂
+
+========================
+
 【更新16】renderWord重构为update模式 + 弹窗BadTokenException修复
 日期：2026-07-29
 涉及文件：MainLearnPageFragment.java, BasicWordView.java, SentenceView.java, MeaningView.java, IntegratedPartView.java, WordComponentView.java, 优化清单.txt

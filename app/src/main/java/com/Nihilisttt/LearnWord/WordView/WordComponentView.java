@@ -31,6 +31,7 @@ import com.Nihilisttt.LearnWord.JavaBean.BasicWord;
 import com.Nihilisttt.LearnWord.JavaBean.WordMeaning;
 import com.Nihilisttt.LearnWord.R;
 import com.Nihilisttt.LearnWord.UtilityClass.AudioManager;
+import com.Nihilisttt.LearnWord.UtilityClass.AppLog;
 import com.Nihilisttt.LearnWord.UtilityClass.Constants;
 import com.Nihilisttt.LearnWord.UtilityClass.Convert;
 import com.Nihilisttt.LearnWord.UtilityClass.Judge;
@@ -284,13 +285,13 @@ public class WordComponentView extends LinearLayout {
             float marginValue;
             if (curIsSmall) {
                 marginValue = layoutParams.getCurrentIsSmallKanaMarginStart();
-                Log.d("wordComponentMargin", "固定边距 position=" + position + ", curIsSmall_marginStart=" + marginValue);
+                AppLog.d("WCV.margin", String.format("pos=%d type=curSmall margin=%.2f", position, marginValue));
             } else if (preIsSmall) {
                 marginValue = layoutParams.getPreviousIsSmallKanaMarginStart();
-                Log.d("wordComponentMargin", "固定边距 position=" + position + ", preIsSmall_marginStart=" + marginValue);
+                AppLog.d("WCV.margin", String.format("pos=%d type=preSmall margin=%.2f", position, marginValue));
             } else {
                 marginValue = layoutParams.getElseMarginStart();
-                Log.d("wordComponentMargin", "固定边距 position=" + position + ", else_marginStart=" + marginValue);
+                AppLog.d("WCV.margin", String.format("pos=%d type=else margin=%.2f", position, marginValue));
             }
             params.setMarginStart(Convert.dpToPx(getContext(), marginValue));
             return;
@@ -299,7 +300,7 @@ public class WordComponentView extends LinearLayout {
         // 异符号时动态计算
         float marginValue = -Math.min(Math.abs(prev), Math.abs(curr)) / 2f;
         params.setMarginStart(Convert.dpToPx(getContext(), marginValue));
-        Log.d("wordComponentMargin", "动态边距 position=" + position + ", value=" + marginValue);
+        AppLog.d("WCV.margin", String.format("pos=%d type=dynamic margin=%.2f prev=%.1f curr=%.1f", position, marginValue, prev, curr));
     }
     // endregion
 
