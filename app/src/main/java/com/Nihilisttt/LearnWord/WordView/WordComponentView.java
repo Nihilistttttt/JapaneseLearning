@@ -180,6 +180,9 @@ public class WordComponentView extends LinearLayout {
         for (int i = 0; i < kanjiComponents.size(); i++) {
             String curKanji = kanjiComponents.get(i);
             String curKana = kanaComponents.get(i);
+            if (Judge.isKana(curKanji)) {
+                curKana = "";
+            }
 
             LinearLayout itemView = new LinearLayout(getContext());
             itemView.setOrientation(LinearLayout.VERTICAL);

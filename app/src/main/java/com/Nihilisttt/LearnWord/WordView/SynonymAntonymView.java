@@ -3,6 +3,7 @@ package com.Nihilisttt.LearnWord.WordView;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Typeface;
+import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -25,9 +26,25 @@ public class SynonymAntonymView extends LinearLayout {
         setOrientation(VERTICAL);
         setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
 
+        Log.d("SynAntView", "synonymWords=" + synonymWords.size() + " antonymWords=" + antonymWords.size());
+
         if (!synonymWords.isEmpty()) {
             addSectionTitle("近义词");
-            addThreeColumnRows(context, lifecycleOwner, layoutType, synonymWords);
+            for (int idx = 0; idx < synonymWords.size(); idx += 3) {
+                LinearLayout row = new LinearLayout(context);
+                row.setOrientation(HORIZONTAL);
+                row.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+                addView(row);
+                for (int c = 0; c < 3 && idx + c < synonymWords.size(); c++) {
+                    SynonymWord word = synonymWords.get(idx + c);
+                    View cell = View.inflate(context, R.layout.view_integrated_part_row, null);
+                    cell.setLayoutParams(new LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f));
+                    LinearLayout rowContainer = cell.findViewById(R.id.integrated_part_row);
+                    rowContainer.addView(new WrappedPhraseView(context, lifecycleOwner, layoutType,
+                            word.getKanjiComponents(), word.getKanaComponents()));
+                    row.addView(cell);
+                }
+            }
         }
 
         if (!antonymWords.isEmpty()) {
@@ -38,8 +55,24 @@ public class SynonymAntonymView extends LinearLayout {
                 addView(divider);
             }
             addSectionTitle("反义词");
-            addThreeColumnRows(context, lifecycleOwner, layoutType, antonymWords);
+            for (int idx = 0; idx < antonymWords.size(); idx += 3) {
+                LinearLayout row = new LinearLayout(context);
+                row.setOrientation(HORIZONTAL);
+                row.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+                addView(row);
+                for (int c = 0; c < 3 && idx + c < antonymWords.size(); c++) {
+                    AntonymWord word = antonymWords.get(idx + c);
+                    View cell = View.inflate(context, R.layout.view_integrated_part_row, null);
+                    cell.setLayoutParams(new LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f));
+                    LinearLayout rowContainer = cell.findViewById(R.id.integrated_part_row);
+                    rowContainer.addView(new WrappedPhraseView(context, lifecycleOwner, layoutType,
+                            word.getKanjiComponents(), word.getKanaComponents()));
+                    row.addView(cell);
+                }
+            }
         }
+
+        Log.d("SynAntView", "childCount=" + getChildCount());
     }
 
     private void addSectionTitle(String title) {
@@ -53,34 +86,5 @@ public class SynonymAntonymView extends LinearLayout {
         params.setMargins(0, 0, 0, marginBottom);
         tv.setLayoutParams(params);
         addView(tv);
-    }
-
-    private void addThreeColumnRows(Context context, LifecycleOwner lifecycleOwner, int layoutType, List<? extends com.Nihilisttt.LearnWord.JavaBean.WordComponent> words) {
-        for (int idx = 0; idx < words.size(); idx += 3) {
-            LinearLayout row = new LinearLayout(context);
-            row.setOrientation(HORIZONTAL);
-            row.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
-            addView(row);
-
-            int count = Math.min(3, words.size() - idx);
-            for (int c = 0; c < count; c++) {
-                com.Nihilisttt.LearnWord.JavaBean.WordComponent word = words.get(idx + c);
-                View cell = View.inflate(context, R.layout.view_integrated_part_row, null);
-                LinearLayout.LayoutParams cellParams = new LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f);
-                cell.setLayoutParams(cellParams);
-
-                LinearLayout rowContainer = cell.findViewById(R.id.integrated_part_row);
-                WrappedPhraseView phrase = new WrappedPhraseView(context, lifecycleOwner, layoutType,
-                        word.getKanjiComponents(), word.getKanaComponents());
-                rowContainer.addView(phrase);
-                row.addView(cell);
-            }
-            for (int c = count; c < 3; c++) {
-                View spacer = new View(context);
-                LinearLayout.LayoutParams spacerParams = new LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f);
-                spacer.setLayoutParams(spacerParams);
-                row.addView(spacer);
-            }
-        }
     }
 }

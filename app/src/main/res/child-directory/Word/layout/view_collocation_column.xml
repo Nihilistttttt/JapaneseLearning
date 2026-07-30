@@ -20,7 +20,7 @@
         android:id="@+id/collocation_translation"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="10dp"
+
         android:textColor="@color/md_on_surface"
         android:textSize="14sp"
         app:layout_constraintBottom_toBottomOf="parent"

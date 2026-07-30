@@ -112,7 +112,7 @@ public class IntegratedPartView extends LinearLayout {
             fragmentList.add(new CollocationViewFragment(collocations));
         }
         if (!synonymWords.isEmpty() || !antonymWords.isEmpty()) {
-            tabTitles.add("近義/反義");
+            tabTitles.add("近义词");
             fragmentList.add(new SynonymAntonymViewFragment(synonymWords, antonymWords));
         }
         if (!conjugationForms.isEmpty()) {
