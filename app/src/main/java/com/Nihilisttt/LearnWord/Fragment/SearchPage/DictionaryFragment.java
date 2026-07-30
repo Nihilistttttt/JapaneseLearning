@@ -23,6 +23,7 @@ public class DictionaryFragment extends Fragment {
     private LearnPageViewModel viewModel;
     private LearnPageStateViewModel stateViewModel;
     private LinearLayout basicWordContainer;
+    private BasicWordView basicWordView;
 
     @Nullable
     @Override
@@ -58,9 +59,19 @@ public class DictionaryFragment extends Fragment {
             BasicWord basicWord = combinedWordInfo.getBasicWord();
             Integer wordFontLevel = stateViewModel.getWordFontLevel().getValue();
             if (wordFontLevel == null) wordFontLevel = Constants.FONT_SIZE_NORMAL;
-            BasicWordView basicWordView = new BasicWordView(getContext(), this, wordFontLevel, basicWord);
-            basicWordContainer.addView(basicWordView);
+            if (basicWordView == null) {
+                basicWordView = new BasicWordView(getContext(), this, wordFontLevel, basicWord);
+                basicWordContainer.addView(basicWordView);
+            } else {
+                basicWordView.update(basicWord, wordFontLevel);
+            }
         });
 
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        basicWordView = null;
     }
 }
