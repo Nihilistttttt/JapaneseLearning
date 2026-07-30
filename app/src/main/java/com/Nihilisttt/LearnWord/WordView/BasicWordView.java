@@ -128,13 +128,14 @@ public class BasicWordView extends LinearLayout {
         float accentMarkWidth = accentMark.getPaint().measureText(accentMark.getText().toString());
         int wordWidthPx = Math.round(estimatedWidth);
         float finalAccentMarkWidth = accentMarkWidth;
+        setVisibility(INVISIBLE);
         post(() -> {
             ViewParent parent = getParent();
             if (parent == null) return;
             if (parent instanceof LinearLayout) {
                 int gravity = ((LinearLayout) parent).getGravity();
                 boolean hasCenterHorizontal = (gravity & Gravity.HORIZONTAL_GRAVITY_MASK) == Gravity.CENTER_HORIZONTAL;
-                if (hasCenterHorizontal) return;
+                if (hasCenterHorizontal) { setVisibility(VISIBLE); return; }
             }
             int parentWidth = ((View) parent).getWidth();
             if (parentWidth <= 0) return;
@@ -145,6 +146,7 @@ public class BasicWordView extends LinearLayout {
             MarginLayoutParams mlp = (MarginLayoutParams) getLayoutParams();
             mlp.setMarginStart(marginStart);
             setLayoutParams(mlp);
+            setVisibility(VISIBLE);
         });
     }
 

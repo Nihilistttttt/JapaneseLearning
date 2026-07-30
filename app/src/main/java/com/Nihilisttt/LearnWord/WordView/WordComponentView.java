@@ -7,6 +7,8 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.text.SpannableStringBuilder;
+import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.util.TypedValue;
 import androidx.core.content.ContextCompat;
@@ -384,7 +386,11 @@ public class WordComponentView extends LinearLayout {
 
         LinearLayout basicWordPart = new LinearLayout(context);
         basicWordPart.setOrientation(LinearLayout.VERTICAL);
-        basicWordPart.setGravity(Gravity.CENTER_HORIZONTAL);
+
+
+        LinearLayout infoRow = new LinearLayout(context);
+        infoRow.setOrientation(LinearLayout.HORIZONTAL);
+        infoRow.setGravity(Gravity.CENTER_HORIZONTAL);
 
         LinearLayout meaningPart = new LinearLayout(context);
         meaningPart.setOrientation(LinearLayout.VERTICAL);
@@ -396,6 +402,7 @@ public class WordComponentView extends LinearLayout {
         buttonPart.addView(wordDetails);
 
         container.addView(basicWordPart);
+        container.addView(infoRow);
         container.addView(meaningPart);
         container.addView(buttonPart);
         scrollView.addView(container);
@@ -434,6 +441,35 @@ public class WordComponentView extends LinearLayout {
                 int wordLevel = fontPrefs.getInt("word_font_level", Constants.FONT_SIZE_NORMAL);
                 BasicWordView basicWordView = new BasicWordView(getContext(), lifecycleOwner, wordLevel, basicWord);
                 basicWordPart.addView(basicWordView);
+
+                infoRow.removeAllViews();
+                int jlptLevel = basicWord.getJlptLevel();
+                int wordFrequency = basicWord.getWordFrequency();
+                if (jlptLevel > 0 || wordFrequency > 0) {
+                    SpannableStringBuilder ssb = new SpannableStringBuilder();
+                    int primaryColor = context.getResources().getColor(R.color.md_primary);
+                    int variantColor = context.getResources().getColor(R.color.md_on_surface_variant);
+                    if (jlptLevel > 0) {
+                        String jlptText = "N" + jlptLevel;
+                        int start = ssb.length();
+                        ssb.append(jlptText);
+                        ssb.setSpan(new ForegroundColorSpan(primaryColor), start, ssb.length(), 0);
+                    }
+                    if (jlptLevel > 0 && wordFrequency > 0) {
+                        int start = ssb.length();
+                        ssb.append(" · ");
+                        ssb.setSpan(new ForegroundColorSpan(variantColor), start, ssb.length(), 0);
+                    }
+                    if (wordFrequency > 0) {
+                        int start = ssb.length();
+                        ssb.append(String.valueOf(wordFrequency));
+                        ssb.setSpan(new ForegroundColorSpan(variantColor), start, ssb.length(), 0);
+                    }
+                    TextView infoText = new TextView(context);
+                    infoText.setText(ssb);
+                    infoText.setTextSize(13);
+                    infoRow.addView(infoText);
+                }
             }
             basicWordReady[0] = true;
             if (meaningReady[0] && !popupWindow.isShowing()) {

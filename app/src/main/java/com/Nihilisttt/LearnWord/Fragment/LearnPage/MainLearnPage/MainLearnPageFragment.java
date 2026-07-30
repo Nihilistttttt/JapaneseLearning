@@ -140,8 +140,6 @@ public class MainLearnPageFragment extends Fragment {
             sentenceView.update(limitedSentences, subLevel);
         }
 
-        wordContainer.setVisibility(View.VISIBLE);
-
         BasicWord basicWord = combinedWordInfo.getBasicWord();
         int jlptLevel = basicWord.getJlptLevel();
         int wordFrequency = basicWord.getWordFrequency();
@@ -173,6 +171,7 @@ public class MainLearnPageFragment extends Fragment {
             infoRow.setVisibility(View.VISIBLE);
         }
 
+        wordContainer.setVisibility(View.VISIBLE);
         sentenceContainer.setVisibility(View.VISIBLE);
 
         if (meaningView == null) {

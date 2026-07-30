@@ -5,6 +5,49 @@ LearnWord 项目更新记录
 
 ========================
 
+【更新22】近义词反义词可点击+汉字情报可点击+弹窗JLPT/词频+单词居中无跳动+显示时序修复
+日期：2026-07-30
+涉及文件：
+  View: SynonymAntonymView(WordComponentView替代WrappedPhraseView,左对齐),
+        KanjiInfoView(sameKanjiWords用带wordId的fromSingleWord),
+        WordComponentView(弹窗basicWordPart去gravity+infoRow+JLPT/词频),
+        BasicWordView(INVISIBLE→post()设margin→VISIBLE消除跳动),
+        MainLearnPageFragment(wordContainer和sentenceContainer同时VISIBLE)
+  Database: WordDatabase(PREBUILT_DB_VERSION 19→20), word_database.db(correspondingWordId+sameKanjiWords wid修复)
+
+1. 近义词反义词可点击：
+   - SynonymAntonymView用WordComponentView(kj,kn,wordId)替代WrappedPhraseView
+   - correspondingWordId为"0"时回退到WrappedPhraseView(不可点击)
+   - cell改为左对齐(与词组搭配一致)，去掉Gravity.CENTER和paddingStart
+   - DB修复：AntonymWord/SynonymWord的correspondingWordId从"0"填充为实际wordId
+
+2. 汉字情报sameKanjiWords可点击：
+   - KanjiInfoView用PhraseComponentView.fromSingleWord(kj,kn,wid)替代fromSingleWord(kj,kn)
+   - sameKanjiWords JSON添加"wid"字段存储目标词wordId
+   - DB修复：KanjiInfo的sameKanjiWords添加wid字段
+
+3. 弹窗JLPT/词频：
+   - WordComponentView.showInfoDialog在basicWordPart和meaningPart之间添加infoRow
+   - 格式与主页面一致：N5蓝色·词频灰色
+
+4. 单词居中无跳动：
+   - BasicWordView.fillContent先设INVISIBLE，post()中设好marginStart后设VISIBLE
+   - 消除弹窗中单词先左后居中的视觉跳动
+
+5. 显示时序修复：
+   - MainLearnPageFragment中wordContainer和sentenceContainer同时设VISIBLE
+   - JLPT/词频infoRow设置移到两者之前
+
+6. 弹窗单词居中：
+   - 弹窗basicWordPart去掉CENTER_HORIZONTAL gravity，由BasicWordView margin居中
+
+意义：
+  - 近义词反义词和汉字情报中的词可点击查看详情是核心交互需求
+  - 弹窗JLPT/词频与主页面一致，信息密度更高
+  - 居中无跳动提升视觉体验
+
+========================
+
 【更新21】近义词反义词合并+单词居中修复+假名标注修复+词组翻译间距+测试词wordId修复
 日期：2026-07-30
 B涉及文件：

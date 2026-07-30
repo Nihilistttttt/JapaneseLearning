@@ -105,7 +105,13 @@ public class KanjiInfoView extends LinearLayout {
                         List<String> kn = new ArrayList<>();
                         for (int j = 0; j < kjArr.length(); j++) kj.add(kjArr.getString(j));
                         for (int j = 0; j < knArr.length(); j++) kn.add(knArr.getString(j));
-                        PhraseComponentView wordView = PhraseComponentView.fromSingleWord(context, lifecycleOwner, layoutType, kj, kn);
+                        String wid = obj.optString("wid", "0");
+                        PhraseComponentView wordView;
+                        if (!wid.equals("0")) {
+                            wordView = PhraseComponentView.fromSingleWord(context, lifecycleOwner, layoutType, kj, kn, wid);
+                        } else {
+                            wordView = PhraseComponentView.fromSingleWord(context, lifecycleOwner, layoutType, kj, kn);
+                        }
                         wordCell.addView(wordView);
                     } catch (Exception e) {
                         TextView fallback = new TextView(context);
