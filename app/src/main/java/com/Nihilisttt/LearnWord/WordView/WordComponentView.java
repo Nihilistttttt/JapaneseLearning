@@ -377,13 +377,13 @@ public class WordComponentView extends LinearLayout {
 
         PopupWindow popupWindow = new PopupWindow(context);
         popupWindow.setOutsideTouchable(true);
-        popupWindow.setElevation(16);
+        popupWindow.setElevation(Constants.POPUP_ELEVATION_DP * getResources().getDisplayMetrics().density);
         popupWindow.setFocusable(false);
         popupWindow.setTouchable(true);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
 
         MaterialCardView cardView = new MaterialCardView(context);
-        cardView.setRadius(16);
+        cardView.setRadius(Constants.POPUP_RADIUS_DP * getResources().getDisplayMetrics().density);
         cardView.setCardBackgroundColor(ContextCompat.getColor(context, R.color.md_card_background));
         cardView.setLayoutParams(new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -393,7 +393,7 @@ public class WordComponentView extends LinearLayout {
         NestedScrollView scrollView = new NestedScrollView(context);
         LinearLayout container = new LinearLayout(context);
         container.setOrientation(LinearLayout.VERTICAL);
-        int containerPadding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 16, context.getResources().getDisplayMetrics());
+        int containerPadding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, Constants.POPUP_PADDING_DP, context.getResources().getDisplayMetrics());
         container.setPadding(containerPadding, containerPadding, containerPadding, containerPadding);
 
         LinearLayout basicWordPart = new LinearLayout(context);
@@ -432,14 +432,14 @@ public class WordComponentView extends LinearLayout {
         popupWindow.setContentView(cardView);
 
         int screenWidth = context.getResources().getDisplayMetrics().widthPixels;
-        int popupWidth = (int) (screenWidth * 0.95);
+        int popupWidth = (int) (screenWidth * Constants.POPUP_WIDTH_RATIO);
         popupWindow.setWidth(popupWidth);
         popupWindow.setHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
 
         int[] location = new int[2];
         this.getLocationOnScreen(location);
         int yOffset = location[1] + this.getHeight() + (int) TypedValue.applyDimension(
-                TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics());
+                TypedValue.COMPLEX_UNIT_DIP, Constants.POPUP_Y_OFFSET_DP, getResources().getDisplayMetrics());
         int xOffset = (screenWidth - popupWidth) / 2;
 
         View activityRoot = this.getRootView();

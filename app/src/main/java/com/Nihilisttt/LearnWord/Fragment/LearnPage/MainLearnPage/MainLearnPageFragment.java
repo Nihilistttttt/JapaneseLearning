@@ -101,6 +101,14 @@ public class MainLearnPageFragment extends Fragment {
             if (info != null) renderWord(info);
         });
 
+        stateViewModel.getIsScrollMode().observe(getViewLifecycleOwner(), isScroll -> {
+            if (integratedPartView != null) {
+                Integer subLevel = stateViewModel.getSubFontLevel().getValue();
+                if (subLevel == null) subLevel = Constants.FONT_SIZE_NORMAL;
+                integratedPartView.setScrollMode(isScroll, subLevel);
+            }
+        });
+
         viewModel.getToastMessage().observe(getViewLifecycleOwner(), message -> {
             if (message != null) {
                 Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
@@ -193,8 +201,13 @@ public class MainLearnPageFragment extends Fragment {
                     combinedWordInfo.getGrammarPointList(),
                     combinedWordInfo.getIdiomList());
             integratedPartContainer.addView(integratedPartView);
+            Boolean isScroll = stateViewModel.getIsScrollMode().getValue();
+            if (isScroll != null && isScroll) {
+
+                integratedPartView.setScrollMode(true, subLevel);
+            }
         } else {
-            integratedPartView.update(combinedWordInfo.getWordCollocationList(),
+            integratedPartView.updateData(combinedWordInfo.getWordCollocationList(),
                     combinedWordInfo.getAntonymWordList(),
                     combinedWordInfo.getSynonymWordList(),
                     combinedWordInfo.getConjugationFormList(),

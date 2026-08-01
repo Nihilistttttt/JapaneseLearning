@@ -36,6 +36,7 @@
 
     <color name="md_part_of_speech">#FF1565C0</color>
     <color name="md_definition_text">#FF424242</color>
+    <color name="md_translation_text">#FF757575</color>
     <color name="md_detail_label">#FF1565C0</color>
 
     <color name="md_card_background">#FFFFFFFF</color>

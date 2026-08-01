@@ -86,7 +86,7 @@ public class WordDetailBottomSheet extends BottomSheetDialogFragment {
                 int statusBarH = 0;
                 int resId = getResources().getIdentifier("status_bar_height", "dimen", "android");
                 if (resId > 0) statusBarH = getResources().getDimensionPixelSize(resId);
-                int toolbarH = (int) (56 * getResources().getDisplayMetrics().density);
+                int toolbarH = (int) (Constants.TOOLBAR_HEIGHT_DP * getResources().getDisplayMetrics().density);
                 int peekH = screenHeight - statusBarH - toolbarH;
                 behavior.setPeekHeight(peekH);
                 behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
@@ -103,25 +103,26 @@ public class WordDetailBottomSheet extends BottomSheetDialogFragment {
 
         LinearLayout root = new LinearLayout(context);
         root.setOrientation(LinearLayout.VERTICAL);
-        int minH = (int) (getResources().getDisplayMetrics().heightPixels * 0.92);
+        int minH = (int) (getResources().getDisplayMetrics().heightPixels * Constants.BOTTOM_SHEET_HEIGHT_RATIO);
         root.setMinimumHeight(minH);
-        int rootPad = (int) (8 * density);
+        int rootPad = (int) (Constants.ROOT_TOP_PADDING_DP * density);
         root.setPadding(0, rootPad, 0, 0);
 
         LinearLayout headerPart = new LinearLayout(context);
         headerPart.setOrientation(LinearLayout.VERTICAL);
-        int hPad = (int) (16 * density);
-        headerPart.setPadding(hPad, 0, hPad, (int) (4 * density));
+        int hPad = (int) (Constants.HEADER_PADDING_H_DP * density);
+        headerPart.setPadding(hPad, 0, hPad, (int) (Constants.HEADER_PADDING_BOTTOM_DP * density));
 
         CardView tabCard = new CardView(context);
-        tabCard.setRadius(12 * density);
-        tabCard.setCardElevation(1 * density);
+        tabCard.setRadius(Constants.CARD_RADIUS_DP * density);
+        tabCard.setCardElevation(Constants.CARD_ELEVATION_DP * density);
         tabCard.setCardBackgroundColor(context.getResources().getColor(R.color.md_card_background));
-        tabCard.setContentPadding((int) (8 * density), (int) (8 * density), (int) (8 * density), (int) (8 * density));
+        int contentPad = (int) (Constants.CARD_CONTENT_PADDING_DP * density);
+        tabCard.setContentPadding(contentPad, contentPad, contentPad, contentPad);
         LinearLayout.LayoutParams tabCardLp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f);
-        int cardMargin = (int) (12 * density);
-        tabCardLp.setMargins(cardMargin, (int) (8 * density), cardMargin, cardMargin);
+        int cardMargin = (int) (Constants.CARD_MARGIN_DP * density);
+        tabCardLp.setMargins(cardMargin, (int) (Constants.ROOT_TOP_PADDING_DP * density), cardMargin, cardMargin);
         tabCard.setLayoutParams(tabCardLp);
 
         LinearLayout tabPart = new LinearLayout(context);
@@ -293,7 +294,7 @@ public class WordDetailBottomSheet extends BottomSheetDialogFragment {
             if (headerPart.getChildAt(i) instanceof MeaningView) return;
         }
         MeaningView meaningView = new MeaningView(context, lifecycleOwner, subFontLevel, meanings, Constants.SHOW_SENTENCE_POPUP);
-        int mBottom = (int) (8 * getResources().getDisplayMetrics().density);
+        int mBottom = (int) (Constants.MEANING_BOTTOM_MARGIN_DP * getResources().getDisplayMetrics().density);
         LinearLayout.LayoutParams mp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         mp.setMargins(0, 0, 0, mBottom);
@@ -405,7 +406,7 @@ public class WordDetailBottomSheet extends BottomSheetDialogFragment {
         });
         mediator.attach();
 
-        int tabMinWidth = (int) (40 * getResources().getDisplayMetrics().density);
+        int tabMinWidth = (int) (Constants.TAB_MIN_WIDTH_DP * getResources().getDisplayMetrics().density);
         for (int i = 0; i < tabLayout.getTabCount(); i++) {
             TabLayout.Tab tab = tabLayout.getTabAt(i);
             if (tab != null && tab.view != null) {

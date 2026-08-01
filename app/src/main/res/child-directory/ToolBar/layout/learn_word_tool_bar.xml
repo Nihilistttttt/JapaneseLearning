@@ -55,6 +55,14 @@
             android:contentDescription="Font size" />
 
         <ImageButton
+            android:id="@+id/scroll_mode_button"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/ic_scroll_mode"
+            android:contentDescription="Toggle scroll mode" />
+
+        <ImageButton
             android:id="@+id/delete_button"
             android:layout_width="36dp"
             android:layout_height="36dp"

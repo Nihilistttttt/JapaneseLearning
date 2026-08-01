@@ -122,7 +122,9 @@ public class MeaningView extends LinearLayout {
 
         view.setText(spannable);
         view.setTextSize(TypedValue.COMPLEX_UNIT_SP, definitionTextSize);
-        view.setTextColor(ContextCompat.getColor(getContext(), R.color.md_definition_text));
+        int defColor = mode == Constants.TURN_TO_DETAIL_PAGE
+                ? R.color.md_definition_text : R.color.md_translation_text;
+        view.setTextColor(ContextCompat.getColor(getContext(), defColor));
         view.setTag(meaning);
         if (mode == Constants.TURN_TO_DETAIL_PAGE) {
             view.setMaxLines(1);

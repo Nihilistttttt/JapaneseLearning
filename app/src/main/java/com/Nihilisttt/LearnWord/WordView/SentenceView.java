@@ -174,6 +174,12 @@ public class SentenceView extends LinearLayout {
         List<List<String>> originalsKana = sentence.getKanaComponents();
 
         View sentenceColumn = View.inflate(context, R.layout.view_sentence_column, null);
+        if (sentencePart.getChildCount() > 0) {
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            lp.topMargin = (int) (Constants.SENTENCE_ITEM_MARGIN_DP * context.getResources().getDisplayMetrics().density);
+            sentenceColumn.setLayoutParams(lp);
+        }
         sentencePart.addView(sentenceColumn);
         sentenceColumn.setBackgroundResource(R.drawable.word_layout_selector);
         sentenceColumn.setOnClickListener(v -> {
@@ -188,7 +194,7 @@ public class SentenceView extends LinearLayout {
         translation.setTextSize(TypedValue.COMPLEX_UNIT_SP, Constants.getSubDefinitionSize(layoutType));
 
         int screenWidthPx = context.getResources().getDisplayMetrics().widthPixels;
-        int availableWidthPx = screenWidthPx - Convert.dpToPx(context, 40);
+        int availableWidthPx = screenWidthPx - Convert.dpToPx(context, (int) Constants.AVAILABLE_WIDTH_DEDUCTION_DP);
 
         LinearLayout currentRow = new LinearLayout(context);
         currentRow.setOrientation(LinearLayout.HORIZONTAL);

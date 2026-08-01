@@ -33,6 +33,7 @@ public class LearnPageToolBar extends androidx.appcompat.widget.Toolbar {
     private ImageButton back_button;
     private TextView count_textView;
     private ImageButton font_size_button;
+    private ImageButton scroll_mode_button;
     private ImageButton delete_button;
     private LearnPageStateViewModel stateViewModel;
 
@@ -53,6 +54,7 @@ public class LearnPageToolBar extends androidx.appcompat.widget.Toolbar {
         back_button.setOnClickListener(v -> ((Activity) context).finish());
         count_textView = findViewById(R.id.count_text);
         font_size_button = findViewById(R.id.font_size_button);
+        scroll_mode_button = findViewById(R.id.scroll_mode_button);
         delete_button = findViewById(R.id.delete_button);
     }
 
@@ -60,6 +62,12 @@ public class LearnPageToolBar extends androidx.appcompat.widget.Toolbar {
         this.stateViewModel = stateViewModel;
         if (font_size_button != null) {
             font_size_button.setOnClickListener(v -> showFontSizePopup());
+        }
+        if (scroll_mode_button != null) {
+            scroll_mode_button.setOnClickListener(v -> {
+                Boolean current = stateViewModel.getIsScrollMode().getValue();
+                stateViewModel.setScrollMode(current == null || !current);
+            });
         }
     }
 

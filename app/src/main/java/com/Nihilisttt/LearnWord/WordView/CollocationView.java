@@ -71,7 +71,11 @@ public class CollocationView extends LinearLayout {
         for (int idx = 0; idx < collocations.size(); idx += 2) {
             LinearLayout gridRow = new LinearLayout(context);
             gridRow.setOrientation(HORIZONTAL);
-            gridRow.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+            LinearLayout.LayoutParams rowParams = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+            if (idx > 0) {
+                rowParams.topMargin = (int) (Constants.COLLOCATION_ROW_MARGIN_DP * context.getResources().getDisplayMetrics().density);
+            }
+            gridRow.setLayoutParams(rowParams);
             addView(gridRow);
 
             for (int c = 0; c < 2 && idx + c < collocations.size(); c++) {

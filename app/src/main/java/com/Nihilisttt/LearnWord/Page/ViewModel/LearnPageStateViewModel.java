@@ -44,6 +44,16 @@ public class LearnPageStateViewModel extends AndroidViewModel {
         isViewPagerScrollEnabled.setValue(enabled);
     }
 
+    private MutableLiveData<Boolean> isScrollMode = new MutableLiveData<>(false);
+
+    public MutableLiveData<Boolean> getIsScrollMode() {
+        return isScrollMode;
+    }
+
+    public void setScrollMode(boolean scroll) {
+        isScrollMode.setValue(scroll);
+    }
+
     private MutableLiveData<FragmentInLearnPage> whichFragmentInLearnPage = new MutableLiveData<>();
 
     public MutableLiveData<FragmentInLearnPage> getWhichFragmentInLearnPage() {

@@ -90,7 +90,7 @@ public class BasicWordView extends LinearLayout {
         List<String> kanaComponents = basicWord.getKanaComponents();
 
         int screenWidthPx = getContext().getResources().getDisplayMetrics().widthPixels;
-        int availableWidthPx = screenWidthPx - Convert.dpToPx(getContext(), 32);
+        int availableWidthPx = screenWidthPx - Convert.dpToPx(getContext(), (int) Constants.BASIC_WORD_AVAILABLE_WIDTH_DEDUCTION_DP);
 
         Select.layoutParams lp = Select.selectLayout(layoutType);
         float estimatedWidth = estimateWordWidth(kanjiComponents, kanaComponents, lp);

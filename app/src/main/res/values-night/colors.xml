@@ -27,6 +27,7 @@
 
     <color name="md_part_of_speech">#FFA7C8FF</color>
     <color name="md_definition_text">#FFE0E0E0</color>
+    <color name="md_translation_text">#FFB0B0B0</color>
     <color name="md_detail_label">#FFA7C8FF</color>
 
     <color name="md_card_background">#FF1E2024</color>

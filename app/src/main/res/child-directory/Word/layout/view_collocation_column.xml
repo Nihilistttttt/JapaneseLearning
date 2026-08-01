@@ -21,7 +21,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
 
-        android:textColor="@color/md_on_surface"
+        android:textColor="@color/md_translation_text"
         android:textSize="14sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="@+id/collocation_guideline_2"

@@ -8,6 +8,8 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.Nihilisttt.LearnWord.UtilityClass.Constants;
+
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LifecycleOwner;
 
@@ -37,7 +39,7 @@ public class SynonymAntonymView extends LinearLayout {
         if (!antonymWords.isEmpty()) {
             if (!synonymWords.isEmpty()) {
                 View divider = new View(context);
-                int dividerHeight = (int) (8 * context.getResources().getDisplayMetrics().density);
+                int dividerHeight = (int) (Constants.SECTION_DIVIDER_HEIGHT_DP * context.getResources().getDisplayMetrics().density);
                 divider.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, dividerHeight));
                 addView(divider);
             }
@@ -89,7 +91,7 @@ public class SynonymAntonymView extends LinearLayout {
         tv.setTextSize(14);
         tv.setTypeface(Typeface.DEFAULT_BOLD);
         tv.setTextColor(getContext().getResources().getColor(R.color.md_detail_label));
-        int marginBottom = (int) (4 * getContext().getResources().getDisplayMetrics().density);
+        int marginBottom = (int) (Constants.SECTION_TITLE_BOTTOM_MARGIN_DP * getContext().getResources().getDisplayMetrics().density);
         LayoutParams params = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
         params.setMargins(0, 0, 0, marginBottom);
         tv.setLayoutParams(params);
