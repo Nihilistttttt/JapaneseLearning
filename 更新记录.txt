@@ -5,6 +5,29 @@ LearnWord 项目更新记录
 
 ========================
 
+【更新26】BottomSheet Tab/滚动模式切换
+日期：2026-08-01
+涉及文件：
+  Fragment: WordDetailBottomSheet(header区添加切换按钮+buildContent支持Tab/滚动模式+buildScrollContent滚动模式实现+observe isScrollMode切换rebuild)
+
+1. BottomSheet切换按钮：
+   - header区添加ImageButton(ic_scroll_mode图标), 32dp大小, 透明背景, 居中
+   - 点击切换stateViewModel.isScrollMode状态
+   - 与主页面ToolBar切换按钮共享isScrollMode状态
+
+2. BottomSheet滚动模式：
+   - buildTabs改名buildContent, 新增isScrollMode参数
+   - 滚动模式: ScrollView+分区标题(例句/活用形/漢字/其他)+直接添加View
+   - SynonymAntonymView不加section标题(自带近义词/反义词标题)
+   - addScrollSection: 标题(md_detail_label, 14sp粗体)+内容+分隔线
+   - addScrollDivider: md_outline_variant颜色, 8dp上间距
+
+3. 模式切换：
+   - observe isScrollMode, 切换时removeAllViews并rebuild
+   - tabsBuilt标志防止数据未ready时提前build
+
+========================
+
 【更新25】BottomSheet UI美化+数据时序修复+高度调整
 日期：2026-07-31
 涉及文件：

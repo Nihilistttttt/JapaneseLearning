@@ -46,7 +46,13 @@ import com.Nihilisttt.LearnWord.R;
 import com.Nihilisttt.LearnWord.UtilityClass.Constants;
 import com.Nihilisttt.LearnWord.ViewPager2.NestedScrollableHostBetween2Layers;
 import com.Nihilisttt.LearnWord.WordView.BasicWordView;
+import com.Nihilisttt.LearnWord.WordView.CollocationView;
+import com.Nihilisttt.LearnWord.WordView.ConjugationFormView;
+import com.Nihilisttt.LearnWord.WordView.ExtendedInfoView;
+import com.Nihilisttt.LearnWord.WordView.KanjiInfoView;
 import com.Nihilisttt.LearnWord.WordView.MeaningView;
+import com.Nihilisttt.LearnWord.WordView.SentenceView;
+import com.Nihilisttt.LearnWord.WordView.SynonymAntonymView;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import com.google.android.material.tabs.TabLayout;
@@ -182,7 +188,7 @@ public class WordDetailBottomSheet extends BottomSheetDialogFragment {
         final Observer<BasicWord> basicObserver = basicWord -> {
             if (basicWord == null || basicWord.getWordId().equals("null")) return;
             Log.d(TAG, "basicObserver: wordId=" + basicWord.getWordId());
-            renderHeader(headerPart, basicWord, wordLevel, subFontLevel, lifecycleOwner, context);
+            renderHeader(headerPart, basicWord, wordLevel, subFontLevel, lifecycleOwner, context, stateViewModel);
             headerRendered[0] = true;
         };
 
@@ -208,7 +214,8 @@ public class WordDetailBottomSheet extends BottomSheetDialogFragment {
                     || kanjiInfosLiveData.getValue() == null || usageDistinctionsLiveData.getValue() == null
                     || grammarPointsLiveData.getValue() == null || idiomsLiveData.getValue() == null) return;
             Log.d(TAG, "tryBuildTabs: all data ready");
-            buildTabs(tabPart, subFontLevel, sentencesLiveData, collocationsLiveData,
+            Boolean isScroll = stateViewModel.getIsScrollMode().getValue();
+            buildContent(tabPart, subFontLevel, isScroll != null && isScroll, sentencesLiveData, collocationsLiveData,
                     antonymsLiveData, synonymsLiveData, conjugationsLiveData,
                     etymologiesLiveData, kanjiInfosLiveData, usageDistinctionsLiveData,
                     grammarPointsLiveData, idiomsLiveData, context, lifecycleOwner);
@@ -228,10 +235,19 @@ public class WordDetailBottomSheet extends BottomSheetDialogFragment {
         usageDistinctionsLiveData.observe(lifecycleOwner, u -> tryBuildTabs.run());
         grammarPointsLiveData.observe(lifecycleOwner, g -> tryBuildTabs.run());
         idiomsLiveData.observe(lifecycleOwner, i -> tryBuildTabs.run());
+
+        stateViewModel.getIsScrollMode().observe(lifecycleOwner, isScroll -> {
+            if (!tabsBuilt[0]) return;
+            tabPart.removeAllViews();
+            buildContent(tabPart, subFontLevel, isScroll, sentencesLiveData, collocationsLiveData,
+                    antonymsLiveData, synonymsLiveData, conjugationsLiveData,
+                    etymologiesLiveData, kanjiInfosLiveData, usageDistinctionsLiveData,
+                    grammarPointsLiveData, idiomsLiveData, context, lifecycleOwner);
+        });
     }
 
     private void renderHeader(LinearLayout headerPart, BasicWord basicWord, int wordLevel, int subFontLevel,
-                              LifecycleOwner lifecycleOwner, Context context) {
+                              LifecycleOwner lifecycleOwner, Context context, LearnPageStateViewModel stateViewModel) {
         headerPart.removeAllViews();
 
         BasicWordView basicWordView = new BasicWordView(context, lifecycleOwner, wordLevel, basicWord);
@@ -286,6 +302,20 @@ public class WordDetailBottomSheet extends BottomSheetDialogFragment {
             headerPart.addView(infoRow);
         }
 
+        android.widget.ImageButton scrollToggle = new android.widget.ImageButton(context);
+        scrollToggle.setImageResource(R.drawable.ic_scroll_mode);
+        scrollToggle.setBackgroundColor(android.graphics.Color.TRANSPARENT);
+        int btnSize = (int) (32 * context.getResources().getDisplayMetrics().density);
+        LinearLayout.LayoutParams toggleLp = new LinearLayout.LayoutParams(btnSize, btnSize);
+        toggleLp.gravity = android.view.Gravity.CENTER_HORIZONTAL;
+        toggleLp.topMargin = (int) (4 * context.getResources().getDisplayMetrics().density);
+        scrollToggle.setLayoutParams(toggleLp);
+        scrollToggle.setOnClickListener(v -> {
+            Boolean current = stateViewModel.getIsScrollMode().getValue();
+            stateViewModel.setScrollMode(current == null || !current);
+        });
+        headerPart.addView(scrollToggle);
+
     }
 
     private void renderMeanings(LinearLayout headerPart, int subFontLevel,
@@ -302,8 +332,8 @@ public class WordDetailBottomSheet extends BottomSheetDialogFragment {
         headerPart.addView(meaningView);
     }
 
-    private void buildTabs(LinearLayout tabPart, int subFontLevel,
-                           LiveData<List<WordSentence>> sentencesLiveData,
+    private void buildContent(LinearLayout tabPart, int subFontLevel, boolean isScrollMode,
+                            LiveData<List<WordSentence>> sentencesLiveData,
                            LiveData<List<WordCollocation>> collocationsLiveData,
                            LiveData<List<AntonymWord>> antonymsLiveData,
                            LiveData<List<SynonymWord>> synonymsLiveData,
@@ -360,16 +390,17 @@ public class WordDetailBottomSheet extends BottomSheetDialogFragment {
         }
 
         if (fragmentList.isEmpty()) {
-            Log.d(TAG, "buildTabs: no fragments to show");
+            Log.d(TAG, "buildContent: no fragments to show");
             return;
         }
 
-        Log.d(TAG, "buildTabs: tabs=" + tabTitles + " sentences=" + sentences.size()
-                + " collocations=" + collocations.size() + " antonyms=" + antonyms.size()
-                + " synonyms=" + synonyms.size() + " conjugations=" + conjugations.size()
-                + " kanjiInfos=" + kanjiInfos.size() + " etymologies=" + etymologies.size()
-                + " usageDist=" + usageDistinctions.size() + " grammar=" + grammarPoints.size()
-                + " idioms=" + validIdioms.size());
+        Log.d(TAG, "buildContent: tabs=" + tabTitles + " isScroll=" + isScrollMode);
+
+        if (isScrollMode) {
+            buildScrollContent(tabPart, subFontLevel, sentences, antonyms, synonyms, conjugations,
+                    etymologies, kanjiInfos, usageDistinctions, grammarPoints, validIdioms, context, lifecycleOwner);
+            return;
+        }
 
         TabLayout tabLayout = new TabLayout(context);
         tabLayout.setTabGravity(TabLayout.GRAVITY_START);
@@ -413,5 +444,75 @@ public class WordDetailBottomSheet extends BottomSheetDialogFragment {
                 tab.view.setMinimumWidth(tabMinWidth);
             }
         }
+    }
+
+    private void buildScrollContent(LinearLayout tabPart, int subFontLevel,
+                                    List<WordSentence> sentences, List<AntonymWord> antonyms, List<SynonymWord> synonyms,
+                                    List<ConjugationForm> conjugations, List<Etymology> etymologies, List<KanjiInfo> kanjiInfos,
+                                    List<UsageDistinction> usageDistinctions, List<GrammarPoint> grammarPoints, List<Idiom> validIdioms,
+                                    Context context, LifecycleOwner lifecycleOwner) {
+        float density = context.getResources().getDisplayMetrics().density;
+
+        android.widget.ScrollView scrollView = new android.widget.ScrollView(context);
+        scrollView.setFillViewport(true);
+        scrollView.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
+
+        LinearLayout container = new LinearLayout(context);
+        container.setOrientation(LinearLayout.VERTICAL);
+
+        if (!sentences.isEmpty()) {
+            addScrollSection(container, "例句", new SentenceView(context, lifecycleOwner, subFontLevel, sentences), context, density);
+        }
+        if (!synonyms.isEmpty() || !antonyms.isEmpty()) {
+            View synView = new SynonymAntonymView(context, lifecycleOwner, subFontLevel, synonyms, antonyms);
+            synView.setLayoutParams(new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+            container.addView(synView);
+            addScrollDivider(container, context, density);
+        }
+        if (!conjugations.isEmpty()) {
+            addScrollSection(container, "活用形", new ConjugationFormView(context, lifecycleOwner, subFontLevel, conjugations), context, density);
+        }
+        if (!kanjiInfos.isEmpty()) {
+            addScrollSection(container, "漢字", new KanjiInfoView(context, lifecycleOwner, subFontLevel, kanjiInfos), context, density);
+        }
+        boolean hasExtendedInfo = !etymologies.isEmpty() || !usageDistinctions.isEmpty()
+                || !grammarPoints.isEmpty() || !validIdioms.isEmpty();
+        if (hasExtendedInfo) {
+            addScrollSection(container, "其他", new ExtendedInfoView(context, lifecycleOwner, subFontLevel, etymologies, usageDistinctions, grammarPoints, validIdioms), context, density);
+        }
+
+        scrollView.addView(container);
+        tabPart.addView(scrollView);
+    }
+
+    private void addScrollSection(LinearLayout container, String title, View content, Context context, float density) {
+        TextView titleView = new TextView(context);
+        titleView.setText(title);
+        titleView.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        titleView.setTextColor(context.getResources().getColor(R.color.md_detail_label));
+        titleView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 14);
+        LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        titleParams.bottomMargin = (int) (Constants.SECTION_TITLE_BOTTOM_MARGIN_DP * density);
+        titleView.setLayoutParams(titleParams);
+        container.addView(titleView);
+
+        content.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+        container.addView(content);
+
+        addScrollDivider(container, context, density);
+    }
+
+    private void addScrollDivider(LinearLayout container, Context context, float density) {
+        View divider = new View(context);
+        divider.setBackgroundColor(context.getResources().getColor(R.color.md_outline_variant));
+        LinearLayout.LayoutParams dividerParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, (int) (Constants.SECTION_DIVIDER_HEIGHT_DP * density));
+        dividerParams.topMargin = (int) (8 * density);
+        divider.setLayoutParams(dividerParams);
+        container.addView(divider);
     }
 }
