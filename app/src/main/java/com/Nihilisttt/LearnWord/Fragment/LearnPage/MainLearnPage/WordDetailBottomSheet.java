@@ -31,10 +31,12 @@ import com.Nihilisttt.LearnWord.Database.Repository.WordRepository;
 import com.Nihilisttt.LearnWord.JavaBean.AntonymWord;
 import com.Nihilisttt.LearnWord.JavaBean.BasicWord;
 import com.Nihilisttt.LearnWord.JavaBean.ConjugationForm;
+import com.Nihilisttt.LearnWord.JavaBean.DerivedWord;
 import com.Nihilisttt.LearnWord.JavaBean.Etymology;
 import com.Nihilisttt.LearnWord.JavaBean.GrammarPoint;
 import com.Nihilisttt.LearnWord.JavaBean.Idiom;
 import com.Nihilisttt.LearnWord.JavaBean.KanjiInfo;
+import com.Nihilisttt.LearnWord.JavaBean.RelatedWord;
 import com.Nihilisttt.LearnWord.JavaBean.SynonymWord;
 import com.Nihilisttt.LearnWord.JavaBean.UsageDistinction;
 import com.Nihilisttt.LearnWord.JavaBean.Word;
@@ -180,6 +182,10 @@ public class WordDetailBottomSheet extends BottomSheetDialogFragment {
                 word -> word != null ? repository.getGrammarPointsByGrammarPointIdList(word.getGrammarPointIdList()) : new androidx.lifecycle.MutableLiveData<>());
         LiveData<List<Idiom>> idiomsLiveData = Transformations.switchMap(wordLiveData,
                 word -> word != null ? repository.getIdiomsByIdiomIdList(word.getIdiomIdList()) : new androidx.lifecycle.MutableLiveData<>());
+        LiveData<List<DerivedWord>> derivedWordsLiveData = Transformations.switchMap(wordLiveData,
+                word -> word != null ? repository.getDerivedWordsByDerivedWordsIdList(word.getDerivedWordIdList()) : new androidx.lifecycle.MutableLiveData<>());
+        LiveData<List<RelatedWord>> relatedWordsLiveData = Transformations.switchMap(wordLiveData,
+                word -> word != null ? repository.getRelatedWordsByRelatedWordsIdList(word.getRelatedWordIdList()) : new androidx.lifecycle.MutableLiveData<>());
 
         final boolean[] headerRendered = {false};
         final boolean[] tabsBuilt = {false};
@@ -212,11 +218,12 @@ public class WordDetailBottomSheet extends BottomSheetDialogFragment {
                     || antonymsLiveData.getValue() == null || synonymsLiveData.getValue() == null
                     || conjugationsLiveData.getValue() == null || etymologiesLiveData.getValue() == null
                     || kanjiInfosLiveData.getValue() == null || usageDistinctionsLiveData.getValue() == null
-                    || grammarPointsLiveData.getValue() == null || idiomsLiveData.getValue() == null) return;
+                    || grammarPointsLiveData.getValue() == null || idiomsLiveData.getValue() == null
+                    || derivedWordsLiveData.getValue() == null || relatedWordsLiveData.getValue() == null) return;
             Log.d(TAG, "tryBuildTabs: all data ready");
             Boolean isScroll = stateViewModel.getIsScrollMode().getValue();
             buildContent(tabPart, subFontLevel, isScroll != null && isScroll, sentencesLiveData, collocationsLiveData,
-                    antonymsLiveData, synonymsLiveData, conjugationsLiveData,
+                    antonymsLiveData, synonymsLiveData, derivedWordsLiveData, relatedWordsLiveData, conjugationsLiveData,
                     etymologiesLiveData, kanjiInfosLiveData, usageDistinctionsLiveData,
                     grammarPointsLiveData, idiomsLiveData, context, lifecycleOwner);
             tabsBuilt[0] = true;
@@ -235,12 +242,14 @@ public class WordDetailBottomSheet extends BottomSheetDialogFragment {
         usageDistinctionsLiveData.observe(lifecycleOwner, u -> tryBuildTabs.run());
         grammarPointsLiveData.observe(lifecycleOwner, g -> tryBuildTabs.run());
         idiomsLiveData.observe(lifecycleOwner, i -> tryBuildTabs.run());
+        derivedWordsLiveData.observe(lifecycleOwner, d -> tryBuildTabs.run());
+        relatedWordsLiveData.observe(lifecycleOwner, r -> tryBuildTabs.run());
 
         stateViewModel.getIsScrollMode().observe(lifecycleOwner, isScroll -> {
             if (!tabsBuilt[0]) return;
             tabPart.removeAllViews();
             buildContent(tabPart, subFontLevel, isScroll, sentencesLiveData, collocationsLiveData,
-                    antonymsLiveData, synonymsLiveData, conjugationsLiveData,
+                    antonymsLiveData, synonymsLiveData, derivedWordsLiveData, relatedWordsLiveData, conjugationsLiveData,
                     etymologiesLiveData, kanjiInfosLiveData, usageDistinctionsLiveData,
                     grammarPointsLiveData, idiomsLiveData, context, lifecycleOwner);
         });
@@ -334,10 +343,12 @@ public class WordDetailBottomSheet extends BottomSheetDialogFragment {
 
     private void buildContent(LinearLayout tabPart, int subFontLevel, boolean isScrollMode,
                             LiveData<List<WordSentence>> sentencesLiveData,
-                           LiveData<List<WordCollocation>> collocationsLiveData,
-                           LiveData<List<AntonymWord>> antonymsLiveData,
-                           LiveData<List<SynonymWord>> synonymsLiveData,
-                           LiveData<List<ConjugationForm>> conjugationsLiveData,
+                            LiveData<List<WordCollocation>> collocationsLiveData,
+                            LiveData<List<AntonymWord>> antonymsLiveData,
+                            LiveData<List<SynonymWord>> synonymsLiveData,
+                            LiveData<List<DerivedWord>> derivedWordsLiveData,
+                            LiveData<List<RelatedWord>> relatedWordsLiveData,
+                            LiveData<List<ConjugationForm>> conjugationsLiveData,
                            LiveData<List<Etymology>> etymologiesLiveData,
                            LiveData<List<KanjiInfo>> kanjiInfosLiveData,
                            LiveData<List<UsageDistinction>> usageDistinctionsLiveData,
@@ -350,6 +361,8 @@ public class WordDetailBottomSheet extends BottomSheetDialogFragment {
         List<WordCollocation> collocations = collocationsLiveData.getValue() != null ? collocationsLiveData.getValue() : Collections.emptyList();
         List<AntonymWord> antonyms = antonymsLiveData.getValue() != null ? antonymsLiveData.getValue() : Collections.emptyList();
         List<SynonymWord> synonyms = synonymsLiveData.getValue() != null ? synonymsLiveData.getValue() : Collections.emptyList();
+        List<DerivedWord> derivedWords = derivedWordsLiveData.getValue() != null ? derivedWordsLiveData.getValue() : Collections.emptyList();
+        List<RelatedWord> relatedWords = relatedWordsLiveData.getValue() != null ? relatedWordsLiveData.getValue() : Collections.emptyList();
         List<ConjugationForm> conjugations = conjugationsLiveData.getValue() != null ? conjugationsLiveData.getValue() : Collections.emptyList();
         List<Etymology> etymologies = etymologiesLiveData.getValue() != null ? etymologiesLiveData.getValue() : Collections.emptyList();
         List<KanjiInfo> kanjiInfos = kanjiInfosLiveData.getValue() != null ? kanjiInfosLiveData.getValue() : Collections.emptyList();
@@ -370,9 +383,9 @@ public class WordDetailBottomSheet extends BottomSheetDialogFragment {
             fragmentList.add(new SentenceViewFragment(sentences));
         }
 
-        if (!synonyms.isEmpty() || !antonyms.isEmpty()) {
-            tabTitles.add("近义词");
-            fragmentList.add(new SynonymAntonymViewFragment(synonyms, antonyms));
+        if (!synonyms.isEmpty() || !antonyms.isEmpty() || !derivedWords.isEmpty() || !relatedWords.isEmpty()) {
+            tabTitles.add("関連語");
+            fragmentList.add(new SynonymAntonymViewFragment(synonyms, antonyms, derivedWords, relatedWords));
         }
         if (!conjugations.isEmpty()) {
             tabTitles.add("活用形");
@@ -397,7 +410,7 @@ public class WordDetailBottomSheet extends BottomSheetDialogFragment {
         Log.d(TAG, "buildContent: tabs=" + tabTitles + " isScroll=" + isScrollMode);
 
         if (isScrollMode) {
-            buildScrollContent(tabPart, subFontLevel, sentences, antonyms, synonyms, conjugations,
+            buildScrollContent(tabPart, subFontLevel, sentences, antonyms, synonyms, derivedWords, relatedWords, conjugations,
                     etymologies, kanjiInfos, usageDistinctions, grammarPoints, validIdioms, context, lifecycleOwner);
             return;
         }
@@ -448,6 +461,7 @@ public class WordDetailBottomSheet extends BottomSheetDialogFragment {
 
     private void buildScrollContent(LinearLayout tabPart, int subFontLevel,
                                     List<WordSentence> sentences, List<AntonymWord> antonyms, List<SynonymWord> synonyms,
+                                    List<DerivedWord> derivedWords, List<RelatedWord> relatedWords,
                                     List<ConjugationForm> conjugations, List<Etymology> etymologies, List<KanjiInfo> kanjiInfos,
                                     List<UsageDistinction> usageDistinctions, List<GrammarPoint> grammarPoints, List<Idiom> validIdioms,
                                     Context context, LifecycleOwner lifecycleOwner) {
@@ -464,8 +478,8 @@ public class WordDetailBottomSheet extends BottomSheetDialogFragment {
         if (!sentences.isEmpty()) {
             addScrollSection(container, "例句", new SentenceView(context, lifecycleOwner, subFontLevel, sentences), context, density);
         }
-        if (!synonyms.isEmpty() || !antonyms.isEmpty()) {
-            View synView = new SynonymAntonymView(context, lifecycleOwner, subFontLevel, synonyms, antonyms);
+        if (!synonyms.isEmpty() || !antonyms.isEmpty() || !derivedWords.isEmpty() || !relatedWords.isEmpty()) {
+            View synView = new SynonymAntonymView(context, lifecycleOwner, subFontLevel, synonyms, antonyms, derivedWords, relatedWords);
             synView.setLayoutParams(new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
             container.addView(synView);

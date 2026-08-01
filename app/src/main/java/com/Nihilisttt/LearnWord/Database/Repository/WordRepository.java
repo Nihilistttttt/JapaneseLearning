@@ -9,10 +9,12 @@ import androidx.lifecycle.Transformations;
 import com.Nihilisttt.LearnWord.Database.Converter.AntonymWordConverter;
 import com.Nihilisttt.LearnWord.Database.Converter.BasicWordConverter;
 import com.Nihilisttt.LearnWord.Database.Converter.ConjugationFormConverter;
+import com.Nihilisttt.LearnWord.Database.Converter.DerivedWordConverter;
 import com.Nihilisttt.LearnWord.Database.Converter.EtymologyConverter;
 import com.Nihilisttt.LearnWord.Database.Converter.GrammarPointConverter;
 import com.Nihilisttt.LearnWord.Database.Converter.IdiomConverter;
 import com.Nihilisttt.LearnWord.Database.Converter.KanjiInfoConverter;
+import com.Nihilisttt.LearnWord.Database.Converter.RelatedWordConverter;
 import com.Nihilisttt.LearnWord.Database.Converter.SynonymWordConverter;
 import com.Nihilisttt.LearnWord.Database.Converter.UsageDistinctionConverter;
 import com.Nihilisttt.LearnWord.Database.Converter.WordCollocationConverter;
@@ -21,10 +23,12 @@ import com.Nihilisttt.LearnWord.Database.Converter.WordSentenceConverter;
 import com.Nihilisttt.LearnWord.Database.Dao.AntonymWordDao;
 import com.Nihilisttt.LearnWord.Database.Dao.BasicWordDao;
 import com.Nihilisttt.LearnWord.Database.Dao.ConjugationFormDao;
+import com.Nihilisttt.LearnWord.Database.Dao.DerivedWordDao;
 import com.Nihilisttt.LearnWord.Database.Dao.EtymologyDao;
 import com.Nihilisttt.LearnWord.Database.Dao.GrammarPointDao;
 import com.Nihilisttt.LearnWord.Database.Dao.IdiomDao;
 import com.Nihilisttt.LearnWord.Database.Dao.KanjiInfoDao;
+import com.Nihilisttt.LearnWord.Database.Dao.RelatedWordDao;
 import com.Nihilisttt.LearnWord.Database.Dao.SynonymWordDao;
 import com.Nihilisttt.LearnWord.Database.Dao.UsageDistinctionDao;
 import com.Nihilisttt.LearnWord.Database.Dao.WordCollocationDao;
@@ -35,10 +39,12 @@ import com.Nihilisttt.LearnWord.Database.Database.WordDatabase;
 import com.Nihilisttt.LearnWord.Database.Entities.AntonymWordEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.BasicWordEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.ConjugationFormEntity;
+import com.Nihilisttt.LearnWord.Database.Entities.DerivedWordEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.EtymologyEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.GrammarPointEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.IdiomEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.KanjiInfoEntity;
+import com.Nihilisttt.LearnWord.Database.Entities.RelatedWordEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.SynonymWordEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.UsageDistinctionEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.WordCollocationEntity;
@@ -48,10 +54,12 @@ import com.Nihilisttt.LearnWord.Database.Entities.WordSentenceEntity;
 import com.Nihilisttt.LearnWord.JavaBean.AntonymWord;
 import com.Nihilisttt.LearnWord.JavaBean.BasicWord;
 import com.Nihilisttt.LearnWord.JavaBean.ConjugationForm;
+import com.Nihilisttt.LearnWord.JavaBean.DerivedWord;
 import com.Nihilisttt.LearnWord.JavaBean.Etymology;
 import com.Nihilisttt.LearnWord.JavaBean.GrammarPoint;
 import com.Nihilisttt.LearnWord.JavaBean.Idiom;
 import com.Nihilisttt.LearnWord.JavaBean.KanjiInfo;
+import com.Nihilisttt.LearnWord.JavaBean.RelatedWord;
 import com.Nihilisttt.LearnWord.JavaBean.SynonymWord;
 import com.Nihilisttt.LearnWord.JavaBean.UsageDistinction;
 import com.Nihilisttt.LearnWord.JavaBean.Word;
@@ -78,6 +86,8 @@ public class WordRepository {
     private final UsageDistinctionDao usageDistinctionDao;
     private final GrammarPointDao grammarPointDao;
     private final IdiomDao idiomDao;
+    private final DerivedWordDao derivedWordDao;
+    private final RelatedWordDao relatedWordDao;
     private static volatile WordRepository instance;
 
     // 私有构造函数
@@ -96,6 +106,8 @@ public class WordRepository {
         this.usageDistinctionDao = database.getUsageDistinctionDao();
         this.grammarPointDao = database.getGrammarPointDao();
         this.idiomDao = database.getIdiomDao();
+        this.derivedWordDao = database.getDerivedWordDao();
+        this.relatedWordDao = database.getRelatedWordDao();
     }
 
     // 单例获取方法
@@ -171,6 +183,24 @@ public class WordRepository {
                     .map(SynonymWordConverter::SynonymWordToSynonymWordEntity)
                     .toArray(SynonymWordEntity[]::new);
             synonymWordDao.insertSynonymWords(entities);
+        });
+    }
+
+    public void batchInsertDerivedWords(List<DerivedWord> derivedWords) {
+        WordDatabase.databaseExecutor.execute(() -> {
+            DerivedWordEntity[] entities = derivedWords.stream()
+                    .map(DerivedWordConverter::DerivedWordToDerivedWordEntity)
+                    .toArray(DerivedWordEntity[]::new);
+            derivedWordDao.insertDerivedWords(entities);
+        });
+    }
+
+    public void batchInsertRelatedWords(List<RelatedWord> relatedWords) {
+        WordDatabase.databaseExecutor.execute(() -> {
+            RelatedWordEntity[] entities = relatedWords.stream()
+                    .map(RelatedWordConverter::RelatedWordToRelatedWordEntity)
+                    .toArray(RelatedWordEntity[]::new);
+            relatedWordDao.insertRelatedWords(entities);
         });
     }
 
@@ -558,6 +588,36 @@ public class WordRepository {
         );
     }
 
+    // endregion
+
+    // region DerivedWord操作
+    public LiveData<List<DerivedWord>> getDerivedWordsByDerivedWordsIdList(List<String> derivedIdList) {
+        if (derivedIdList == null || derivedIdList.isEmpty()) {
+            MutableLiveData<List<DerivedWord>> result = new MutableLiveData<>();
+            result.setValue(Collections.emptyList());
+            return result;
+        }
+        return Transformations.map(derivedWordDao.getDerivedWordsByDerivedIdList(derivedIdList),
+                entities -> entities.stream()
+                        .map(DerivedWordConverter::DerivedWordEntityToDerivedWord)
+                        .collect(Collectors.toList())
+        );
+    }
+    // endregion
+
+    // region RelatedWord操作
+    public LiveData<List<RelatedWord>> getRelatedWordsByRelatedWordsIdList(List<String> relatedIdList) {
+        if (relatedIdList == null || relatedIdList.isEmpty()) {
+            MutableLiveData<List<RelatedWord>> result = new MutableLiveData<>();
+            result.setValue(Collections.emptyList());
+            return result;
+        }
+        return Transformations.map(relatedWordDao.getRelatedWordsByRelatedIdList(relatedIdList),
+                entities -> entities.stream()
+                        .map(RelatedWordConverter::RelatedWordEntityToRelatedWord)
+                        .collect(Collectors.toList())
+        );
+    }
     // endregion
 
     // region ConjugationForm操作

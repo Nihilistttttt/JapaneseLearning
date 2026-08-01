@@ -9,10 +9,12 @@ import androidx.room.RoomDatabase;
 import com.Nihilisttt.LearnWord.Database.Dao.AntonymWordDao;
 import com.Nihilisttt.LearnWord.Database.Dao.BasicWordDao;
 import com.Nihilisttt.LearnWord.Database.Dao.ConjugationFormDao;
+import com.Nihilisttt.LearnWord.Database.Dao.DerivedWordDao;
 import com.Nihilisttt.LearnWord.Database.Dao.EtymologyDao;
 import com.Nihilisttt.LearnWord.Database.Dao.GrammarPointDao;
 import com.Nihilisttt.LearnWord.Database.Dao.IdiomDao;
 import com.Nihilisttt.LearnWord.Database.Dao.KanjiInfoDao;
+import com.Nihilisttt.LearnWord.Database.Dao.RelatedWordDao;
 import com.Nihilisttt.LearnWord.Database.Dao.SynonymWordDao;
 import com.Nihilisttt.LearnWord.Database.Dao.UsageDistinctionDao;
 import com.Nihilisttt.LearnWord.Database.Dao.WordCollocationDao;
@@ -21,10 +23,12 @@ import com.Nihilisttt.LearnWord.Database.Dao.WordMeaningDao;
 import com.Nihilisttt.LearnWord.Database.Dao.WordSentenceDao;
 import com.Nihilisttt.LearnWord.Database.Entities.AntonymWordEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.ConjugationFormEntity;
+import com.Nihilisttt.LearnWord.Database.Entities.DerivedWordEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.EtymologyEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.GrammarPointEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.IdiomEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.KanjiInfoEntity;
+import com.Nihilisttt.LearnWord.Database.Entities.RelatedWordEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.SynonymWordEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.UsageDistinctionEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.WordCollocationEntity;
@@ -54,14 +58,16 @@ import java.util.concurrent.Executors;
         KanjiInfoEntity.class,
         UsageDistinctionEntity.class,
         GrammarPointEntity.class,
-        IdiomEntity.class
+        IdiomEntity.class,
+        DerivedWordEntity.class,
+        RelatedWordEntity.class
 },
         version = 2,
         exportSchema = false)
 public abstract class WordDatabase extends RoomDatabase {
     private static final String PREFS_NAME = "room_db_prefs";
     private static final String KEY_DB_VERSION = "prebuilt_db_version";
-    private static final int PREBUILT_DB_VERSION = 21;
+    private static final int PREBUILT_DB_VERSION = 22;
     // 线程安全的单例模式
     private static volatile WordDatabase INSTANCE;
     // 数据库操作线程池（4线程）
@@ -115,6 +121,8 @@ public abstract class WordDatabase extends RoomDatabase {
     public abstract UsageDistinctionDao getUsageDistinctionDao();
     public abstract GrammarPointDao getGrammarPointDao();
     public abstract IdiomDao getIdiomDao();
+    public abstract DerivedWordDao getDerivedWordDao();
+    public abstract RelatedWordDao getRelatedWordDao();
     // 新增事务控制接口
     public interface TransactionListener {
         void onCommit();

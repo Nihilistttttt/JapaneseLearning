@@ -14,6 +14,8 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.LifecycleOwner;
 
 import com.Nihilisttt.LearnWord.JavaBean.AntonymWord;
+import com.Nihilisttt.LearnWord.JavaBean.DerivedWord;
+import com.Nihilisttt.LearnWord.JavaBean.RelatedWord;
 import com.Nihilisttt.LearnWord.JavaBean.SynonymWord;
 import com.Nihilisttt.LearnWord.R;
 import com.Nihilisttt.LearnWord.UtilityClass.Select;
@@ -24,10 +26,12 @@ import java.util.List;
 public class SynonymAntonymView extends LinearLayout {
 
     public SynonymAntonymView(Context context, @NonNull LifecycleOwner lifecycleOwner, int layoutType,
-                              List<SynonymWord> synonymWords, List<AntonymWord> antonymWords) {
+                              List<SynonymWord> synonymWords, List<AntonymWord> antonymWords,
+                              List<DerivedWord> derivedWords, List<RelatedWord> relatedWords) {
         super(context);
         setOrientation(VERTICAL);
         setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+
 
         Select.layoutParams lp = Select.selectLayout(layoutType);
 
@@ -38,13 +42,26 @@ public class SynonymAntonymView extends LinearLayout {
 
         if (!antonymWords.isEmpty()) {
             if (!synonymWords.isEmpty()) {
-                View divider = new View(context);
-                int dividerHeight = (int) (Constants.SECTION_DIVIDER_HEIGHT_DP * context.getResources().getDisplayMetrics().density);
-                divider.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, dividerHeight));
-                addView(divider);
+                addDivider();
             }
             addSectionTitle("反义词");
             addWordRows(context, lifecycleOwner, lp, layoutType, antonymWords);
+        }
+
+        if (!derivedWords.isEmpty()) {
+            if (!synonymWords.isEmpty() || !antonymWords.isEmpty()) {
+                addDivider();
+            }
+            addSectionTitle("派生词");
+            addWordRows(context, lifecycleOwner, lp, layoutType, derivedWords);
+        }
+
+        if (!relatedWords.isEmpty()) {
+            if (!synonymWords.isEmpty() || !antonymWords.isEmpty() || !derivedWords.isEmpty()) {
+                addDivider();
+            }
+            addSectionTitle("关联词");
+            addWordRows(context, lifecycleOwner, lp, layoutType, relatedWords);
         }
     }
 
@@ -63,6 +80,8 @@ public class SynonymAntonymView extends LinearLayout {
                 String cwid = null;
                 if (word instanceof SynonymWord) cwid = ((SynonymWord) word).getCorrespondingWordId();
                 else if (word instanceof AntonymWord) cwid = ((AntonymWord) word).getCorrespondingWordId();
+                else if (word instanceof DerivedWord) cwid = ((DerivedWord) word).getCorrespondingWordId();
+                else if (word instanceof RelatedWord) cwid = ((RelatedWord) word).getCorrespondingWordId();
 
                 LinearLayout cell = new LinearLayout(context);
                 cell.setOrientation(HORIZONTAL);
@@ -72,8 +91,8 @@ public class SynonymAntonymView extends LinearLayout {
                     cell.addView(new WordComponentView(context, lifecycleOwner, lp,
                             word.getKanjiComponents(), word.getKanaComponents(), cwid));
                 } else {
-                    cell.addView(new WrappedPhraseView(context, lifecycleOwner, layoutType,
-                            word.getKanjiComponents(), word.getKanaComponents()));
+                    cell.addView(new WordComponentView(context, lifecycleOwner, lp,
+                            word.getKanjiComponents(), word.getKanaComponents(), "0"));
                 }
                 row.addView(cell);
             }
@@ -96,5 +115,12 @@ public class SynonymAntonymView extends LinearLayout {
         params.setMargins(0, 0, 0, marginBottom);
         tv.setLayoutParams(params);
         addView(tv);
+    }
+
+    private void addDivider() {
+        View divider = new View(getContext());
+        int dividerHeight = (int) (Constants.SECTION_DIVIDER_HEIGHT_DP * getContext().getResources().getDisplayMetrics().density);
+        divider.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, dividerHeight));
+        addView(divider);
     }
 }

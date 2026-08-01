@@ -138,7 +138,9 @@ public class DataImporter {
                     getAsStringOrDefault(obj, "kanjiInfoIdList", "[]"),
                     getAsStringOrDefault(obj, "usageDistinctionIdList", "[]"),
                     getAsStringOrDefault(obj, "grammarPointIdList", "[]"),
-                    getAsStringOrDefault(obj, "idiomIdList", "[]")
+                    getAsStringOrDefault(obj, "idiomIdList", "[]"),
+                    getAsStringOrDefault(obj, "derivedWordIdList", "[]"),
+                    getAsStringOrDefault(obj, "relatedWordIdList", "[]")
             ));
             if (batch.size() >= BATCH_SIZE) {
                 dao.insertWords(batch.toArray(new WordEntity[0]));

@@ -30,10 +30,12 @@ import com.Nihilisttt.LearnWord.Fragment.LearnPage.MainLearnPage.ExtendedInfoVie
 import com.Nihilisttt.LearnWord.Fragment.LearnPage.MainLearnPage.KanjiInfoViewFragment;
 import com.Nihilisttt.LearnWord.JavaBean.AntonymWord;
 import com.Nihilisttt.LearnWord.JavaBean.ConjugationForm;
+import com.Nihilisttt.LearnWord.JavaBean.DerivedWord;
 import com.Nihilisttt.LearnWord.JavaBean.Etymology;
 import com.Nihilisttt.LearnWord.JavaBean.GrammarPoint;
 import com.Nihilisttt.LearnWord.JavaBean.Idiom;
 import com.Nihilisttt.LearnWord.JavaBean.KanjiInfo;
+import com.Nihilisttt.LearnWord.JavaBean.RelatedWord;
 import com.Nihilisttt.LearnWord.JavaBean.SynonymWord;
 import com.Nihilisttt.LearnWord.JavaBean.UsageDistinction;
 import com.Nihilisttt.LearnWord.JavaBean.WordCollocation;
@@ -54,6 +56,8 @@ public class IntegratedPartView extends LinearLayout {
     private List<WordCollocation> collocations;
     private List<AntonymWord> antonymWords;
     private List<SynonymWord> synonymWords;
+    private List<DerivedWord> derivedWords;
+    private List<RelatedWord> relatedWords;
     private List<ConjugationForm> conjugationForms;
     private List<Etymology> etymologies;
     private List<KanjiInfo> kanjiInfos;
@@ -68,6 +72,8 @@ public class IntegratedPartView extends LinearLayout {
                               List<WordCollocation> collocations,
                               List<AntonymWord> antonymWords,
                               List<SynonymWord> synonymWords,
+                              List<DerivedWord> derivedWords,
+                              List<RelatedWord> relatedWords,
                               List<ConjugationForm> conjugationForms,
                               List<Etymology> etymologies,
                               List<KanjiInfo> kanjiInfos,
@@ -80,7 +86,7 @@ public class IntegratedPartView extends LinearLayout {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.MATCH_PARENT
         ));
-        saveData(collocations, antonymWords, synonymWords, conjugationForms, etymologies, kanjiInfos, usageDistinctions, grammarPoints, idioms);
+        saveData(collocations, antonymWords, synonymWords, derivedWords, relatedWords, conjugationForms, etymologies, kanjiInfos, usageDistinctions, grammarPoints, idioms);
         initContainers();
         update();
     }
@@ -88,6 +94,8 @@ public class IntegratedPartView extends LinearLayout {
     private void saveData(List<WordCollocation> collocations,
                           List<AntonymWord> antonymWords,
                           List<SynonymWord> synonymWords,
+                          List<DerivedWord> derivedWords,
+                          List<RelatedWord> relatedWords,
                           List<ConjugationForm> conjugationForms,
                           List<Etymology> etymologies,
                           List<KanjiInfo> kanjiInfos,
@@ -97,6 +105,8 @@ public class IntegratedPartView extends LinearLayout {
         this.collocations = collocations;
         this.antonymWords = antonymWords;
         this.synonymWords = synonymWords;
+        this.derivedWords = derivedWords;
+        this.relatedWords = relatedWords;
         this.conjugationForms = conjugationForms;
         this.etymologies = etymologies;
         this.kanjiInfos = kanjiInfos;
@@ -134,13 +144,15 @@ public class IntegratedPartView extends LinearLayout {
     public void updateData(List<WordCollocation> collocations,
                            List<AntonymWord> antonymWords,
                            List<SynonymWord> synonymWords,
+                           List<DerivedWord> derivedWords,
+                           List<RelatedWord> relatedWords,
                            List<ConjugationForm> conjugationForms,
                            List<Etymology> etymologies,
                            List<KanjiInfo> kanjiInfos,
                            List<UsageDistinction> usageDistinctions,
                            List<GrammarPoint> grammarPoints,
                            List<Idiom> idioms) {
-        saveData(collocations, antonymWords, synonymWords, conjugationForms, etymologies, kanjiInfos, usageDistinctions, grammarPoints, idioms);
+        saveData(collocations, antonymWords, synonymWords, derivedWords, relatedWords, conjugationForms, etymologies, kanjiInfos, usageDistinctions, grammarPoints, idioms);
         rebuild();
     }
 
@@ -178,8 +190,8 @@ public class IntegratedPartView extends LinearLayout {
         if (!collocations.isEmpty()) {
             addSection(container, "词组", new CollocationView(context, lifecycleOwner, subFontLevel, collocations));
         }
-        if (!synonymWords.isEmpty() || !antonymWords.isEmpty()) {
-            View synView = new SynonymAntonymView(context, lifecycleOwner, subFontLevel, synonymWords, antonymWords);
+        if (!synonymWords.isEmpty() || !antonymWords.isEmpty() || !derivedWords.isEmpty() || !relatedWords.isEmpty()) {
+            View synView = new SynonymAntonymView(context, lifecycleOwner, subFontLevel, synonymWords, antonymWords, derivedWords, relatedWords);
             synView.setLayoutParams(new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
             container.addView(synView);
@@ -251,9 +263,9 @@ public class IntegratedPartView extends LinearLayout {
             tabTitles.add("词组");
             fragmentList.add(new CollocationViewFragment(collocations));
         }
-        if (!synonymWords.isEmpty() || !antonymWords.isEmpty()) {
-            tabTitles.add("近义词");
-            fragmentList.add(new SynonymAntonymViewFragment(synonymWords, antonymWords));
+        if (!synonymWords.isEmpty() || !antonymWords.isEmpty() || !derivedWords.isEmpty() || !relatedWords.isEmpty()) {
+            tabTitles.add("関連語");
+            fragmentList.add(new SynonymAntonymViewFragment(synonymWords, antonymWords, derivedWords, relatedWords));
         }
         if (!conjugationForms.isEmpty()) {
             tabTitles.add("活用形");

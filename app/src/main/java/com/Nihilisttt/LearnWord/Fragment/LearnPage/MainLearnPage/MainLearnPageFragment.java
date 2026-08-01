@@ -190,10 +190,13 @@ public class MainLearnPageFragment extends Fragment {
         }
 
         if (integratedPartView == null) {
+
             integratedPartView = new IntegratedPartView(requireContext(),
                     combinedWordInfo.getWordCollocationList(),
                     combinedWordInfo.getAntonymWordList(),
                     combinedWordInfo.getSynonymWordList(),
+                    combinedWordInfo.getDerivedWordList(),
+                    combinedWordInfo.getRelatedWordList(),
                     combinedWordInfo.getConjugationFormList(),
                     combinedWordInfo.getEtymologyList(),
                     combinedWordInfo.getKanjiInfoList(),
@@ -210,6 +213,8 @@ public class MainLearnPageFragment extends Fragment {
             integratedPartView.updateData(combinedWordInfo.getWordCollocationList(),
                     combinedWordInfo.getAntonymWordList(),
                     combinedWordInfo.getSynonymWordList(),
+                    combinedWordInfo.getDerivedWordList(),
+                    combinedWordInfo.getRelatedWordList(),
                     combinedWordInfo.getConjugationFormList(),
                     combinedWordInfo.getEtymologyList(),
                     combinedWordInfo.getKanjiInfoList(),

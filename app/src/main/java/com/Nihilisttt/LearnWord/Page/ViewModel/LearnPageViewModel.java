@@ -16,10 +16,12 @@ import com.Nihilisttt.LearnWord.Database.Repository.WordRepository;
 import com.Nihilisttt.LearnWord.JavaBean.AntonymWord;
 import com.Nihilisttt.LearnWord.JavaBean.BasicWord;
 import com.Nihilisttt.LearnWord.JavaBean.ConjugationForm;
+import com.Nihilisttt.LearnWord.JavaBean.DerivedWord;
 import com.Nihilisttt.LearnWord.JavaBean.Etymology;
 import com.Nihilisttt.LearnWord.JavaBean.GrammarPoint;
 import com.Nihilisttt.LearnWord.JavaBean.Idiom;
 import com.Nihilisttt.LearnWord.JavaBean.KanjiInfo;
+import com.Nihilisttt.LearnWord.JavaBean.RelatedWord;
 import com.Nihilisttt.LearnWord.JavaBean.SynonymWord;
 import com.Nihilisttt.LearnWord.JavaBean.UsageDistinction;
 import com.Nihilisttt.LearnWord.JavaBean.Word;
@@ -55,6 +57,8 @@ public class LearnPageViewModel extends AndroidViewModel {
     private final LiveData<List<UsageDistinction>> usageDistinctionListLiveData;
     private final LiveData<List<GrammarPoint>> grammarPointListLiveData;
     private final LiveData<List<Idiom>> idiomListLiveData;
+    private final LiveData<List<DerivedWord>> derivedWordListLiveData;
+    private final LiveData<List<RelatedWord>> relatedWordListLiveData;
     private final MediatorLiveData<CombinedWordInfo> combinedWordInfo = new MediatorLiveData<>();
 
     public LearnPageViewModel(@NonNull Application application) {
@@ -120,6 +124,12 @@ public class LearnPageViewModel extends AndroidViewModel {
         idiomListLiveData = Transformations.switchMap(currentWord, word ->
                 repository.getIdiomsByIdiomIdList(word.getIdiomIdList()));
 
+        derivedWordListLiveData = Transformations.switchMap(currentWord, word ->
+                repository.getDerivedWordsByDerivedWordsIdList(word.getDerivedWordIdList()));
+
+        relatedWordListLiveData = Transformations.switchMap(currentWord, word ->
+                repository.getRelatedWordsByRelatedWordsIdList(word.getRelatedWordIdList()));
+
         combinedWordInfo.addSource(basicWordLiveData, value -> updateCombined());
         combinedWordInfo.addSource(wordMeaningListLiveData, value -> updateCombined());
         combinedWordInfo.addSource(wordSentenceListLiveData, value -> updateCombined());
@@ -132,6 +142,8 @@ public class LearnPageViewModel extends AndroidViewModel {
         combinedWordInfo.addSource(usageDistinctionListLiveData, value -> updateCombined());
         combinedWordInfo.addSource(grammarPointListLiveData, value -> updateCombined());
         combinedWordInfo.addSource(idiomListLiveData, value -> updateCombined());
+        combinedWordInfo.addSource(derivedWordListLiveData, value -> updateCombined());
+        combinedWordInfo.addSource(relatedWordListLiveData, value -> updateCombined());
     }
 
     // region 公开的LiveData访问方法
@@ -147,6 +159,8 @@ public class LearnPageViewModel extends AndroidViewModel {
     public LiveData<List<UsageDistinction>> getUsageDistinctionListLiveData() { return usageDistinctionListLiveData; }
     public LiveData<List<GrammarPoint>> getGrammarPointListLiveData() { return grammarPointListLiveData; }
     public LiveData<List<Idiom>> getIdiomListLiveData() { return idiomListLiveData; }
+    public LiveData<List<DerivedWord>> getDerivedWordListLiveData() { return derivedWordListLiveData; }
+    public LiveData<List<RelatedWord>> getRelatedWordListLiveData() { return relatedWordListLiveData; }
     public LiveData<String> getToastMessage() { return toastMessage; }
     public LiveData<CombinedWordInfo> getCombinedWordInfo() { return combinedWordInfo; }
     // endregion
@@ -201,6 +215,8 @@ public class LearnPageViewModel extends AndroidViewModel {
         private final List<UsageDistinction> usageDistinctionList;
         private final List<GrammarPoint> grammarPointList;
         private final List<Idiom> idiomList;
+        private final List<DerivedWord> derivedWordList;
+        private final List<RelatedWord> relatedWordList;
 
         public CombinedWordInfo(BasicWord basicWord,
                                 List<WordMeaning> wordMeaningList,
@@ -212,8 +228,10 @@ public class LearnPageViewModel extends AndroidViewModel {
                                 List<Etymology> etymologyList,
                                 List<KanjiInfo> kanjiInfoList,
                                 List<UsageDistinction> usageDistinctionList,
-                                List<GrammarPoint> grammarPointList,
-                                List<Idiom> idiomList) {
+                                 List<GrammarPoint> grammarPointList,
+                                 List<Idiom> idiomList,
+                                 List<DerivedWord> derivedWordList,
+                                 List<RelatedWord> relatedWordList) {
             this.basicWord = basicWord;
             this.wordMeaningList = wordMeaningList != null ? wordMeaningList : Collections.emptyList();
             this.wordSentenceList = wordSentenceList != null ? wordSentenceList : Collections.emptyList();
@@ -226,6 +244,8 @@ public class LearnPageViewModel extends AndroidViewModel {
             this.usageDistinctionList = usageDistinctionList != null ? usageDistinctionList : Collections.emptyList();
             this.grammarPointList = grammarPointList != null ? grammarPointList : Collections.emptyList();
             this.idiomList = idiomList != null ? idiomList : Collections.emptyList();
+            this.derivedWordList = derivedWordList != null ? derivedWordList : Collections.emptyList();
+            this.relatedWordList = relatedWordList != null ? relatedWordList : Collections.emptyList();
         }
 
         public BasicWord getBasicWord() { return basicWord; }
@@ -240,11 +260,14 @@ public class LearnPageViewModel extends AndroidViewModel {
         public List<UsageDistinction> getUsageDistinctionList() { return usageDistinctionList; }
         public List<GrammarPoint> getGrammarPointList() { return grammarPointList; }
         public List<Idiom> getIdiomList() { return idiomList; }
+        public List<DerivedWord> getDerivedWordList() { return derivedWordList; }
+        public List<RelatedWord> getRelatedWordList() { return relatedWordList; }
     }
 
     private void updateCombined() {
         BasicWord basicWord = basicWordLiveData.getValue();
         if (basicWord == null) return;
+
 
         combinedWordInfo.setValue(new CombinedWordInfo(
                 basicWord,
@@ -258,7 +281,9 @@ public class LearnPageViewModel extends AndroidViewModel {
                 kanjiInfoListLiveData.getValue(),
                 usageDistinctionListLiveData.getValue(),
                 grammarPointListLiveData.getValue(),
-                idiomListLiveData.getValue()
+                idiomListLiveData.getValue(),
+                derivedWordListLiveData.getValue(),
+                relatedWordListLiveData.getValue()
         ));
     }
     // endregion

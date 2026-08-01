@@ -42,6 +42,12 @@ public class WordEntity {
     @NonNull
     @ColumnInfo(defaultValue = "[]")
     private String idiomIdList;
+    @NonNull
+    @ColumnInfo(defaultValue = "[]")
+    private String derivedWordIdList;
+    @NonNull
+    @ColumnInfo(defaultValue = "[]")
+    private String relatedWordIdList;
 
     @NonNull
     public String getWordId() {
@@ -146,8 +152,27 @@ public class WordEntity {
         this.idiomIdList = idiomIdList;
     }
 
+    @NonNull
+    public String getDerivedWordIdList() {
+        return derivedWordIdList;
+    }
+
+    public void setDerivedWordIdList(@NonNull String derivedWordIdList) {
+        this.derivedWordIdList = derivedWordIdList;
+    }
+
+    @NonNull
+    public String getRelatedWordIdList() {
+        return relatedWordIdList;
+    }
+
+    public void setRelatedWordIdList(@NonNull String relatedWordIdList) {
+        this.relatedWordIdList = relatedWordIdList;
+    }
+
     public WordEntity(@NotNull String wordId, String antonymWordIdList, String synonymWordIdList, String collocationIdList, String meaningIdList, String sentenceIdList,
-                      @NonNull String conjugationFormIdList, @NonNull String etymologyIdList, @NonNull String kanjiInfoIdList, @NonNull String usageDistinctionIdList, @NonNull String grammarPointIdList, @NonNull String idiomIdList) {
+                      @NonNull String conjugationFormIdList, @NonNull String etymologyIdList, @NonNull String kanjiInfoIdList, @NonNull String usageDistinctionIdList, @NonNull String grammarPointIdList, @NonNull String idiomIdList,
+                      @NonNull String derivedWordIdList, @NonNull String relatedWordIdList) {
         this.wordId = wordId;
         this.meaningIdList = meaningIdList;
         this.sentenceIdList = sentenceIdList;
@@ -160,6 +185,8 @@ public class WordEntity {
         this.usageDistinctionIdList = usageDistinctionIdList;
         this.grammarPointIdList = grammarPointIdList;
         this.idiomIdList = idiomIdList;
+        this.derivedWordIdList = derivedWordIdList;
+        this.relatedWordIdList = relatedWordIdList;
     }
 
     @Override

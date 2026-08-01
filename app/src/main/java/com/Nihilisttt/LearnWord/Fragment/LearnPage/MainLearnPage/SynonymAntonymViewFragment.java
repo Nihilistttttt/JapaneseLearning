@@ -15,6 +15,8 @@ import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.Nihilisttt.LearnWord.JavaBean.AntonymWord;
+import com.Nihilisttt.LearnWord.JavaBean.DerivedWord;
+import com.Nihilisttt.LearnWord.JavaBean.RelatedWord;
 import com.Nihilisttt.LearnWord.JavaBean.SynonymWord;
 import com.Nihilisttt.LearnWord.Page.ViewModel.LearnPageStateViewModel;
 import com.Nihilisttt.LearnWord.R;
@@ -27,12 +29,17 @@ import java.util.List;
 public class SynonymAntonymViewFragment extends Fragment {
     private List<SynonymWord> synonymWords;
     private List<AntonymWord> antonymWords;
+    private List<DerivedWord> derivedWords;
+    private List<RelatedWord> relatedWords;
 
     public SynonymAntonymViewFragment() {}
 
-    public SynonymAntonymViewFragment(List<SynonymWord> synonymWords, List<AntonymWord> antonymWords) {
+    public SynonymAntonymViewFragment(List<SynonymWord> synonymWords, List<AntonymWord> antonymWords,
+                                      List<DerivedWord> derivedWords, List<RelatedWord> relatedWords) {
         this.synonymWords = synonymWords;
         this.antonymWords = antonymWords;
+        this.derivedWords = derivedWords;
+        this.relatedWords = relatedWords;
     }
 
     @Override
@@ -55,7 +62,7 @@ public class SynonymAntonymViewFragment extends Fragment {
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
         scrollView.setFillViewport(true);
 
-        View contentView = new SynonymAntonymView(requireContext(), this, subFontLevel, synonymWords, antonymWords);
+        View contentView = new SynonymAntonymView(requireContext(), this, subFontLevel, synonymWords, antonymWords, derivedWords, relatedWords);
         contentView.setLayoutParams(new ScrollView.LayoutParams(
                 ScrollView.LayoutParams.MATCH_PARENT, ScrollView.LayoutParams.WRAP_CONTENT));
         scrollView.addView(contentView);

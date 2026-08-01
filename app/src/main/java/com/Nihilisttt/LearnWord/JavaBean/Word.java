@@ -18,6 +18,8 @@ public class Word {
     private final List<String> usageDistinctionIdList;
     private final List<String> grammarPointIdList;
     private final List<String> idiomIdList;
+    private final List<String> derivedWordIdList;
+    private final List<String> relatedWordIdList;
 
     // 私有构造函数，只能通过Builder创建实例
     private Word(String wordId,
@@ -31,7 +33,9 @@ public class Word {
                  List<String> kanjiInfoIdList,
                  List<String> usageDistinctionIdList,
                  List<String> grammarPointIdList,
-                 List<String> idiomIdList) {
+                 List<String> idiomIdList,
+                 List<String> derivedWordIdList,
+                 List<String> relatedWordIdList) {
         this.wordId = wordId;
         this.antonymIdList = Collections.unmodifiableList(antonymIdList);
         this.synonymIdList = Collections.unmodifiableList(synonymIdList);
@@ -44,6 +48,8 @@ public class Word {
         this.usageDistinctionIdList = Collections.unmodifiableList(usageDistinctionIdList);
         this.grammarPointIdList = Collections.unmodifiableList(grammarPointIdList);
         this.idiomIdList = Collections.unmodifiableList(idiomIdList);
+        this.derivedWordIdList = Collections.unmodifiableList(derivedWordIdList);
+        this.relatedWordIdList = Collections.unmodifiableList(relatedWordIdList);
     }
 
     public static Builder builder() {
@@ -63,6 +69,8 @@ public class Word {
     public List<String> getUsageDistinctionIdList() { return usageDistinctionIdList; }
     public List<String> getGrammarPointIdList() { return grammarPointIdList; }
     public List<String> getIdiomIdList() { return idiomIdList; }
+    public List<String> getDerivedWordIdList() { return derivedWordIdList; }
+    public List<String> getRelatedWordIdList() { return relatedWordIdList; }
 
     public static class Builder {
         private String wordId;
@@ -77,6 +85,8 @@ public class Word {
         private List<String> usageDistinctionIdList = new ArrayList<>();
         private List<String> grammarPointIdList = new ArrayList<>();
         private List<String> idiomIdList = new ArrayList<>();
+        private List<String> derivedWordIdList = new ArrayList<>();
+        private List<String> relatedWordIdList = new ArrayList<>();
 
         public Builder addWordId(String wordId) {
             this.wordId = Objects.requireNonNull(wordId);
@@ -165,6 +175,16 @@ public class Word {
             return this;
         }
 
+        public Builder withDerivedWordIdList(List<String> derivedWordIdList) {
+            this.derivedWordIdList = new ArrayList<>(derivedWordIdList);
+            return this;
+        }
+
+        public Builder withRelatedWordIdList(List<String> relatedWordIdList) {
+            this.relatedWordIdList = new ArrayList<>(relatedWordIdList);
+            return this;
+        }
+
         public Word build() {
             // 必要参数校验
             Objects.requireNonNull(wordId, "wordId must not be null");
@@ -182,7 +202,9 @@ public class Word {
                     kanjiInfoIdList != null ? new ArrayList<>(kanjiInfoIdList) : new ArrayList<>(),
                     usageDistinctionIdList != null ? new ArrayList<>(usageDistinctionIdList) : new ArrayList<>(),
                     grammarPointIdList != null ? new ArrayList<>(grammarPointIdList) : new ArrayList<>(),
-                    idiomIdList != null ? new ArrayList<>(idiomIdList) : new ArrayList<>()
+                    idiomIdList != null ? new ArrayList<>(idiomIdList) : new ArrayList<>(),
+                    derivedWordIdList != null ? new ArrayList<>(derivedWordIdList) : new ArrayList<>(),
+                    relatedWordIdList != null ? new ArrayList<>(relatedWordIdList) : new ArrayList<>()
             );
         }
     }

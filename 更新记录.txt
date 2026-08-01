@@ -5,6 +5,46 @@ LearnWord 项目更新记录
 
 ========================
 
+【更新27】派生词/关联词功能+近义词反义词修复+汉字关联词格式修复
+日期：2026-08-01
+涉及文件：
+  Entity: DerivedWordEntity, RelatedWordEntity, WordEntity(+derivedWordIdList/relatedWordIdList)
+  Dao: DerivedWordDao, RelatedWordDao
+  JavaBean: DerivedWord, RelatedWord, Word(+2字段)
+  Converter: DerivedWordConverter, RelatedWordConverter, WordConverter(+2字段)
+  Database: WordDatabase(+2Entity, 版本22)
+  Repository: WordRepository(+派生词/关联词查询)
+  ViewModel: LearnPageViewModel(+derivedWordListLiveData/relatedWordListLiveData+CombinedWordInfo)
+  View: SynonymAntonymView(+派生词/关联词section, WordComponentView替代WrappedPhraseView), IntegratedPartView(Tab标题→関連語)
+  Fragment: SynonymAntonymViewFragment, WordDetailBottomSheet(Tab标题→関連語), MainLearnPageFragment(+派生词/关联词传递)
+  Utility: DataImporter(+2字段)
+  Python: insert_derived_related.py, cleanup_conflicts.py, fix_word_schema.py, fix_derived_related_schema.py, fix_corresponding_wordids.py, migrate_to_real_wordids.py, fix_same_kanji_words.py
+  DB: word_database.db(数据迁移+schema修复+格式修复)
+
+1. 派生词/关联词功能：
+   - 新建DerivedWord/RelatedWord实体、Dao、JavaBean、Converter
+   - Word表新增derivedWordIdList/relatedWordIdList字段(NOT NULL DEFAULT '[]')
+   - LearnPageViewModel新增derivedWordListLiveData/relatedWordListLiveData, 合并到CombinedWordInfo
+   - SynonymAntonymView新增派生词/关联词section(标题: 派生語/関連語)
+   - IntegratedPartView和WordDetailBottomSheet的近义词Tab改名为"関連語"
+   - 数据库版本升至22
+
+2. 近义词反义词修复：
+   - correspondingWordId="0"时改用WordComponentView(有假名标注), 不再用WrappedPhraseView(无假名标注)
+   - fix_corresponding_wordids.py: 修复correspondingWordId为真实wordId(如 読む→1456360)
+   - migrate_to_real_wordids.py: 数据从wordId="1"-"4"迁移到"0000001"-"0000004"(应用显示的真实wordId)
+
+3. 汉字关联词格式修复：
+   - fix_same_kanji_words.py: KanjiInfo.sameKanjiWords从简单字符串["書籍","図書"]修复为JSON对象[{"kj":["書","籍"],"kn":["しょ","せき"],"wid":"1344090"}]
+   - 修复后汉字中的单词可点击跳转
+
+4. 关键发现：
+   - 应用显示的单词wordId是0000001(7位数字格式), 不是测试单词的1
+   - 数据必须放在0000001-0000004上才能在应用中生效
+   - DerivedWord/RelatedWord表主键必须是TEXT NOT NULL PRIMARY KEY(Room验证要求)
+
+========================
+
 【更新26】BottomSheet Tab/滚动模式切换
 日期：2026-08-01
 涉及文件：
