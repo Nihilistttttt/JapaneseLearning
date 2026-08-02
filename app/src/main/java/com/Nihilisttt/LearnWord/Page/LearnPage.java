@@ -49,7 +49,12 @@ public class LearnPage extends AppCompatActivity {
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
         boolean handled = super.dispatchTouchEvent(ev);
-        scrollController.handleTouchEvent(ev);
+        // When on search page (position 0), disable VP2 swipe to prevent accidental close
+        if (viewPager2.getCurrentItem() == 0) {
+            viewPager2.setUserInputEnabled(false);
+        } else {
+            scrollController.handleTouchEvent(ev);
+        }
         return handled;
     }
 

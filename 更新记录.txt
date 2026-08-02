@@ -5,6 +5,25 @@ LearnWord 项目更新记录
 
 ========================
 
+【更新33】搜索页禁止滑动关闭+BottomSheet滚动冲突修复
+日期：2026-08-02
+涉及文件：
+  Java: LearnPage.java(dispatchTouchEvent搜索页禁用VP2滑动)
+       WordDetailBottomSheet.java(ScrollView→NestedScrollView)
+       IntegratedPartView.java(ScrollView→NestedScrollView)
+
+1. 搜索页禁止滑动关闭：
+   - 外层VP2垂直方向，向下滑会从搜索页(position 0)切到主页面(position 1)
+   - dispatchTouchEvent中当VP2在position 0时setUserInputEnabled(false)，跳过scrollController
+   - 搜索页只能通过FAB/取消键/返回键回主页面
+
+2. BottomSheet滚动模式内部滑动冲突：
+   - 根因: android.widget.ScrollView不支持嵌套滚动协议，向下滚动被BottomSheetBehavior误判为拖拽关闭
+   - 修复: ScrollView→NestedScrollView，支持嵌套滚动协议，正确消费滚动事件
+   - WordDetailBottomSheet和IntegratedPartView均替换
+
+========================
+
 【更新32】Tab区域首次不显示修复+友達複数形删除+kana分组修复补丁
 日期：2026-08-02
 涉及文件：

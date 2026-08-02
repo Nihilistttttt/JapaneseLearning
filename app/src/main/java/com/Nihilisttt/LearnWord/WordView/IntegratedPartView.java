@@ -6,7 +6,7 @@ import android.graphics.Typeface;
 import android.util.TypedValue;
 import android.view.View;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
+import androidx.core.widget.NestedScrollView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -173,7 +173,7 @@ public class IntegratedPartView extends LinearLayout {
 
     private void buildScrollMode() {
         Context context = getContext();
-        ScrollView scrollView = new ScrollView(context);
+        NestedScrollView scrollView = new NestedScrollView(context);
         scrollView.setFillViewport(true);
         scrollView.setLayoutParams(new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));

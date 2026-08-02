@@ -10,7 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
+
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -467,7 +467,7 @@ public class WordDetailBottomSheet extends BottomSheetDialogFragment {
                                     Context context, LifecycleOwner lifecycleOwner) {
         float density = context.getResources().getDisplayMetrics().density;
 
-        android.widget.ScrollView scrollView = new android.widget.ScrollView(context);
+        androidx.core.widget.NestedScrollView scrollView = new androidx.core.widget.NestedScrollView(context);
         scrollView.setFillViewport(true);
         scrollView.setLayoutParams(new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
