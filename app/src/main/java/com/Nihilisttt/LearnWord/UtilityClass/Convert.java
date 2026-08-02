@@ -21,8 +21,21 @@ public class Convert {
     @TypeConverter
     public static List<String> jsonToList(String value) {
         if (value == null || value.isEmpty()) return java.util.Collections.emptyList();
-        List<String> result = new Gson().fromJson(value, new TypeToken<List<String>>(){}.getType());
-        return result != null ? result : java.util.Collections.emptyList();
+        try {
+            List<String> result = new Gson().fromJson(value, new TypeToken<List<String>>(){}.getType());
+            if (result != null) return result;
+        } catch (Exception ignored) {}
+        try {
+            List<List<String>> nested = new Gson().fromJson(value, new TypeToken<List<List<String>>>(){}.getType());
+            if (nested != null) {
+                java.util.List<String> flat = new java.util.ArrayList<>();
+                for (List<String> inner : nested) {
+                    if (inner != null) flat.addAll(inner);
+                }
+                return flat;
+            }
+        } catch (Exception ignored) {}
+        return java.util.Collections.emptyList();
     }
 
     @TypeConverter

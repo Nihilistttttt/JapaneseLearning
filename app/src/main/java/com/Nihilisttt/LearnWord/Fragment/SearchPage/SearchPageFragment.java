@@ -1,45 +1,220 @@
 package com.Nihilisttt.LearnWord.Fragment.SearchPage;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
+import android.widget.FrameLayout;
+import android.widget.ImageButton;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
-import com.Nihilisttt.LearnWord.Adapter.SearchPageAdapter;
-import com.Nihilisttt.LearnWord.Fragment.LearnPage.ExtendedLearnPage.ExtendedSentenceFragment;
-import com.Nihilisttt.LearnWord.JavaBean.WordMeaning;
-import com.Nihilisttt.LearnWord.JavaBean.WordSentence;
+import com.Nihilisttt.LearnWord.Adapter.SearchResultAdapter;
 import com.Nihilisttt.LearnWord.Page.ViewModel.LearnPageStateViewModel;
 import com.Nihilisttt.LearnWord.Page.ViewModel.LearnPageViewModel;
+import com.Nihilisttt.LearnWord.Page.ViewModel.SearchPageViewModel;
 import com.Nihilisttt.LearnWord.R;
-import com.Nihilisttt.LearnWord.ViewPager2.ViewPager2Navigation;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 public class SearchPageFragment extends Fragment {
-    private ViewPager2 viewPager2;
-    private LearnPageViewModel viewModel;
+    private EditText searchInput;
+    private ImageButton clearBtn;
+    private TextView cancelBtn;
+    private FrameLayout contentContainer;
+    private RecyclerView resultsList;
+    private FloatingActionButton backFab;
+    private SearchResultAdapter adapter;
+    private SearchPageViewModel searchViewModel;
+    private LearnPageViewModel learnViewModel;
     private LearnPageStateViewModel stateViewModel;
-    private WordMeaning meaning;
-    private List<WordSentence> sentenceList;
-    private List<Fragment> fragmentList;
+    private final Handler debounceHandler = new Handler(Looper.getMainLooper());
+    private Runnable debounceRunnable;
+    private static final long DEBOUNCE_DELAY = 300;
+    private boolean isInDetailPage = false;
+
+    private final TextWatcher searchTextWatcher = new TextWatcher() {
+        @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+        @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+        @Override public void afterTextChanged(Editable s) {
+            String query = s.toString();
+            clearBtn.setVisibility(query.isEmpty() ? View.GONE : View.VISIBLE);
+            if (debounceRunnable != null) debounceHandler.removeCallbacks(debounceRunnable);
+            debounceRunnable = () -> searchViewModel.search(query);
+            debounceHandler.postDelayed(debounceRunnable, DEBOUNCE_DELAY);
+        }
+    };
+
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater,
+                             @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_search_page, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        searchViewModel = new ViewModelProvider(requireActivity(),
+                ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().getApplication()))
+                .get(SearchPageViewModel.class);
+        learnViewModel = new ViewModelProvider(requireActivity(),
+                ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().getApplication()))
+                .get(LearnPageViewModel.class);
+        stateViewModel = new ViewModelProvider(requireActivity(),
+                ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().getApplication()))
+                .get(LearnPageStateViewModel.class);
+
+        searchInput = view.findViewById(R.id.search_input);
+        clearBtn = view.findViewById(R.id.search_clear_btn);
+        cancelBtn = view.findViewById(R.id.search_cancel_btn);
+        contentContainer = view.findViewById(R.id.search_content_container);
+        backFab = view.findViewById(R.id.search_detail_back_fab);
+
+        resultsList = new RecyclerView(requireContext());
+        resultsList.setId(View.generateViewId());
+        resultsList.setLayoutManager(new LinearLayoutManager(requireContext()));
+        adapter = new SearchResultAdapter(result -> showDetailPage(result.wordId));
+        resultsList.setAdapter(adapter);
+        resultsList.setLayoutParams(new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+        contentContainer.addView(resultsList);
+
+        setupSearchBar();
+        setupObservers();
+        setupBackFab();
+    }
+
+    private void setupSearchBar() {
+        searchInput.addTextChangedListener(searchTextWatcher);
+
+        searchInput.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus && isInDetailPage) {
+                showMultiPage();
+            }
+        });
+
+        searchInput.setOnClickListener(v -> {
+            if (isInDetailPage) {
+                showMultiPage();
+            }
+        });
+
+        searchInput.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                if (debounceRunnable != null) debounceHandler.removeCallbacks(debounceRunnable);
+                searchViewModel.search(searchInput.getText().toString());
+                return true;
+            }
+            return false;
+        });
+
+        clearBtn.setOnClickListener(v -> {
+            searchInput.setText("");
+            searchInput.requestFocus();
+            showKeyboard();
+        });
+
+        cancelBtn.setOnClickListener(v -> navigateBackToMain());
+    }
+
+    private void setupObservers() {
+        searchViewModel.getSearchResults().observe(getViewLifecycleOwner(), results -> {
+            if (!isInDetailPage) {
+                adapter.setResults(results);
+            }
+        });
+    }
+
+    private void setupBackFab() {
+        backFab.setOnClickListener(v -> navigateBackToMain());
+    }
+
+    private void fillCurrentWord() {
+        LearnPageViewModel.CombinedWordInfo info = learnViewModel.getCombinedWordInfo().getValue();
+        if (info != null) {
+            String kanji = info.getBasicWord().getCompositeKanji();
+            if (kanji != null && !kanji.isEmpty()) {
+                searchInput.removeTextChangedListener(searchTextWatcher);
+                searchInput.setText(kanji);
+                searchInput.setSelection(kanji.length());
+                searchInput.addTextChangedListener(searchTextWatcher);
+                clearBtn.setVisibility(View.VISIBLE);
+                searchViewModel.search(kanji);
+            }
+        }
+    }
+
+    private void showDetailPage(String wordId) {
+        hideKeyboard();
+        searchInput.clearFocus();
+        isInDetailPage = true;
+        resultsList.setVisibility(View.GONE);
+        backFab.setVisibility(View.VISIBLE);
+
+        SearchDetailFragment detailFragment = SearchDetailFragment.newInstance(wordId);
+        FragmentTransaction ft = getChildFragmentManager().beginTransaction();
+        ft.replace(contentContainer.getId(), detailFragment, "SearchDetail");
+        ft.commit();
+    }
+
+    private void showMultiPage() {
+        isInDetailPage = false;
+        backFab.setVisibility(View.GONE);
+        removeDetailFragment();
+        resultsList.setVisibility(View.VISIBLE);
+        adapter.setResults(searchViewModel.getSearchResults().getValue());
+        searchInput.requestFocus();
+        showKeyboard();
+    }
+
+    private void navigateBackToMain() {
+        searchInput.setText("");
+        hideKeyboard();
+        if (isInDetailPage) {
+            isInDetailPage = false;
+            backFab.setVisibility(View.GONE);
+            removeDetailFragment();
+            resultsList.setVisibility(View.VISIBLE);
+        }
+        ViewPager2 outerVp2 = requireActivity().findViewById(R.id.learn_page_vp2_container);
+        if (outerVp2 != null) {
+            outerVp2.setCurrentItem(1, true);
+        }
+    }
+
+    private void removeDetailFragment() {
+        Fragment detailFragment = getChildFragmentManager().findFragmentByTag("SearchDetail");
+        if (detailFragment != null) {
+            getChildFragmentManager().beginTransaction().remove(detailFragment).commitNowAllowingStateLoss();
+        }
+    }
 
     @Override
     public void onResume() {
         super.onResume();
-        if (isVisibleToUser()) { // 确保真正可见
+        if (isVisibleToUser()) {
             stateViewModel.setWhichFragmentInLearnPage(
-                    LearnPageStateViewModel.FragmentInLearnPage.SearchFragment
-            );
+                    LearnPageStateViewModel.FragmentInLearnPage.SearchFragment);
+            if (!isInDetailPage) {
+                resultsList.setVisibility(View.VISIBLE);
+                fillCurrentWord();
+                searchInput.requestFocus();
+            }
         }
     }
 
@@ -47,70 +222,19 @@ public class SearchPageFragment extends Fragment {
         return getUserVisibleHint() || isVisible();
     }
 
-    @Nullable
-    @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
-        // 使用新的布局文件名
-        return inflater.inflate(R.layout.fragment_search_page, container, false);
+    private void showKeyboard() {
+        InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
+        if (imm != null) imm.showSoftInput(searchInput, 0);
     }
 
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        // 初始化ViewModel
-        viewModel = new ViewModelProvider(requireActivity(),
-                ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().getApplication()))
-                .get(LearnPageViewModel.class);
-        stateViewModel = new ViewModelProvider(requireActivity(),
-                ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().getApplication()))
-                .get(LearnPageStateViewModel.class);
-        // 初始化视图组件
-        initViews(view);
-
-        // 设置数据观察
-        setupObservers();
-    }
-
-    private void initViews(View view) {
-        viewPager2 = view.findViewById(R.id.detailed_page_container);
-        View childAt = viewPager2.getChildAt(0);
-        if (childAt instanceof RecyclerView) {
-            childAt.setOverScrollMode(View.OVER_SCROLL_NEVER);
-        } // 取消滑动到边缘的阴影效果
-    }
-
-
-    private void setupObservers() {
-        viewModel.getCombinedWordInfo().observe(getViewLifecycleOwner(), combinedWordInfo -> {
-            List<WordSentence> sentences = combinedWordInfo.getWordSentenceList();
-            fragmentList = new ArrayList<>();
-            for (WordSentence sentence : sentences) {
-                fragmentList.add(new ExtendedSentenceFragment(sentence));
-            }
-
-            // 创建ViewPager2所使用的适配器，FragmentStateAdapter抽象类的实现类对象
-            SearchPageAdapter adapter = new SearchPageAdapter(requireActivity());
-
-            viewPager2.setAdapter(adapter);
-            ViewPager2Navigation.getInstance().setMeaningVp2(viewPager2);
-            ViewPager2Navigation.getInstance().onMeaningVp2Ready();
-
-        });
-
-        viewModel.getToastMessage().observe(getViewLifecycleOwner(), message -> {
-            if (message != null) {
-                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
-            }
-        });
-
-
+    private void hideKeyboard() {
+        InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
+        if (imm != null) imm.hideSoftInputFromWindow(searchInput.getWindowToken(), 0);
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        ViewPager2Navigation.getInstance().setMeaningVp2(null);
-        ViewPager2Navigation.getInstance().clearPendingNavigation();
+        if (debounceRunnable != null) debounceHandler.removeCallbacks(debounceRunnable);
     }
 }

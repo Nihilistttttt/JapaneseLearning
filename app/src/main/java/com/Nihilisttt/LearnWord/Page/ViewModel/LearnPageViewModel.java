@@ -166,6 +166,16 @@ public class LearnPageViewModel extends AndroidViewModel {
     // endregion
 
     // region 导航控制
+    public void setCurrentWordId(String wordId) {
+        currentWordId.setValue(wordId);
+        saveCurrentId(wordId);
+    }
+
+
+    public String getCurrentWordId() {
+        return currentWordId.getValue();
+    }
+
     public void navigatePrevious() {
         String currentId = currentWordId.getValue();
         if (currentId != null) checkAndNavigatePrevious(currentId);

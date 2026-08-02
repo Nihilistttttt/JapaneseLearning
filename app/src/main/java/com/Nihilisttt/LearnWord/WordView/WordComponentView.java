@@ -451,7 +451,7 @@ public class WordComponentView extends LinearLayout {
             basicWordPart.removeAllViews();
             if (basicWord == null || basicWord.getWordId().equals("null")) {
                 TextView emptyView = new TextView(context);
-                emptyView.setText("暂无单词信息");
+                emptyView.setText("该单词暂未收录");
                 basicWordPart.addView(emptyView);
             } else {
                 AudioManager audioManager = AudioManager.getInstance(context);

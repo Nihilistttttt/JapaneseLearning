@@ -40,4 +40,7 @@ public interface WordMeaningDao {
 
     @Query("SELECT * FROM WordMeaning WHERE wordMeaningId IN (:wordMeaningIdList)")
     List<WordMeaningEntity> getWordMeaningsByWordMeaningIdListSync(List<String> wordMeaningIdList);
+
+    @Query("SELECT * FROM WordMeaning WHERE wordId IN (:wordIdList)")
+    List<WordMeaningEntity> getWordMeaningsByWordIdListSync(List<String> wordIdList);
 }

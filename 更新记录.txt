@@ -5,6 +5,47 @@ LearnWord 项目更新记录
 
 ========================
 
+【更新29】关联语数据修复+汉字关联词格式修复+数据库脏数据清理
+日期：2026-08-02
+涉及文件：
+  Python: fix_test_words.py(删除wordId 1-4脏数据+重建0000001-4完整数据),
+          fix_relations_and_kanji.py(修复correspondingWordId+插入DerivedWord/RelatedWord+修复sameKanjiWords格式),
+          supplement_syn_ant.py(补充近义词/反义词至各3个)
+  DB: word_database.db(脏数据删除+关联语补全+sameKanjiWords格式修复)
+
+1. 数据库脏数据清理：
+   - wordId 1-4(嵌套数组格式[["書","く"]])已删除
+   - wordId 0000001-4使用正确扁平数组格式["書","く"]重建
+   - 关联数据(meaning/sentence/conj/coll/etymology/kanjiInfo)完整
+
+2. 关联语数据修复：
+   - SynonymWord/AntonymWord的correspondingWordId从"0"修复为真实wordId(如 描く→1583460, 読む→1456360)
+   - 补充近义词/反义词至每个词各3个(原fix_test_words.py只插了1个甚至0个)
+   - 插入DerivedWord(派生词)数据: 12条(書き方/書き物/書道/高さ/高み/高値/静けさ/静かさ/静寂/友情/友好/友達付き合い)
+   - 插入RelatedWord(关联词)数据: 12条(読む/覚える/記録/山/塔/屋上/静止/沈黙/平穏/家族/同僚/知人)
+   - Word表derivedWordIdList/relatedWordIdList从[]更新为实际ID列表
+
+3. 汉字关联词格式修复：
+   - KanjiInfo.sameKanjiWords从简单字符串["書籍","図書"]修复为JSON对象[{"kj":["書","籍"],"kn":["しょ","せき"],"wid":"1344090"}]
+   - 修复后汉字中的单词有假名注音且可点击跳转
+   - 与更新记录22/27的修复一致(fix_test_words.py重建时遗漏了此格式转换)
+
+4. 少数correspondingWordId="0"属正常：
+   - 嵩高い/貴い/うるさい/静かさ不在BasicWord表中，无法关联wordId
+   - 代码已有处理: cwid="0"时正常显示但不可点击
+
+意义：
+   - 关联语(近义词/反义词/派生词/关联词)是单词学习的核心维度，数据缺失导致関連語Tab内容为空或不可交互
+   - sameKanjiWords格式错误导致汉字中的单词无假名注音且不可点击，与更新记录22/27的修复目标矛盾
+   - fix_test_words.py重建数据时遗漏了insert_derived_related.py和fix_same_kanji_words.py的修复，本次补全
+
+新理解：
+   - 重建测试数据时必须回溯所有历史修复脚本，否则会重复出现已修复的问题
+   - sameKanjiWords在DB中存储为List<String>，每个元素是JSON对象的字符串表示，KanjiInfoView逐个new JSONObject解析
+   - DerivedWord/RelatedWord全库只有测试词有数据，真实词数据待后续导入
+
+========================
+
 【更新28】kanaComponents分组修复(外层+内层)
 日期：2026-08-02
 涉及文件：

@@ -28,4 +28,7 @@ public interface BasicWordDao {
     LiveData<BasicWordEntity> getBasicWordByWordId(String word_id);
     @Query("SELECT * FROM BasicWord WHERE wordId = :word_id")
     BasicWordEntity getBasicWordByWordIdSync(String word_id);
+
+    @Query("SELECT * FROM BasicWord WHERE REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(kanjiComponents,'[',''),']',''),'\"',''),',',''),' ','') LIKE '%' || :query || '%' OR REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(kanaComponents,'[',''),']',''),'\"',''),',',''),' ','') LIKE '%' || :query || '%' ORDER BY wordFrequency DESC LIMIT :limit")
+    List<BasicWordEntity> searchBasicWordsSync(String query, int limit);
 }

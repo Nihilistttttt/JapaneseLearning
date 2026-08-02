@@ -728,4 +728,14 @@ public class WordRepository {
     }
     // endregion
 
+    // region 搜索
+    public List<BasicWordEntity> searchBasicWordsSync(String query, int limit) {
+        return basicWordDao.searchBasicWordsSync(query, limit);
+    }
+
+    public List<WordMeaningEntity> getWordMeaningsByWordIdListSync(List<String> wordIdList) {
+        return wordMeaningDao.getWordMeaningsByWordIdListSync(wordIdList);
+    }
+    // endregion
+
 }
