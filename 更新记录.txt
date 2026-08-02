@@ -5,6 +5,32 @@ LearnWord 项目更新记录
 
 ========================
 
+【更新31】测试词kanaComponents分组修复
+日期：2026-08-02
+涉及文件：
+  Python: fix_kana_grouping_test.py(修复25处), fix_remaining.py(修复2处)
+  DB: word_database.db(27处kana分组修复)
+
+1. 问题：
+   - kana被逐字拆分导致len(kc)!=len(kn)，假名显示不全
+   - 例: 友達 kc=['友','達'](2) kn=['と','も','だ','ち'](4) → kn=['とも','だち'](2)
+
+2. 修复(27处)：
+   - BasicWord: 友達(ともだち)
+   - SynonymWord: 書き記す(かきしるす, kc也需调整)
+   - AntonymWord: 破る(やぶる), 仇(かたき)
+   - DerivedWord: 書き方(かきかた), 書き物(かきもの)
+   - RelatedWord: 覚える(おぼえる), 記録(きろく)
+   - ConjugationForm: 友達6个活用形 + 友達達(kc也需调整)
+   - UsageDistinction: 友達(ともだち)
+   - WordSentence: 友達7处 + 家(いえ) + 大事(だいじ)
+   - Etymology: 友達(ともだち)
+   - Idiom: 友達(ともだち)
+
+3. 验证：全库测试词0不匹配
+
+========================
+
 【更新30】助词wordId修复+切换按钮修复+Tab位置修复
 日期：2026-08-02
 涉及文件：
