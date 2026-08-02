@@ -79,6 +79,14 @@ public class SearchDetailFragment extends Fragment {
     }
 
     private void setupObservers() {
+        stateViewModel.getIsScrollMode().observe(getViewLifecycleOwner(), isScroll -> {
+            if (integratedPartView != null) {
+                Integer subLevel = stateViewModel.getSubFontLevel().getValue();
+                if (subLevel == null) subLevel = Constants.FONT_SIZE_NORMAL;
+                integratedPartView.setScrollMode(isScroll, subLevel);
+            }
+        });
+
         viewModel.getCombinedWordInfo().observe(getViewLifecycleOwner(), combinedWordInfo -> {
             if (combinedWordInfo == null) return;
 

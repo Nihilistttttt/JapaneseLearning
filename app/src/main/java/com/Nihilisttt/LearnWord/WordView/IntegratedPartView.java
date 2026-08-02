@@ -166,8 +166,8 @@ public class IntegratedPartView extends LinearLayout {
     }
 
     private void buildTabMode() {
-        addView(host);
         addView(tabLayout);
+        addView(host);
         update();
     }
 

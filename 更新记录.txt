@@ -5,6 +5,29 @@ LearnWord 项目更新记录
 
 ========================
 
+【更新30】助词wordId修复+切换按钮修复+Tab位置修复
+日期：2026-08-02
+涉及文件：
+  Java: SearchDetailFragment.java(+isScrollMode observe), IntegratedPartView.java(buildTabMode Tab在上)
+  Python: fix_particle_wordids.py(助词wordIdList"0"→真实wordId)
+  DB: word_database.db(24句子+8词组助词wordId修复)
+
+1. 助词wordId修复：
+   - 例句/词组wordIdList中"0"占位符根据kanjiComponents查BasicWord表替换为真实wordId
+   - は→2028920, が→2028930, を→2029010, に→2028990, で→2028980, と→1008490, も→2028940, へ→2029000等
+   - 修复24个句子+8个词组搭配，助词从不可点击变为可点击
+   - 剩余5个"0"是活用形中间段(書い/てい/なければ/ください/あります)，BasicWord中不存在，属正常
+
+2. 搜索详情页切换按钮修复：
+   - 根因: scrollToggle点击切换stateViewModel.isScrollMode，但缺少observe来调用integratedPartView.setScrollMode()
+   - 修复: setupObservers()开头添加stateViewModel.getIsScrollMode().observe()，与MainLearnPageFragment一致
+
+3. Tab位置修复：
+   - IntegratedPartView.buildTabMode()中addView顺序从host→tabLayout改为tabLayout→host
+   - Tab现在在VP2上方，与BottomSheet布局一致
+
+========================
+
 【更新29】关联语数据修复+汉字关联词格式修复+数据库脏数据清理
 日期：2026-08-02
 涉及文件：
