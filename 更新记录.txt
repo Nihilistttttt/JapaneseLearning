@@ -5,6 +5,31 @@ LearnWord 项目更新记录
 
 ========================
 
+【更新28】kanaComponents分组修复(外层+内层)
+日期：2026-08-02
+涉及文件：
+  Python: fix_kana_grouping.py, fix_kana_remaining.py, fix_conj_usage_kn.py, fix_nested_kn.py
+  DB: word_database.db(70处kana分组修复)
+
+1. 问题：
+   - kana被逐字拆分，导致len(kc)!=len(kn)，假名显示不全
+   - 例: 友達 kc=['友','達'](2) kn=['と','も','だ','ち'](4) → kn=['とも','だち'](2)
+
+2. 外层修复(45处)：
+   - BasicWord/SynonymWord/AntonymWord/DerivedWord/RelatedWord: 36处
+   - ConjugationForm: 7处(静か活用形, 静=しず)
+   - UsageDistinction: 2处(静か=しずか, 友達=ともだち)
+
+3. 内层修复(25处)：
+   - WordCollocation: 5处(友達/遊ぶ/作る/家/話す)
+   - Idiom: 4处(静か/友達/作る)
+   - Etymology: 2处(友=とも/達=だち)
+   - WordSentence: 14处(友達/遊ぶ/作った/映画等)
+
+4. 验证：全库外层0不匹配，内层0不匹配
+
+========================
+
 【更新27】派生词/关联词功能+近义词反义词修复+汉字关联词格式修复
 日期：2026-08-01
 涉及文件：
