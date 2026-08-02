@@ -5,6 +5,27 @@ LearnWord 项目更新记录
 
 ========================
 
+【更新32】Tab区域首次不显示修复+友達複数形删除+kana分组修复补丁
+日期：2026-08-02
+涉及文件：
+  Java: IntegratedPartView.java(构造函数rebuild替代update)
+  DB: word_database.db(删除cf4_2+27处kana修复)
+
+1. Tab区域首次不显示修复：
+   - 根因: IntegratedPartView构造函数调initContainers()+update()，但update()只设adapter/mediator
+   - tabLayout和host从未被addView到IntegratedPartView，首次创建时为空View
+   - 直到setScrollMode()或updateData()触发rebuild()才显示
+   - 修复: 构造函数调rebuild()替代直接调update()，确保buildTabMode()执行addView
+
+2. 友達複数形删除：
+   - 友達本身達(だち)已是复数接尾，友達たち是双重复数不自然
+   - 删除cf4_2，Word.conjugationFormIdList同步移除
+
+3. kana分组修复补丁(27处)：
+   - 友達kn=['と','も','だ','ち']→['とも','だち']等，全库测试词0不匹配
+
+========================
+
 【更新31】测试词kanaComponents分组修复
 日期：2026-08-02
 涉及文件：

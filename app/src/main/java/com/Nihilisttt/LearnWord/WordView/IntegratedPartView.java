@@ -88,7 +88,7 @@ public class IntegratedPartView extends LinearLayout {
         ));
         saveData(collocations, antonymWords, synonymWords, derivedWords, relatedWords, conjugationForms, etymologies, kanjiInfos, usageDistinctions, grammarPoints, idioms);
         initContainers();
-        update();
+        rebuild();
     }
 
     private void saveData(List<WordCollocation> collocations,
