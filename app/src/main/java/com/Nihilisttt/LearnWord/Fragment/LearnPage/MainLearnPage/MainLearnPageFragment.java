@@ -17,6 +17,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -144,8 +145,8 @@ public class MainLearnPageFragment extends Fragment {
         infoRow.removeAllViews();
         if (jlptLevel > 0 || wordFrequency > 0) {
             SpannableStringBuilder ssb = new SpannableStringBuilder();
-            int primaryColor = getResources().getColor(R.color.md_primary);
-            int variantColor = getResources().getColor(R.color.md_on_surface_variant);
+            int primaryColor = ContextCompat.getColor(requireContext(), R.color.md_primary);
+            int variantColor = ContextCompat.getColor(requireContext(), R.color.md_on_surface_variant);
             if (jlptLevel > 0) {
                 String jlptText = "N" + jlptLevel;
                 int start = ssb.length();

@@ -8,6 +8,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 
 import com.Nihilisttt.LearnWord.UtilityClass.Constants;
 import androidx.lifecycle.LifecycleOwner;
@@ -76,7 +77,7 @@ public class ExtendedInfoView extends LinearLayout {
         tv.setText(title);
         tv.setTextSize(14);
         tv.setTypeface(Typeface.DEFAULT_BOLD);
-        tv.setTextColor(getContext().getResources().getColor(R.color.md_detail_label));
+        tv.setTextColor(ContextCompat.getColor(getContext(), R.color.md_detail_label));
         int marginBottom = (int) (Constants.SECTION_TITLE_BOTTOM_MARGIN_DP * getContext().getResources().getDisplayMetrics().density);
         LayoutParams params = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
         params.setMargins(0, 0, 0, marginBottom);

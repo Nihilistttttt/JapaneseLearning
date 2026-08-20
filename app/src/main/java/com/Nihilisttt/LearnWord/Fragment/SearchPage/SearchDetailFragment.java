@@ -13,6 +13,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -151,8 +152,8 @@ public class SearchDetailFragment extends Fragment {
             infoRow.setOrientation(LinearLayout.HORIZONTAL);
             infoRow.setGravity(Gravity.CENTER_HORIZONTAL);
             SpannableStringBuilder ssb = new SpannableStringBuilder();
-            int primaryColor = requireContext().getResources().getColor(R.color.md_primary);
-            int variantColor = requireContext().getResources().getColor(R.color.md_on_surface_variant);
+            int primaryColor = ContextCompat.getColor(requireContext(), R.color.md_primary);
+            int variantColor = ContextCompat.getColor(requireContext(), R.color.md_on_surface_variant);
             if (jlptLevel > 0) {
                 int start = ssb.length();
                 ssb.append("N" + jlptLevel);

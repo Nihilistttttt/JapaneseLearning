@@ -10,6 +10,7 @@ import androidx.core.widget.NestedScrollView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ViewModelProvider;
@@ -220,7 +221,7 @@ public class IntegratedPartView extends LinearLayout {
         TextView titleView = new TextView(context);
         titleView.setText(title);
         titleView.setTypeface(Typeface.DEFAULT_BOLD);
-        titleView.setTextColor(context.getResources().getColor(R.color.md_detail_label));
+        titleView.setTextColor(ContextCompat.getColor(context, R.color.md_detail_label));
         titleView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
         LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -239,7 +240,7 @@ public class IntegratedPartView extends LinearLayout {
         Context context = getContext();
         float density = context.getResources().getDisplayMetrics().density;
         View divider = new View(context);
-        divider.setBackgroundColor(context.getResources().getColor(R.color.md_outline_variant));
+        divider.setBackgroundColor(ContextCompat.getColor(context, R.color.md_outline_variant));
         LinearLayout.LayoutParams dividerParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, (int) (Constants.SECTION_DIVIDER_HEIGHT_DP * density));
         dividerParams.topMargin = (int) (8 * density);

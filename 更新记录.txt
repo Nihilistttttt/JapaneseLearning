@@ -5,6 +5,44 @@ LearnWord 项目更新记录
 
 ========================
 
+【更新35】新版本适配优化 + FragmentContainerView改造
+日期：2026-08-21
+涉及文件：
+  Java: 7个文件getColor替换, FirstPage.java(Handler+ViewBinding), LearnPage.java(ViewBinding),
+       ReviewPage.java(ViewBinding), UserPage.java(ViewBinding)
+  XML: themes.xml×2(M3迁移), 4个Activity布局(fitsSystemWindows), activity_first_page.xml(FragmentContainerView)
+  构建: build.gradle(viewBinding启用)
+
+1. P0-1: getResources().getColor()→ContextCompat.getColor() (15处, 7文件)
+   - 消除废弃API调用, 正确处理夜间模式颜色
+   - WordDetailBottomSheet(5处), IntegratedPartView(2处), SearchDetailFragment(2处),
+     WordComponentView(2处), MainLearnPageFragment(2处), SynonymAntonymView(1处), ExtendedInfoView(1处)
+
+2. P0-2: new Handler()→new Handler(Looper.getMainLooper())
+   - 消除废弃API调用, 明确指定Looper
+
+3. P1-4: Theme MaterialComponents→Material3
+   - parent: Theme.MaterialComponents→Theme.Material3
+   - colorPrimaryVariant→colorPrimaryContainer, colorSecondaryVariant→colorSecondaryContainer
+   - 移除statusBarColor(edge-to-edge适配)
+
+4. P1-5: Edge-to-edge适配
+   - 4个Activity根布局添加fitsSystemWindows="true"
+   - 系统自动适配状态栏/导航栏padding, 防止内容遮挡
+
+5. P1-6: ViewBinding替代findViewById (4个Activity)
+   - 启用buildFeatures.viewBinding
+   - FirstPage/LearnPage/ReviewPage/UserPage迁移到ViewBinding
+   - 修复FirstPage中learn_button/review_button重复findViewById的bug
+   - Fragment/自定义View暂保留findViewById(改动量太大, 风险高)
+
+6. FragmentContainerView替代FrameLayout
+   - activity_first_page.xml: FrameLayout→FragmentContainerView
+   - 修复嵌套Fragment状态恢复bug, 支持预测性返回手势, 改进z-order管理
+   - Java代码无需修改(FragmentTransaction.replace通过id找容器)
+
+========================
+
 【更新34】性能优化HIGH-2+HIGH-5 + AGP8迁移适配 + 依赖全面升级
 日期：2026-08-20
 涉及文件：

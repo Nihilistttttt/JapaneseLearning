@@ -10,10 +10,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.Nihilisttt.LearnWord.Adapter.LearnPageAdapter;
-import com.Nihilisttt.LearnWord.R;
-
 import com.Nihilisttt.LearnWord.ViewPager2.ViewPager2ScrollController;
 import com.Nihilisttt.LearnWord.ViewPager2.NestedScrollableHostBetween3LayersManager;
+import com.Nihilisttt.LearnWord.databinding.ActivityLearnPageBinding;
 
 public class LearnPage extends AppCompatActivity {
     private ViewPager2 viewPager2;
@@ -22,9 +21,10 @@ public class LearnPage extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_learn_page);
+        ActivityLearnPageBinding binding = ActivityLearnPageBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
         int touchSlop = ViewConfiguration.get(this).getScaledTouchSlop();
-        viewPager2 = findViewById(R.id.learn_page_vp2_container);
+        viewPager2 = binding.learnPageVp2Container;
         scrollController = new ViewPager2ScrollController(viewPager2, touchSlop, 3.0f,
                 ViewPager2ScrollController.ScrollDirection.VERTICAL);
         setupViewPager();
@@ -49,7 +49,6 @@ public class LearnPage extends AppCompatActivity {
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
         boolean handled = super.dispatchTouchEvent(ev);
-        // When on search page (position 0), disable VP2 swipe to prevent accidental close
         if (viewPager2.getCurrentItem() == 0) {
             viewPager2.setUserInputEnabled(false);
         } else {

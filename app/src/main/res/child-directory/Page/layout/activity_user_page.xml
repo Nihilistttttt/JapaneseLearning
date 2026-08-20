@@ -5,6 +5,7 @@
     android:name="com.Nihilisttt.LearnWord.Fragment.LearnPage.MainLearnPage.MainLearnPageFragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/md_page_background">
+    android:background="@color/md_page_background"
+    android:fitsSystemWindows="true">
 
 </androidx.fragment.app.FragmentContainerView>

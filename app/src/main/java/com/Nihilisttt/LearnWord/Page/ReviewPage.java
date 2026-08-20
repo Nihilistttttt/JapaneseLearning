@@ -11,8 +11,8 @@ import com.Nihilisttt.LearnWord.Adapter.WordListAdapter;
 import com.Nihilisttt.LearnWord.Database.Repository.WordRepository;
 import com.Nihilisttt.LearnWord.JavaBean.Word;
 import com.Nihilisttt.LearnWord.Page.ViewModel.LearnPageStateViewModel;
-import com.Nihilisttt.LearnWord.R;
 import com.Nihilisttt.LearnWord.UtilityClass.Constants;
+import com.Nihilisttt.LearnWord.databinding.ActivityReviewPageBinding;
 
 import java.util.List;
 
@@ -25,14 +25,13 @@ public class ReviewPage extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_review_page);
+        ActivityReviewPageBinding binding = ActivityReviewPageBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
-        // 初始化仓库和组件
         wordRepository = WordRepository.getInstance(this);
         wordLiveData = wordRepository.getAllWords();
 
-        // 设置RecyclerView
-        recyclerView = findViewById(R.id.recycler_view);
+        recyclerView = binding.recyclerView;
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         // 关键修改：传入当前Activity作为LifecycleOwner

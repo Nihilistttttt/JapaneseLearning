@@ -483,8 +483,8 @@ public class WordComponentView extends LinearLayout {
                 int wordFrequency = basicWord.getWordFrequency();
                 if (jlptLevel > 0 || wordFrequency > 0) {
                     SpannableStringBuilder ssb = new SpannableStringBuilder();
-                    int primaryColor = context.getResources().getColor(R.color.md_primary);
-                    int variantColor = context.getResources().getColor(R.color.md_on_surface_variant);
+                    int primaryColor = ContextCompat.getColor(context, R.color.md_primary);
+                    int variantColor = ContextCompat.getColor(context, R.color.md_on_surface_variant);
                     if (jlptLevel > 0) {
                         String jlptText = "N" + jlptLevel;
                         int start = ssb.length();

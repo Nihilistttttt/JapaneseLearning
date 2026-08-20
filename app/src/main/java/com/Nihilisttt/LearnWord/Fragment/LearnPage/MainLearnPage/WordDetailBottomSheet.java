@@ -16,6 +16,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
+import androidx.core.content.ContextCompat;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LifecycleOwner;
@@ -124,7 +125,7 @@ public class WordDetailBottomSheet extends BottomSheetDialogFragment {
         CardView tabCard = new CardView(context);
         tabCard.setRadius(Constants.CARD_RADIUS_DP * density);
         tabCard.setCardElevation(Constants.CARD_ELEVATION_DP * density);
-        tabCard.setCardBackgroundColor(context.getResources().getColor(R.color.md_card_background));
+        tabCard.setCardBackgroundColor(ContextCompat.getColor(context, R.color.md_card_background));
         int contentPad = (int) (Constants.CARD_CONTENT_PADDING_DP * density);
         tabCard.setContentPadding(contentPad, contentPad, contentPad, contentPad);
         LinearLayout.LayoutParams tabCardLp = new LinearLayout.LayoutParams(
@@ -287,8 +288,8 @@ public class WordDetailBottomSheet extends BottomSheetDialogFragment {
             infoRow.setOrientation(LinearLayout.HORIZONTAL);
             infoRow.setGravity(android.view.Gravity.CENTER_HORIZONTAL);
             SpannableStringBuilder ssb = new SpannableStringBuilder();
-            int primaryColor = context.getResources().getColor(R.color.md_primary);
-            int variantColor = context.getResources().getColor(R.color.md_on_surface_variant);
+            int primaryColor = ContextCompat.getColor(context, R.color.md_primary);
+            int variantColor = ContextCompat.getColor(context, R.color.md_on_surface_variant);
             if (jlptLevel > 0) {
                 int start = ssb.length();
                 ssb.append("N" + jlptLevel);
@@ -505,7 +506,7 @@ public class WordDetailBottomSheet extends BottomSheetDialogFragment {
         TextView titleView = new TextView(context);
         titleView.setText(title);
         titleView.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        titleView.setTextColor(context.getResources().getColor(R.color.md_detail_label));
+        titleView.setTextColor(ContextCompat.getColor(context, R.color.md_detail_label));
         titleView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 14);
         LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -522,7 +523,7 @@ public class WordDetailBottomSheet extends BottomSheetDialogFragment {
 
     private void addScrollDivider(LinearLayout container, Context context, float density) {
         View divider = new View(context);
-        divider.setBackgroundColor(context.getResources().getColor(R.color.md_outline_variant));
+        divider.setBackgroundColor(ContextCompat.getColor(context, R.color.md_outline_variant));
         LinearLayout.LayoutParams dividerParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, (int) (Constants.SECTION_DIVIDER_HEIGHT_DP * density));
         dividerParams.topMargin = (int) (8 * density);

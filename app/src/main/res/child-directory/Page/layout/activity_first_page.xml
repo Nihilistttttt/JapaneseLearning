@@ -4,6 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/md_page_background"
+    android:fitsSystemWindows="true"
     android:orientation="vertical">
 
     <ImageButton
@@ -19,7 +20,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <FrameLayout
+    <androidx.fragment.app.FragmentContainerView
         android:id="@+id/sign_in_frame_layout"
         android:layout_width="140dp"
         android:layout_height="140dp"
