@@ -62,7 +62,7 @@ import java.util.concurrent.Executors;
         DerivedWordEntity.class,
         RelatedWordEntity.class
 },
-        version = 2,
+        version = 3,
         exportSchema = false)
 public abstract class WordDatabase extends RoomDatabase {
     private static final String PREFS_NAME = "room_db_prefs";

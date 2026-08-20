@@ -5,6 +5,57 @@ LearnWord 项目更新记录
 
 ========================
 
+【更新34】性能优化HIGH-2+HIGH-5 + AGP8迁移适配 + 依赖全面升级
+日期：2026-08-20
+涉及文件：
+  Java: Convert.java(Gson静态复用+TypeToken缓存)
+       WordMeaningEntity.java, WordSentenceEntity.java, SynonymWordEntity.java, AntonymWordEntity.java(@Index注解)
+       FirstPage.java(switch case R.id改为if-else)
+       WordDatabase.java(version 2→3)
+  DB:  word_database.db(添加5个索引)
+  构建: build.gradle(compileSdk 35, targetSdk 35, namespace, buildFeatures, 依赖升级)
+       AndroidManifest.xml(移除package属性)
+       gradle.properties(移除MaxPermSize)
+       gradle-wrapper.properties(Gradle 8.11.1)
+  资源: 删除learn_page_navigation.xml(未使用)
+
+1. 性能优化HIGH-2: Gson静态实例复用
+   - Convert.java中5处new Gson()替换为静态final GSON实例
+   - 3处new TypeToken<>(){}.getType()替换为缓存的静态Type常量
+   - 消除每次TypeConverter调用的Gson对象分配+GC回收开销
+   - Gson线程安全，多线程共享无风险
+
+2. 性能优化HIGH-5: 数据库索引优化
+   - 预建DB添加5个索引(使用Room默认命名index_{table}_{column}):
+     * index_WordMeaning_wordId (252K行, 提速2242x: 22ms→0.01ms)
+     * index_WordSentence_wordId (41K行, 提速578x: 11ms→0.02ms)
+     * index_WordSentence_wordMeaningId (41K行, 提速1262x: 12ms→0.01ms)
+     * index_SynonymWord_wordId (36K行, 提速248x: 2.5ms→0.01ms)
+     * index_AntonymWord_wordId (1.1K行, 提速4x)
+   - Entity添加@Index注解与DB索引保持一致
+   - DB version 2→3触发fallbackToDestructiveMigration重建(清除设备旧DB残留idx_*索引)
+
+3. AGP8迁移适配:
+   - gradle.properties: 移除-XX:MaxPermSize=512m(Java 23不识别,PermGen已移除)
+   - build.gradle: compileSdk 28→35, namespace迁移(从AndroidManifest.xml package属性)
+   - buildFeatures.buildConfig=true(新版AGP默认不生成BuildConfig)
+   - 禁用未使用的DataBinding(项目无<layout>标签XML,旧版dataBinding{}配置方式已过时)
+   - FirstPage.java: switch case R.id改为if-else(AGP8 R类字段不再final)
+   - 排除kotlin-stdlib-jdk7/jdk8(kotlin-stdlib 1.8+已合并这些模块)
+
+4. 依赖全面升级:
+   - 移除5个未使用依赖: multidex, legacy-support-v4, navigation-fragment, navigation-ui, firebase-crashlytics-buildtools
+   - appcompat: 1.2.0→1.7.0
+   - material: 1.3.0→1.12.0
+   - constraintlayout: 2.0.4→2.2.0
+   - fragment: 1.3.2→1.8.4
+   - gson: 2.8.5→2.11.0
+   - Room: 2.2.5→2.6.1
+   - targetSdk: 28→35
+   - 删除learn_page_navigation.xml(navigation依赖已移除)
+
+========================
+
 【更新33】搜索页禁止滑动关闭+BottomSheet滚动冲突修复
 日期：2026-08-02
 涉及文件：
