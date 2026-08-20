@@ -2,13 +2,14 @@ package com.Nihilisttt.LearnWord.Database.Entities;
 
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
+import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-@Entity(tableName = "AntonymWord")
+@Entity(tableName = "AntonymWord", indices = {@Index("wordId")})
 public class AntonymWordEntity {
     @PrimaryKey
     @NotNull

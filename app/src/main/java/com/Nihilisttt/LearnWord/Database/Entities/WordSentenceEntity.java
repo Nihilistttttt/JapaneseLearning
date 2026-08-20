@@ -3,13 +3,14 @@ package com.Nihilisttt.LearnWord.Database.Entities;
 import androidx.annotation.NonNull;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
+import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-@Entity(tableName = "WordSentence")
+@Entity(tableName = "WordSentence", indices = {@Index("wordId"), @Index("wordMeaningId")})
 public class WordSentenceEntity {
     @PrimaryKey
     @NotNull

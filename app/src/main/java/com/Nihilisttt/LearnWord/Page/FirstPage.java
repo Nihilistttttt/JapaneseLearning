@@ -57,35 +57,26 @@ public class FirstPage extends AppCompatActivity implements View.OnClickListener
     }
 
 
-    @SuppressLint("NonConstantResourceId")
     @Override
     public void onClick(View v) {
-        switch (v.getId()) {
-            case R.id.user_page: {
-                Intent intent = new Intent(this, UserPage.class);
-                startActivity(intent);
-                break;
-            }
-            case R.id.learn_button: {
-                Intent intent = new Intent(this, LearnPage.class);
-                startActivity(intent);
-                break;
-            }
-            case R.id.review_button: {
-                Intent intent = new Intent(this, ReviewPage.class);
-                startActivity(intent);
-                break;
-            }
-            case R.id.sign_in_frame_layout: {
-                replaceFragment(new AfterSignInFragment());
-                sign_in_frame_layout.setClickable(false);
-                Handler handler = new Handler();
-                handler.postDelayed(() -> {
-                    sign_in_frame_layout.setVisibility(View.INVISIBLE);
-                    handler.removeCallbacksAndMessages(null);
-                }, 5000);
-                break;
-            }
+        int id = v.getId();
+        if (id == R.id.user_page) {
+            Intent intent = new Intent(this, UserPage.class);
+            startActivity(intent);
+        } else if (id == R.id.learn_button) {
+            Intent intent = new Intent(this, LearnPage.class);
+            startActivity(intent);
+        } else if (id == R.id.review_button) {
+            Intent intent = new Intent(this, ReviewPage.class);
+            startActivity(intent);
+        } else if (id == R.id.sign_in_frame_layout) {
+            replaceFragment(new AfterSignInFragment());
+            sign_in_frame_layout.setClickable(false);
+            Handler handler = new Handler();
+            handler.postDelayed(() -> {
+                sign_in_frame_layout.setVisibility(View.INVISIBLE);
+                handler.removeCallbacksAndMessages(null);
+            }, 5000);
         }
     }
 }
