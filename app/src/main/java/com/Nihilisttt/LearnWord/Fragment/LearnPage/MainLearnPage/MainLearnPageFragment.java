@@ -157,6 +157,12 @@ public class MainLearnPageFragment extends Fragment {
             }
         });
 
+        viewModel.getSrsButtonMode().observe(getViewLifecycleOwner(), mode -> {
+            if (mode == LearnPageViewModel.SrsButtonMode.HIDDEN && viewModel.isSRSMode()) {
+                hideContentForLoading();
+            }
+        });
+
         viewModel.getEntryLoaded().observe(getViewLifecycleOwner(), version -> {
             if (version != null && viewModel.isSRSMode()) {
                 StudyStage stage = viewModel.getCurrentStage().getValue();
@@ -210,34 +216,40 @@ public class MainLearnPageFragment extends Fragment {
         }
     }
 
-    private void setupStageUI(StudyStage stage) {
-        if (rootView != null) rootView.setVisibility(View.INVISIBLE);
-        hideAllButtonBars();
-        multipleChoiceContainer.setVisibility(View.GONE);
+    private void hideContentForLoading() {
+        wordContainer.setVisibility(View.GONE);
+        infoRow.setVisibility(View.GONE);
+        indicatorBar.setVisibility(View.GONE);
+        meaningContainer.setVisibility(View.GONE);
+        sentenceContainer.setVisibility(View.GONE);
+        integratedPartContainer.setVisibility(View.GONE);
         stageHintText.setVisibility(View.GONE);
+        multipleChoiceContainer.setVisibility(View.GONE);
         blankText.setVisibility(View.GONE);
         blankPart.setVisibility(View.GONE);
 
-        meaningContainer.setVisibility(View.INVISIBLE);
-        integratedPartContainer.setVisibility(View.GONE);
+        for (int i = 0; i < 4; i++) {
+            choiceOptions[i].setText("");
+            choiceOptions[i].setBackgroundResource(R.drawable.card_choice_option);
+            choiceOptions[i].setClickable(true);
+        }
+    }
+
+    private void setupStageUI(StudyStage stage) {
+        hideContentForLoading();
+        hideAllButtonBars();
 
         switch (stage) {
             case NEW:
-                sentenceContainer.setVisibility(View.INVISIBLE);
                 newModeButtonBar.setVisibility(View.VISIBLE);
-                stageHintText.setVisibility(View.VISIBLE);
                 stageHintText.setText("初学：先回想词义再选择");
                 viewModel.setSrsButtonMode(LearnPageViewModel.SrsButtonMode.HIDDEN);
                 break;
             case REVIEW:
-                sentenceContainer.setVisibility(View.VISIBLE);
-                stageHintText.setVisibility(View.VISIBLE);
                 stageHintText.setText("复习：请回想词义");
                 viewModel.setSrsButtonMode(LearnPageViewModel.SrsButtonMode.CHOICE);
                 break;
             case FINAL:
-                sentenceContainer.setVisibility(View.INVISIBLE);
-                stageHintText.setVisibility(View.VISIBLE);
                 stageHintText.setText("最后一关：请在无提示的情况下判断");
                 viewModel.setSrsButtonMode(LearnPageViewModel.SrsButtonMode.CHOICE);
                 break;
@@ -268,7 +280,7 @@ public class MainLearnPageFragment extends Fragment {
     }
 
     private void updateIndicatorBar(int correctCount) {
-        indicatorBar.setVisibility(View.VISIBLE);
+
         int filledColor = ContextCompat.getColor(requireContext(), R.color.md_success);
         int emptyColor = ContextCompat.getColor(requireContext(), R.color.md_surface_variant);
 
@@ -356,7 +368,6 @@ public class MainLearnPageFragment extends Fragment {
     }
 
     private void renderWord(LearnPageViewModel.CombinedWordInfo combinedWordInfo) {
-        if (rootView != null) rootView.setVisibility(View.INVISIBLE);
 
         Integer wordLevel = stateViewModel.getWordFontLevel().getValue();
         if (wordLevel == null) wordLevel = Constants.FONT_SIZE_NORMAL;
@@ -452,11 +463,25 @@ public class MainLearnPageFragment extends Fragment {
                     combinedWordInfo.getIdiomList());
         }
 
+        if (viewModel.isSRSMode()) {
+            StudyStage stage = viewModel.getCurrentStage().getValue();
+            if (stage != null) {
+                stageHintText.setVisibility(View.VISIBLE);
+                sentenceContainer.setVisibility(stage == StudyStage.REVIEW ? View.VISIBLE : View.GONE);
+                if (stage == StudyStage.NEW) {
+                    multipleChoiceContainer.setVisibility(View.VISIBLE);
+                }
+                Integer count = viewModel.getCurrentCorrectCount().getValue();
+                if (count != null) {
+                    indicatorBar.setVisibility(View.VISIBLE);
+                    updateIndicatorBar(count);
+                }
+            }
+        }
+
         if (!viewModel.isSRSMode()) {
             setupNonSRSMode();
         }
-
-        if (rootView != null) rootView.post(() -> rootView.setVisibility(View.VISIBLE));
     }
 
     private void setupNonSRSMode() {

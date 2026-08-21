@@ -5,6 +5,78 @@ LearnWord 项目更新记录
 
 ========================
 
+【更新40】切换单词闪烁修复（generation计数器 + 选项状态重置 + 指示条更新修复）
+日期：2026-08-21
+涉及文件：
+  ViewModel: LearnPageViewModel.java (wordGeneration AtomicInteger + sourceGenerations[14],
+             14个addSource回调记录generation, updateCombined加generation检查,
+             4处currentWordId变更前incrementAndGet)
+  Fragment: MainLearnPageFragment.java (hideContentForLoading重置四选一选项状态,
+             updateIndicatorBar去掉setVisibility, currentCorrectCount observer去掉HIDDEN检查,
+             renderWord显式设indicatorBar VISIBLE)
+
+问题1: 切换单词时闪现上一个单词的详情页面
+  - 根因: 14个switchMap LiveData在currentWordId变化后仍保留旧值(非null)
+    当新单词的Room查询逐个完成时, updateCombined()看到新旧数据混合
+    所有14个源都非null → 创建混合CombinedWordInfo → renderWord渲染混合数据 → 闪烁
+  - 修复: wordGeneration(AtomicInteger)计数器, 每次currentWordId变更前递增
+    14个addSource回调中sourceGenerations[i] = wordGeneration.get()记录当前generation
+    updateCombined()开头检查所有sourceGenerations[i] == wordGeneration.get()
+    只有14个源都属于同一generation才发射CombinedWordInfo, 杜绝混合数据
+
+问题2: 切换单词时闪现上一个单词四选一"已选完"的界面
+  - 根因: revealAnswer()只设multipleChoiceContainer GONE, 未重置选项视觉状态
+    renderWord在NEW阶段设multipleChoiceContainer VISIBLE时
+    选项还保留旧状态(正确项高亮/错误项灰色+wordText/clickable=false)
+    直到multipleChoiceOptions observer稍后填充新选项
+  - 修复: hideContentForLoading()中重置4个选项(清空text/恢复默认背景/恢复clickable)
+    renderWord设VISIBLE时选项是空白默认状态, 不闪现旧内容
+
+问题3: 选对四选一后指示条不更新进度
+  - 根因: NEW阶段srsButtonMode=HIDDEN(四选一不显示SRS按钮)
+    currentCorrectCount observer检查mode != HIDDEN才updateIndicatorBar
+    选对后previewPass()触发observer, 但mode==HIDDEN → 不更新指示条
+  - 修复: updateIndicatorBar去掉setVisibility(只更新颜色)
+    currentCorrectCount observer去掉HIDDEN检查(直接updateIndicatorBar)
+    renderWord中显式设indicatorBar VISIBLE后再updateIndicatorBar
+    → 选对时: indicatorBar已VISIBLE, observer更新颜色 ✓
+    → 切换时: indicatorBar是GONE, observer更新颜色但不可见, 不闪烁 ✓
+
+踩坑:
+  1. switchMap输出在源变化后保留旧值
+     - Transformations.switchMap在源变化时移除旧内部LiveData, 添加新内部LiveData
+     - 但输出MediatorLiveData的value不变(只有setValue/postValue才改变)
+     - 新Room查询完成前, getValue()返回旧值, 仍为非null
+     - updateCombined()只检查null, 无法区分"新数据"和"旧数据残留"
+  2. HIDDEN枚举值语义混淆
+     - NEW阶段的HIDDEN: "不显示SRS按钮"(四选一有自己的按钮), 内容应正常显示
+     - 切换时的HIDDEN: "正在加载, 隐藏所有内容"
+     - 同一HIDDEN值两种含义, 导致currentCorrectCount observer无法正确区分
+     - 修复思路: 不在observer中检查HIDDEN, 而是让updateIndicatorBar不设VISIBLE
+       VISIBLE由renderWord负责(加载完成后), observer只负责更新颜色
+
+意义:
+  - 切换单词是学习过程中的高频操作, 闪烁严重影响用户体验
+  - generation计数器是LiveData数据一致性问题的通用解法
+    适用于任何"多源MediatorLiveData + switchMap"架构
+  - 选项状态重置是UI状态管理的常见陷阱: 隐藏(GONE)≠重置
+    GONE只是不可见, View的text/background/clickable状态仍然保留
+  - 指示条是学习进度的直观反馈, 选对后不更新会让用户困惑
+
+新理解:
+  - switchMap的输出LiveData在源变化后保留旧值, 不会自动清空
+    这是MediatorLiveData的设计: value只有setValue/postValue才改变
+    多源聚合时必须用generation/version等机制确保数据一致性
+  - AtomicInteger适合跨线程的generation计数器:
+    后台线程(incrementAndGet) + 主线程(get)无需额外同步
+    sourceGenerations数组只在主线程访问(mediator回调), 不需同步
+  - UI状态重置: View.setVisibility(GONE)只改变可见性, 不重置内容
+    切换内容时必须显式重置text/background/clickable等视觉状态
+  - observer中的mode检查要谨慎: 同一枚举值可能有多种语义
+    优先让"显示控制"(VISIBLE/GONE)和"内容控制"(颜色/文字)分离
+
+========================
+
 【更新39】四选一选项数据模型重构 + 选项文字覆盖bug修复 + Tab外观圆角化
 日期：2026-08-21
 涉及文件：

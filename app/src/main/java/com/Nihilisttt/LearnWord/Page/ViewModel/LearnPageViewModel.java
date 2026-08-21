@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class LearnPageViewModel extends AndroidViewModel {
     private static final String PREFS_NAME = "WordProgressPrefs";
@@ -92,6 +93,8 @@ public class LearnPageViewModel extends AndroidViewModel {
     private SrsButtonMode pendingRevealMode = SrsButtonMode.SUBMIT;
     private int entryVersion = 0;
     private final MutableLiveData<Integer> entryLoaded = new MutableLiveData<>(0);
+    private final AtomicInteger wordGeneration = new AtomicInteger(0);
+    private final int[] sourceGenerations = new int[14];
 
     private final LiveData<Word> currentWord;
     private final LiveData<BasicWord> basicWordLiveData;
@@ -180,20 +183,20 @@ public class LearnPageViewModel extends AndroidViewModel {
         relatedWordListLiveData = Transformations.switchMap(currentWord, word ->
                 repository.getRelatedWordsByRelatedWordsIdList(word.getRelatedWordIdList()));
 
-        combinedWordInfo.addSource(basicWordLiveData, value -> updateCombined());
-        combinedWordInfo.addSource(wordMeaningListLiveData, value -> updateCombined());
-        combinedWordInfo.addSource(wordSentenceListLiveData, value -> updateCombined());
-        combinedWordInfo.addSource(wordCollocationListLiveData, value -> updateCombined());
-        combinedWordInfo.addSource(antonymWordListLiveData, value -> updateCombined());
-        combinedWordInfo.addSource(synonymWordListLiveData, value -> updateCombined());
-        combinedWordInfo.addSource(conjugationFormListLiveData, value -> updateCombined());
-        combinedWordInfo.addSource(etymologyListLiveData, value -> updateCombined());
-        combinedWordInfo.addSource(kanjiInfoListLiveData, value -> updateCombined());
-        combinedWordInfo.addSource(usageDistinctionListLiveData, value -> updateCombined());
-        combinedWordInfo.addSource(grammarPointListLiveData, value -> updateCombined());
-        combinedWordInfo.addSource(idiomListLiveData, value -> updateCombined());
-        combinedWordInfo.addSource(derivedWordListLiveData, value -> updateCombined());
-        combinedWordInfo.addSource(relatedWordListLiveData, value -> updateCombined());
+        combinedWordInfo.addSource(basicWordLiveData, value -> { sourceGenerations[0] = wordGeneration.get(); updateCombined(); });
+        combinedWordInfo.addSource(wordMeaningListLiveData, value -> { sourceGenerations[1] = wordGeneration.get(); updateCombined(); });
+        combinedWordInfo.addSource(wordSentenceListLiveData, value -> { sourceGenerations[2] = wordGeneration.get(); updateCombined(); });
+        combinedWordInfo.addSource(wordCollocationListLiveData, value -> { sourceGenerations[3] = wordGeneration.get(); updateCombined(); });
+        combinedWordInfo.addSource(antonymWordListLiveData, value -> { sourceGenerations[4] = wordGeneration.get(); updateCombined(); });
+        combinedWordInfo.addSource(synonymWordListLiveData, value -> { sourceGenerations[5] = wordGeneration.get(); updateCombined(); });
+        combinedWordInfo.addSource(conjugationFormListLiveData, value -> { sourceGenerations[6] = wordGeneration.get(); updateCombined(); });
+        combinedWordInfo.addSource(etymologyListLiveData, value -> { sourceGenerations[7] = wordGeneration.get(); updateCombined(); });
+        combinedWordInfo.addSource(kanjiInfoListLiveData, value -> { sourceGenerations[8] = wordGeneration.get(); updateCombined(); });
+        combinedWordInfo.addSource(usageDistinctionListLiveData, value -> { sourceGenerations[9] = wordGeneration.get(); updateCombined(); });
+        combinedWordInfo.addSource(grammarPointListLiveData, value -> { sourceGenerations[10] = wordGeneration.get(); updateCombined(); });
+        combinedWordInfo.addSource(idiomListLiveData, value -> { sourceGenerations[11] = wordGeneration.get(); updateCombined(); });
+        combinedWordInfo.addSource(derivedWordListLiveData, value -> { sourceGenerations[12] = wordGeneration.get(); updateCombined(); });
+        combinedWordInfo.addSource(relatedWordListLiveData, value -> { sourceGenerations[13] = wordGeneration.get(); updateCombined(); });
     }
 
     // region 公开的LiveData访问方法
@@ -237,6 +240,7 @@ public class LearnPageViewModel extends AndroidViewModel {
 
     // region 导航控制
     public void setCurrentWordId(String wordId) {
+        wordGeneration.incrementAndGet();
         currentWordId.setValue(wordId);
         saveCurrentId(wordId);
     }
@@ -268,6 +272,7 @@ public class LearnPageViewModel extends AndroidViewModel {
         WordDatabase.databaseExecutor.execute(() -> {
             String prevId = repository.getPreviousWordId(currentId);
             if (prevId != null) {
+                wordGeneration.incrementAndGet();
                 currentWordId.postValue(prevId);
                 saveCurrentId(prevId);
             } else {
@@ -280,6 +285,7 @@ public class LearnPageViewModel extends AndroidViewModel {
         WordDatabase.databaseExecutor.execute(() -> {
             String nextId = repository.getNextWordId(currentId);
             if (nextId != null) {
+                wordGeneration.incrementAndGet();
                 currentWordId.postValue(nextId);
                 saveCurrentId(nextId);
             } else {
@@ -397,6 +403,7 @@ public class LearnPageViewModel extends AndroidViewModel {
                 multipleChoiceOptions.postValue(null);
             }
 
+            wordGeneration.incrementAndGet();
             currentWordId.postValue(wordId);
             saveCurrentId(wordId);
 
@@ -723,6 +730,11 @@ public class LearnPageViewModel extends AndroidViewModel {
     }
 
     private void updateCombined() {
+        int gen = wordGeneration.get();
+        for (int g : sourceGenerations) {
+            if (g != gen) return;
+        }
+
         BasicWord basicWord = basicWordLiveData.getValue();
         if (basicWord == null) return;
         if (wordMeaningListLiveData.getValue() == null) return;
