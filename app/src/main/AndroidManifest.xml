@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application
+        android:name=".LearnWordApplication"
         android:allowBackup="true"
         android:largeHeap="true"
         android:icon="@mipmap/ic_launcher"
@@ -11,6 +12,9 @@
         android:theme="@style/Theme.Learn">
         <activity
             android:name=".Page.ReviewPage"
+            android:exported="false" />
+        <activity
+            android:name=".Page.WordBookSelectPage"
             android:exported="false" />
         <activity
             android:name=".Page.LearnPage"

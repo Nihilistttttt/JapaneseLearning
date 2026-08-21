@@ -5,6 +5,193 @@ LearnWord 项目更新记录
 
 ========================
 
+【更新38】应用图标替换（默认机器人→"日本語"三字图标）
+日期：2026-08-21
+涉及文件：
+  资源: mipmap-{mdpi,hdpi,xhdpi,xxhdpi,xxxhdpi}/ic_launcher.png + ic_launcher_round.png (10个新PNG)
+        drawable/ic_launcher_background.xml (纯深蓝色#1A237E)
+        删除: mipmap-anydpi-v26/ic_launcher.xml, ic_launcher_round.xml (adaptive icon XML)
+        删除: drawable-v24/ic_launcher_foreground.xml (旧机器人vector drawable)
+        删除: mipmap-*/ic_launcher.webp, ic_launcher_round.webp (10个旧WEBP)
+  Python: 日语python提取/generate_app_icon.py (PIL图标生成脚本)
+  文档: AGENTS.md (构建步骤+数据库修改流程+JLPT分配+SRS逻辑)
+
+1. 图标生成:
+   - PIL生成"日本語"三字图标: 深蓝背景(#1A237E) + 白色文字 + 黄色装饰条
+   - 5个密度: mdpi(48) hdpi(72) xhdpi(96) xxhdpi(144) xxxhdpi(192)
+   - ic_launcher.png(方形) + ic_launcher_round.png(圆形) 各5个
+
+2. 踩坑1: 旧WEBP与新PNG重复资源
+   - AAPT报错: 同一资源名在WEBP和PNG中重复定义
+   - 修复: 删除所有10个旧WEBP文件
+
+3. 踩坑2: drawable-v24/ic_launcher_foreground.xml优先级高于PNG
+   - API 26+使用adaptive icon, foreground引用的是旧机器人vector drawable
+   - 即使生成了新PNG, API 26+设备仍显示旧机器人图标
+   - 修复: 删除drawable-v24/ic_launcher_foreground.xml
+
+4. 踩坑3: AAPT无法直接引用PNG作为adaptive icon foreground
+   - mipmap-anydpi-v26/ic_launcher.xml中<foreground drawable="@drawable/ic_launcher_foreground">
+   - 但ic_launcher_foreground是PNG时AAPT报错, adaptive icon的foreground必须是drawable资源
+   - 修复: 创建drawable/ic_launcher_foreground.xml(bitmap XML)包装PNG
+
+5. 踩坑4: foreground bitmap渲染异常, 只显示巨大的"本"字
+   - adaptive icon的foreground bitmap被系统裁剪+缩放, "日本語"三字只显示最后一个"本"字
+   - adaptive icon的foreground区域只取中心72% (safe zone), 三字横排超出safe zone被裁掉
+   - 最终方案: 删除所有adaptive icon相关文件(mipmap-anydpi-v26/*.xml + drawable/ic_launcher_foreground*)
+   - 让所有API级别(含26+)直接使用mipmap中的PNG图标(已包含完整背景+文字)
+   - drawable/ic_launcher_background.xml保留(非adaptive icon引用, 不影响)
+
+意义:
+   - 默认Android机器人图标无辨识度, "日本語"三字直观体现App功能
+   - 放弃adaptive icon API 26+的动态背景/前景效果, 换取图标内容正确显示
+   - PNG图标各密度独立生成, 渲染行为可预测, 不依赖系统adaptive icon裁剪逻辑
+
+新理解:
+   - adaptive icon的foreground safe zone是中心72%, 横排多字会被裁掉
+   - drawable-v24优先级高于mipmap, adaptive icon XML会覆盖PNG
+   - 若要用adaptive icon, foreground必须是vector drawable或bitmap XML, 不能直接引用PNG
+   - 最简单可靠的方案: 不用adaptive icon, 直接mipmap PNG全API级别通用
+
+========================
+
+【更新37】JLPT等级分配 + Room identity hash修复 + 数据库版本升级
+日期：2026-08-21
+涉及文件：
+  DB: word_database.db (jlptLevel字段更新, room_master_table hash修复, user_version=0)
+      word_database_clean.db, word_database_original.db (备份)
+  Python: 日语python提取/assign_jlpt_levels.py (JLPT等级分配脚本)
+          JLPT_vocab_ALL.json (开源JLPT词表数据, 来自Bluskyo/JLPT_Vocabulary)
+  Java: WordDatabase.java (PREBUILT_DB_VERSION 22→23)
+        PresetBookInitializer.java (CURRENT_VERSION 1→2)
+
+1. JLPT等级分配:
+   - 问题: 数据库中217974个词几乎全部jlptLevel=0, 词频也几乎全为0
+   - 数据源: GitHub开源项目Bluskyo/JLPT_Vocabulary (tanos.co.uk数据)
+   - 匹配结果: 34181词匹配真实JLPT等级
+   - 随机分配: 其余183797词随机分配到N5-N1
+   - 分布: N5约2万 / N4约3万 / N3约5.4万 / N2约5万 / N1约6.3万
+
+2. 踩坑1: Room identity hash不匹配导致启动崩溃
+   - 修改assets/word_database.db后, room_master_table中的identity hash与Room代码期望的不匹配
+   - Room启动时校验hash, 不匹配则抛出IllegalStateException崩溃
+   - Room期望的hash: 3c56aa50799eeb20c068834becc5bfde
+   - 修复: 用Python sqlite3直接更新room_master_table的identity值
+   - 同时确保user_version=0 (让Room自行处理版本, 不触发SQLite回调)
+
+3. 数据库版本升级触发设备重建:
+   - PREBUILT_DB_VERSION 22→23: 触发设备上数据库删除重建(加载新的assets DB)
+   - PresetBookInitializer.CURRENT_VERSION 1→2: 触发词书重新生成(使用新的JLPT等级)
+
+意义:
+   - JLPT等级是词书分类的核心维度, 等级全0导致无法按等级选择词书
+   - 34181词真实等级提供准确分类, 随机分配保证其余词也有等级归属
+   - Room identity hash修复是修改assets DB后的必要步骤, 否则启动崩溃
+
+新理解:
+   - 修改assets DB后必须更新room_master_table的identity hash为Room代码期望的值
+   - Room的identity hash由@Database注解的entities列表+版本号计算得出
+   - user_version必须保持0, 否则Room会认为DB已有版本而跳过createFromAsset
+   - PREBULT_DB_VERSION和PresetBookInitializer.CURRENT_VERSION是两个独立的版本控制:
+     前者控制assets DB是否重新拷贝, 后者控制词书是否重新生成
+
+========================
+
+【更新36】SRS间隔重复学习系统 + 词书管理 + 三种学习模式 + 易混淆干扰项
+日期：2026-08-21
+涉及文件：
+  Entity: WordBookEntity, WordBookItemEntity, WordReviewEntity, WordDistractorEntity (4个新Entity)
+  Dao: WordBookDao, WordBookItemDao, WordReviewDao, WordDistractorDao (4个新Dao)
+  DB: WordDatabase.java (version 3→5, Migration 3→4→5, +4 Entity, PREBUILT_DB_VERSION→23)
+  Algorithm: SRSConfig, EbbinghausAlgorithm, StudyStage(枚举), StudyQueueEntry (4个新类)
+  Repository: WordBookRepository(单例), PresetBookInitializer(JLPT词书自动生成)
+  ViewModel: LearnPageViewModel (SRS队列管理+三种阶段+按钮状态机)
+  Fragment: LearnPageFragment (SRS按钮动态文本/行为/全宽布局)
+            MainLearnPageFragment (指示条/选择题/阶段提示/看答案)
+  Page: WordBookSelectPage + WordBookAdapter (词书选择页)
+        FirstPage (跳转改为WordBookSelectPage), LearnPage (接收bookId)
+  Application: LearnWordApplication (注册Application+初始化)
+  布局: fragment_learn_page.xml (btn_srs_wrong/btn_srs_next)
+        fragment_main_learn_page.xml (指示条/选择题容器/阶段提示/看答案按钮)
+        activity_word_book_select.xml, item_word_book.xml
+  Drawable: button_success/error/neutral, card_choice_option/correct/wrong (6个)
+  Colors: values/colors.xml + values-night/colors.xml (md_success等)
+  Manifest: AndroidManifest.xml (注册Application + WordBookSelectPage)
+  Python: 日语python提取/precompute_distractors.py (Levenshtein距离预计算干扰项)
+  DB数据: word_database.db (643,074对干扰项导入)
+
+1. 词书管理系统:
+   - WordBookEntity: 词书元数据(名称/描述/总词数/JLPT等级范围)
+   - WordBookItemEntity: 词书-单词关联(bookId/wordId/顺序)
+   - WordReviewEntity: 单词学习记录(wordId/correctCount/nextReviewTime/easeFactor)
+   - PresetBookInitializer: 启动时自动生成JLPT N5-N1预设词书
+   - WordBookSelectPage: 词书选择页, 显示所有词书+词数+进度
+
+2. SRS间隔重复算法:
+   - SRSConfig: 配置参数(初始ease/最小ease/复习间隔等)
+   - EbbinghausAlgorithm: 艾宾浩斯遗忘曲线计算下次复习时间
+   - StudyStage枚举: NEW(四选一)/REVIEW(复习)/FINAL(最后一关)/COMPLETE
+   - StudyQueueEntry: 队列条目(wordId/stage/completed)
+
+3. 三种学习模式(参考不背单词):
+   - 每词3条目(NEW/REVIEW/FINAL), 多词随机混杂(buildInterleavedQueue)
+   - 阶段由correctCount动态决定(非队列预定):
+     correctCount=0→NEW(四选一), =1→REVIEW, =2→FINAL, ≥3→完成
+   - NEW阶段: 显示单词+4个释义选项(1正确3干扰), 选对进入下一阶段
+   - REVIEW阶段: 显示单词+释义, 点"认识"进入FINAL, 点"不认识"回NEW
+   - FINAL阶段: 只显示单词, 点"认识"完成, 点"不认识"回REVIEW
+   - 指示条: 单词旁边显示当前答对次数(0/1/2/3)
+
+4. 易混淆干扰项:
+   - WordDistractorEntity: (wordId/distractorWordId/meaningText)
+   - Python预计算: Levenshtein编辑距离, 取距离最小的3个词的释义作为干扰项
+   - 643,074对干扰项预计算并导入数据库
+   - 四选一选项: 1正确+3易混淆干扰项, 提升学习效果
+
+5. SRS按钮状态机(SrsButtonMode枚举):
+   - HIDDEN: 按钮隐藏
+   - CHOICE: 四选一模式(选项可点击)
+   - SUBMIT: 显示"提交"按钮(选完选项后)
+   - SUBMIT_PASS_ONLY: 只显示"认识"按钮
+   - SUBMIT_FAIL_ONLY: 只显示"不认识"按钮
+   - LearnPageFragment根据mode动态设置按钮文本/行为/全宽布局
+
+6. 踩坑1: LiveData时序问题
+   - 问题: currentStage.postValue()当连续两个单词同阶段时值不变, observer不触发
+   - 例: 词A(REVIEW)→词B(REVIEW), postValue(REVIEW)第二次不触发observer, UI不更新
+   - 修复: 新增entryLoaded版本号LiveData, 每次加载新词时递增, observer监听版本号而非stage
+
+7. 踩坑2: 按钮误点问题
+   - 问题: advanceToNext后UI异步更新前按钮仍可见, 用户可在过渡期误点按钮
+   - 例: 点"认识"→advanceToNext→loadNextFromQueue(异步)→按钮仍可见→用户再点→逻辑错乱
+   - 修复: 在advanceToNext/submitPass/submitFail中loadNextFromQueue前
+           用srsButtonMode.setValue(HIDDEN)同步隐藏按钮(setValue非postValue, 立即生效)
+
+8. 踩坑3: 队列条目浪费导致session提前结束
+   - 问题: 旧逻辑advanceToNext仅在!passPreviewed时重新插入队列条目
+   - 但passPreviewed=true且count<3时, 队列可能已无该单词的未处理条目
+   - 导致该单词在count<3时就被跳过, session提前结束, 学习不完整
+   - 修复: 重新插入条件改为 count < 3 && !hasPendingEntryForWord(currentId)
+   - hasPendingEntryForWord: 检查队列中是否有该单词的未处理条目
+   - submitFail也做同样修改, 并添加entry.setCompleted(true)标记已处理
+   - 保证: 单词未掌握(count<3)时, 队列一定有它的条目, 不会提前结束
+
+意义:
+   - SRS间隔重复是单词学习的核心算法, 三种模式循序渐进(初学→复习→最后一关)
+   - 每词至少出现3次, 多词随机混杂, 避免连续背同一个词的枯燥感
+   - 易混淆干扰项利用Levenshtein距离选择形近词, 比随机干扰项更有效
+   - 指示条直观显示学习进度, 用户知道还差几次才能掌握
+   - 词书管理支持按JLPT等级选择, 满足不同水平学习者需求
+
+新理解:
+   - LiveData.postValue相同值不触发observer, 需要用版本号等机制强制刷新
+   - LiveData.setValue(主线程)立即生效, postValue(异步)延迟生效, 按钮隐藏用setValue
+   - SRS队列设计要保证"未掌握的词一定在队列中", 否则session会提前结束
+   - 阶段由correctCount动态计算(非队列预定), 这样fail后回到正确阶段(NEW或REVIEW)
+   - Room Migration要为每个新增Entity编写createTable SQL, 且列顺序要与@Database期望一致
+
+========================
+
 【更新35】新版本适配优化 + FragmentContainerView改造
 日期：2026-08-21
 涉及文件：

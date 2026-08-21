@@ -43,4 +43,10 @@ public interface WordMeaningDao {
 
     @Query("SELECT * FROM WordMeaning WHERE wordId IN (:wordIdList)")
     List<WordMeaningEntity> getWordMeaningsByWordIdListSync(List<String> wordIdList);
+
+    @Query("SELECT * FROM WordMeaning WHERE wordId != :excludeWordId AND translationDefinition IS NOT NULL AND translationDefinition != '' ORDER BY RANDOM() LIMIT :limit")
+    List<WordMeaningEntity> getRandomMeaningsSync(String excludeWordId, int limit);
+
+    @Query("SELECT * FROM WordMeaning WHERE wordId = :wordId LIMIT 1")
+    WordMeaningEntity getFirstMeaningByWordIdSync(String wordId);
 }

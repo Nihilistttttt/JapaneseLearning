@@ -736,6 +736,18 @@ public class WordRepository {
     public List<WordMeaningEntity> getWordMeaningsByWordIdListSync(List<String> wordIdList) {
         return wordMeaningDao.getWordMeaningsByWordIdListSync(wordIdList);
     }
+
+    public WordMeaningEntity getFirstMeaningByWordIdSync(String wordId) {
+        return wordMeaningDao.getFirstMeaningByWordIdSync(wordId);
+    }
+
+    public BasicWordEntity getBasicWordEntityByIdSync(String wordId) {
+        return basicWordDao.getBasicWordByWordIdSync(wordId);
+    }
+
+    public List<WordMeaningEntity> getRandomMeaningsSync(String excludeWordId, int limit) {
+        return wordMeaningDao.getRandomMeaningsSync(excludeWordId, limit);
+    }
     // endregion
 
 }

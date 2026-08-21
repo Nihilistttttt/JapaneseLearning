@@ -47,7 +47,7 @@ public class FirstPage extends AppCompatActivity implements View.OnClickListener
             Intent intent = new Intent(this, UserPage.class);
             startActivity(intent);
         } else if (id == R.id.learn_button) {
-            Intent intent = new Intent(this, LearnPage.class);
+            Intent intent = new Intent(this, WordBookSelectPage.class);
             startActivity(intent);
         } else if (id == R.id.review_button) {
             Intent intent = new Intent(this, ReviewPage.class);

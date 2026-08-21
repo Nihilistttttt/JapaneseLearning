@@ -2,9 +2,12 @@ package com.Nihilisttt.LearnWord.Database.Database;
 
 import android.content.Context;
 
+import androidx.annotation.NonNull;
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
+import androidx.room.migration.Migration;
+import androidx.sqlite.db.SupportSQLiteDatabase;
 
 import com.Nihilisttt.LearnWord.Database.Dao.AntonymWordDao;
 import com.Nihilisttt.LearnWord.Database.Dao.BasicWordDao;
@@ -17,9 +20,13 @@ import com.Nihilisttt.LearnWord.Database.Dao.KanjiInfoDao;
 import com.Nihilisttt.LearnWord.Database.Dao.RelatedWordDao;
 import com.Nihilisttt.LearnWord.Database.Dao.SynonymWordDao;
 import com.Nihilisttt.LearnWord.Database.Dao.UsageDistinctionDao;
+import com.Nihilisttt.LearnWord.Database.Dao.WordBookDao;
+import com.Nihilisttt.LearnWord.Database.Dao.WordBookItemDao;
 import com.Nihilisttt.LearnWord.Database.Dao.WordCollocationDao;
 import com.Nihilisttt.LearnWord.Database.Dao.WordDao;
+import com.Nihilisttt.LearnWord.Database.Dao.WordDistractorDao;
 import com.Nihilisttt.LearnWord.Database.Dao.WordMeaningDao;
+import com.Nihilisttt.LearnWord.Database.Dao.WordReviewDao;
 import com.Nihilisttt.LearnWord.Database.Dao.WordSentenceDao;
 import com.Nihilisttt.LearnWord.Database.Entities.AntonymWordEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.ConjugationFormEntity;
@@ -31,10 +38,14 @@ import com.Nihilisttt.LearnWord.Database.Entities.KanjiInfoEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.RelatedWordEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.SynonymWordEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.UsageDistinctionEntity;
+import com.Nihilisttt.LearnWord.Database.Entities.WordBookEntity;
+import com.Nihilisttt.LearnWord.Database.Entities.WordBookItemEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.WordCollocationEntity;
+import com.Nihilisttt.LearnWord.Database.Entities.WordDistractorEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.WordMeaningEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.BasicWordEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.WordEntity;
+import com.Nihilisttt.LearnWord.Database.Entities.WordReviewEntity;
 import com.Nihilisttt.LearnWord.Database.Entities.WordSentenceEntity;
 
 import android.content.SharedPreferences;
@@ -60,20 +71,53 @@ import java.util.concurrent.Executors;
         GrammarPointEntity.class,
         IdiomEntity.class,
         DerivedWordEntity.class,
-        RelatedWordEntity.class
+        RelatedWordEntity.class,
+        WordBookEntity.class,
+        WordBookItemEntity.class,
+        WordReviewEntity.class,
+        WordDistractorEntity.class
 },
-        version = 3,
+        version = 5,
         exportSchema = false)
 public abstract class WordDatabase extends RoomDatabase {
     private static final String PREFS_NAME = "room_db_prefs";
     private static final String KEY_DB_VERSION = "prebuilt_db_version";
-    private static final int PREBUILT_DB_VERSION = 22;
+    private static final int PREBUILT_DB_VERSION = 23;
     // 线程安全的单例模式
     private static volatile WordDatabase INSTANCE;
     // 数据库操作线程池（4线程）
     private static final int NUMBER_OF_THREADS = Runtime.getRuntime().availableProcessors() * 2;
     public static final ExecutorService databaseExecutor =
             Executors.newFixedThreadPool(NUMBER_OF_THREADS);
+
+    static final Migration MIGRATION_3_4 = new Migration(3, 4) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase db) {
+            db.execSQL("CREATE TABLE IF NOT EXISTS `WordBook` (`bookId` TEXT NOT NULL, `name` TEXT, `description` TEXT NOT NULL DEFAULT '', `jlptLevel` INTEGER NOT NULL DEFAULT 0, `isPreset` INTEGER NOT NULL DEFAULT 0, `totalWordCount` INTEGER NOT NULL DEFAULT 0, `learnedCount` INTEGER NOT NULL DEFAULT 0, `masteredCount` INTEGER NOT NULL DEFAULT 0, `dailyNewTarget` INTEGER NOT NULL DEFAULT 20, `dailyReviewTarget` INTEGER NOT NULL DEFAULT 200, `sortOrder` INTEGER NOT NULL DEFAULT 0, `color` INTEGER NOT NULL DEFAULT 0, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, PRIMARY KEY(`bookId`))");
+
+            db.execSQL("CREATE TABLE IF NOT EXISTS `WordBookItem` (`id` INTEGER NOT NULL, `bookId` TEXT NOT NULL, `wordId` TEXT NOT NULL, `position` INTEGER NOT NULL, PRIMARY KEY(`id`))");
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_WordBookItem_bookId` ON `WordBookItem` (`bookId`)");
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_WordBookItem_wordId` ON `WordBookItem` (`wordId`)");
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_WordBookItem_bookId_wordId` ON `WordBookItem` (`bookId`, `wordId`)");
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_WordBookItem_bookId_position` ON `WordBookItem` (`bookId`, `position`)");
+
+            db.execSQL("CREATE TABLE IF NOT EXISTS `WordReview` (`id` INTEGER NOT NULL, `wordId` TEXT NOT NULL, `bookId` TEXT NOT NULL, `status` INTEGER NOT NULL DEFAULT 0, `studyCycle` INTEGER NOT NULL DEFAULT 0, `nextReviewTime` INTEGER NOT NULL DEFAULT 0, `lapses` INTEGER NOT NULL DEFAULT 0, `createTime` INTEGER NOT NULL, `updateTime` INTEGER NOT NULL, PRIMARY KEY(`id`))");
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_WordReview_bookId` ON `WordReview` (`bookId`)");
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_WordReview_wordId` ON `WordReview` (`wordId`)");
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_WordReview_wordId_bookId` ON `WordReview` (`wordId`, `bookId`)");
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_WordReview_bookId_nextReviewTime` ON `WordReview` (`bookId`, `nextReviewTime`)");
+        }
+    };
+
+    static final Migration MIGRATION_4_5 = new Migration(4, 5) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase db) {
+            db.execSQL("CREATE TABLE IF NOT EXISTS `WordDistractor` (`id` INTEGER NOT NULL, `wordId` TEXT NOT NULL, `distractorWordId` TEXT NOT NULL, `score` REAL NOT NULL, PRIMARY KEY(`id`))");
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_WordDistractor_wordId` ON `WordDistractor` (`wordId`)");
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_WordDistractor_wordId_distractorWordId` ON `WordDistractor` (`wordId`, `distractorWordId`)");
+        }
+    };
+
     public static synchronized WordDatabase getDatabase(final Context context) {
         if (INSTANCE == null) {
             synchronized (WordDatabase.class) {
@@ -87,6 +131,7 @@ public abstract class WordDatabase extends RoomDatabase {
                             .createFromAsset("databases/word_database.db")
                             .setQueryExecutor(databaseExecutor)
                             .setJournalMode(JournalMode.TRUNCATE)
+                            .addMigrations(MIGRATION_3_4, MIGRATION_4_5)
                             .fallbackToDestructiveMigration()
                             .enableMultiInstanceInvalidation()
                             .build();
@@ -123,6 +168,10 @@ public abstract class WordDatabase extends RoomDatabase {
     public abstract IdiomDao getIdiomDao();
     public abstract DerivedWordDao getDerivedWordDao();
     public abstract RelatedWordDao getRelatedWordDao();
+    public abstract WordBookDao getWordBookDao();
+    public abstract WordBookItemDao getWordBookItemDao();
+    public abstract WordReviewDao getWordReviewDao();
+    public abstract WordDistractorDao getWordDistractorDao();
     // 新增事务控制接口
     public interface TransactionListener {
         void onCommit();

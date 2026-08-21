@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import android.text.SpannableStringBuilder;
 import android.text.style.ForegroundColorSpan;
 import android.widget.LinearLayout;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -21,6 +22,7 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.Nihilisttt.LearnWord.Algorithm.StudyStage;
 import com.Nihilisttt.LearnWord.JavaBean.BasicWord;
 import com.Nihilisttt.LearnWord.JavaBean.WordSentence;
 import com.Nihilisttt.LearnWord.Page.ViewModel.LearnPageStateViewModel;
@@ -46,6 +48,17 @@ public class MainLearnPageFragment extends Fragment {
     private LinearLayout blankPart;
     private TextView blankText;
 
+    private LinearLayout indicatorBar;
+    private View indicator1;
+    private View indicator2;
+    private View indicator3;
+    private TextView stageHintText;
+    private LinearLayout multipleChoiceContainer;
+    private TextView[] choiceOptions = new TextView[4];
+
+    private LinearLayout newModeButtonBar;
+    private Button btnSeeAnswer;
+
     private BasicWordView basicWordView;
     private SentenceView sentenceView;
     private MeaningView meaningView;
@@ -54,12 +67,18 @@ public class MainLearnPageFragment extends Fragment {
     private LearnPageViewModel viewModel;
     private LearnPageStateViewModel stateViewModel;
 
+    private boolean answerRevealed = false;
+    private boolean wasCorrect = false;
+    private boolean isChoiceAnswered = false;
+    private boolean hasWrongChoice = false;
+    private String currentCorrectWordText = "";
+    private View rootView;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_main_learn_page, container, false);
     }
-
 
     private void initViews(View view) {
         toolBar = view.findViewById(R.id.learn_page_tool_bar);
@@ -70,6 +89,20 @@ public class MainLearnPageFragment extends Fragment {
         integratedPartContainer = view.findViewById(R.id.integrated_part_container);
         blankPart = view.findViewById(R.id.blank_part);
         blankText = view.findViewById(R.id.blank_text);
+
+        indicatorBar = view.findViewById(R.id.indicator_bar);
+        indicator1 = view.findViewById(R.id.indicator_1);
+        indicator2 = view.findViewById(R.id.indicator_2);
+        indicator3 = view.findViewById(R.id.indicator_3);
+        stageHintText = view.findViewById(R.id.stage_hint_text);
+        multipleChoiceContainer = view.findViewById(R.id.multiple_choice_container);
+        choiceOptions[0] = view.findViewById(R.id.choice_option_0);
+        choiceOptions[1] = view.findViewById(R.id.choice_option_1);
+        choiceOptions[2] = view.findViewById(R.id.choice_option_2);
+        choiceOptions[3] = view.findViewById(R.id.choice_option_3);
+
+        newModeButtonBar = view.findViewById(R.id.new_mode_button_bar);
+        btnSeeAnswer = view.findViewById(R.id.btn_see_answer);
     }
 
     @Override
@@ -81,6 +114,7 @@ public class MainLearnPageFragment extends Fragment {
                 ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().getApplication()))
                 .get(LearnPageStateViewModel.class);
         initViews(view);
+        rootView = view;
         toolBar.setStateViewModel(stateViewModel);
         toolBar.observeFontSize(getViewLifecycleOwner());
         setupObservers();
@@ -89,7 +123,7 @@ public class MainLearnPageFragment extends Fragment {
     @SuppressLint("ClickableViewAccessibility")
     private void setupObservers() {
         viewModel.getCombinedWordInfo().observe(getViewLifecycleOwner(), combinedWordInfo -> {
-            renderWord(combinedWordInfo);
+            if (combinedWordInfo != null) renderWord(combinedWordInfo);
         });
 
         stateViewModel.getWordFontLevel().observe(getViewLifecycleOwner(), level -> {
@@ -115,17 +149,200 @@ public class MainLearnPageFragment extends Fragment {
                 Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
             }
         });
+
+        viewModel.getSessionComplete().observe(getViewLifecycleOwner(), complete -> {
+            if (complete != null && complete) {
+                hideAllButtonBars();
+            }
+        });
+
+        viewModel.getEntryLoaded().observe(getViewLifecycleOwner(), version -> {
+            if (version != null && viewModel.isSRSMode()) {
+                StudyStage stage = viewModel.getCurrentStage().getValue();
+                if (stage != null) {
+                    answerRevealed = false;
+                    isChoiceAnswered = false;
+                    hasWrongChoice = false;
+                    setupStageUI(stage);
+                }
+            }
+        });
+
+        viewModel.getCurrentCorrectCount().observe(getViewLifecycleOwner(), count -> {
+            if (count != null && viewModel.isSRSMode()) {
+                updateIndicatorBar(count);
+            }
+        });
+
+        viewModel.getMultipleChoiceOptions().observe(getViewLifecycleOwner(), options -> {
+            if (options != null && viewModel.isSRSMode()) {
+                setupMultipleChoice(options);
+            } else if (multipleChoiceContainer != null) {
+                multipleChoiceContainer.setVisibility(View.GONE);
+            }
+        });
+
+        viewModel.getCorrectWordText().observe(getViewLifecycleOwner(), text -> {
+            currentCorrectWordText = text != null ? text : "";
+        });
+
+        viewModel.getRevealRequested().observe(getViewLifecycleOwner(), requested -> {
+            if (requested != null && requested) {
+                revealAnswer(viewModel.getPendingRevealMode());
+                viewModel.consumeRevealRequest();
+            }
+        });
+
+        setupButtonListeners();
+    }
+
+    private void setupButtonListeners() {
+        btnSeeAnswer.setOnClickListener(v -> onSeeAnswerClicked());
+
+        for (int i = 0; i < 4; i++) {
+            final int index = i;
+            choiceOptions[i].setOnClickListener(v -> onChoiceClicked(index));
+        }
+    }
+
+    private void setupStageUI(StudyStage stage) {
+        if (rootView != null) rootView.setVisibility(View.INVISIBLE);
+        hideAllButtonBars();
+        multipleChoiceContainer.setVisibility(View.GONE);
+        stageHintText.setVisibility(View.GONE);
+        blankText.setVisibility(View.GONE);
+        blankPart.setVisibility(View.GONE);
+
+        meaningContainer.setVisibility(View.INVISIBLE);
+        integratedPartContainer.setVisibility(View.GONE);
+
+        switch (stage) {
+            case NEW:
+                sentenceContainer.setVisibility(View.INVISIBLE);
+                newModeButtonBar.setVisibility(View.VISIBLE);
+                stageHintText.setVisibility(View.VISIBLE);
+                stageHintText.setText("初学：先回想词义再选择");
+                viewModel.setSrsButtonMode(LearnPageViewModel.SrsButtonMode.HIDDEN);
+                break;
+            case REVIEW:
+                sentenceContainer.setVisibility(View.VISIBLE);
+                stageHintText.setVisibility(View.VISIBLE);
+                stageHintText.setText("复习：请回想词义");
+                viewModel.setSrsButtonMode(LearnPageViewModel.SrsButtonMode.CHOICE);
+                break;
+            case FINAL:
+                sentenceContainer.setVisibility(View.INVISIBLE);
+                stageHintText.setVisibility(View.VISIBLE);
+                stageHintText.setText("最后一关：请在无提示的情况下判断");
+                viewModel.setSrsButtonMode(LearnPageViewModel.SrsButtonMode.CHOICE);
+                break;
+        }
+    }
+
+    private void setupMultipleChoice(List<String> options) {
+        if (options == null || options.isEmpty()) {
+            multipleChoiceContainer.setVisibility(View.GONE);
+            newModeButtonBar.setVisibility(View.GONE);
+            viewModel.setSrsButtonMode(LearnPageViewModel.SrsButtonMode.CHOICE);
+            return;
+        }
+
+        multipleChoiceContainer.setVisibility(View.VISIBLE);
+        int count = Math.min(options.size(), 4);
+        for (int i = 0; i < 4; i++) {
+            if (i < count) {
+                choiceOptions[i].setText(options.get(i));
+                choiceOptions[i].setVisibility(View.VISIBLE);
+                choiceOptions[i].setBackgroundResource(R.drawable.card_choice_option);
+                choiceOptions[i].setClickable(true);
+            } else {
+                choiceOptions[i].setVisibility(View.GONE);
+            }
+        }
+    }
+
+    private void updateIndicatorBar(int correctCount) {
+        indicatorBar.setVisibility(View.VISIBLE);
+        int filledColor = ContextCompat.getColor(requireContext(), R.color.md_success);
+        int emptyColor = ContextCompat.getColor(requireContext(), R.color.md_surface_variant);
+
+        indicator1.setBackgroundColor(correctCount >= 1 ? filledColor : emptyColor);
+        indicator2.setBackgroundColor(correctCount >= 2 ? filledColor : emptyColor);
+        indicator3.setBackgroundColor(correctCount >= 3 ? filledColor : emptyColor);
+    }
+
+    private void onChoiceClicked(int index) {
+        if (isChoiceAnswered) return;
+        if (!choiceOptions[index].isClickable()) return;
+
+        Integer correctIdx = viewModel.getCorrectOptionIndex().getValue();
+        if (correctIdx == null) return;
+
+        boolean correct = (index == correctIdx);
+
+        if (correct) {
+            isChoiceAnswered = true;
+            wasCorrect = true;
+            for (int i = 0; i < 4; i++) {
+                choiceOptions[i].setClickable(false);
+            }
+            choiceOptions[index].setBackgroundResource(R.drawable.card_choice_correct);
+            for (int i = 0; i < 4; i++) {
+                if (i != index) {
+                    choiceOptions[i].setBackgroundResource(R.drawable.card_choice_wrong);
+                    choiceOptions[i].setText(currentCorrectWordText);
+                }
+            }
+            if (!hasWrongChoice) {
+                viewModel.previewPass();
+            }
+            rootView.postDelayed(() -> revealAnswer(LearnPageViewModel.SrsButtonMode.SUBMIT_PASS_ONLY), 1200);
+        } else {
+            hasWrongChoice = true;
+            choiceOptions[index].setBackgroundResource(R.drawable.card_choice_wrong);
+            choiceOptions[index].setText(currentCorrectWordText);
+            choiceOptions[index].setClickable(false);
+        }
+    }
+
+    private void onSeeAnswerClicked() {
+        if (isChoiceAnswered) return;
+        isChoiceAnswered = true;
+
+        Integer correctIdx = viewModel.getCorrectOptionIndex().getValue();
+        if (correctIdx != null && correctIdx < 4) {
+            choiceOptions[correctIdx].setBackgroundResource(R.drawable.card_choice_correct);
+        }
+        for (int i = 0; i < 4; i++) {
+            choiceOptions[i].setClickable(false);
+        }
+
+        wasCorrect = false;
+        rootView.postDelayed(() -> revealAnswer(LearnPageViewModel.SrsButtonMode.SUBMIT_FAIL_ONLY), 1000);
+    }
+
+    private void revealAnswer(LearnPageViewModel.SrsButtonMode mode) {
+        answerRevealed = true;
+
+        hideAllButtonBars();
+
+        meaningContainer.setVisibility(View.VISIBLE);
+        integratedPartContainer.setVisibility(View.VISIBLE);
+        sentenceContainer.setVisibility(View.VISIBLE);
+        stageHintText.setVisibility(View.GONE);
+        multipleChoiceContainer.setVisibility(View.GONE);
+        blankText.setVisibility(View.GONE);
+        blankPart.setVisibility(View.GONE);
+
+        viewModel.setSrsButtonMode(mode);
+    }
+
+    private void hideAllButtonBars() {
+        newModeButtonBar.setVisibility(View.GONE);
     }
 
     private void renderWord(LearnPageViewModel.CombinedWordInfo combinedWordInfo) {
-        stateViewModel.setViewPagerScrollEnabled(false);
-        wordContainer.setVisibility(View.INVISIBLE);
-        infoRow.setVisibility(View.INVISIBLE);
-        meaningContainer.setVisibility(View.INVISIBLE);
-        sentenceContainer.setVisibility(View.INVISIBLE);
-        integratedPartContainer.setVisibility(View.GONE);
-        blankPart.setVisibility(View.VISIBLE);
-        blankText.setVisibility(View.VISIBLE);
+        if (rootView != null) rootView.setVisibility(View.INVISIBLE);
 
         Integer wordLevel = stateViewModel.getWordFontLevel().getValue();
         if (wordLevel == null) wordLevel = Constants.FONT_SIZE_NORMAL;
@@ -181,7 +398,6 @@ public class MainLearnPageFragment extends Fragment {
 
         wordContainer.setVisibility(View.VISIBLE);
         infoRow.setVisibility(jlptLevel > 0 || wordFrequency > 0 ? View.VISIBLE : View.GONE);
-        sentenceContainer.setVisibility(View.VISIBLE);
 
         if (meaningView == null) {
             meaningView = new MeaningView(requireContext(), requireActivity(), subLevel, combinedWordInfo.getWordMeaningList(), Constants.TURN_TO_DETAIL_PAGE);
@@ -191,7 +407,6 @@ public class MainLearnPageFragment extends Fragment {
         }
 
         if (integratedPartView == null) {
-
             integratedPartView = new IntegratedPartView(requireContext(),
                     combinedWordInfo.getWordCollocationList(),
                     combinedWordInfo.getAntonymWordList(),
@@ -207,7 +422,6 @@ public class MainLearnPageFragment extends Fragment {
             integratedPartContainer.addView(integratedPartView);
             Boolean isScroll = stateViewModel.getIsScrollMode().getValue();
             if (isScroll != null && isScroll) {
-
                 integratedPartView.setScrollMode(true, subLevel);
             }
         } else {
@@ -223,6 +437,23 @@ public class MainLearnPageFragment extends Fragment {
                     combinedWordInfo.getGrammarPointList(),
                     combinedWordInfo.getIdiomList());
         }
+
+        if (!viewModel.isSRSMode()) {
+            setupNonSRSMode();
+        }
+
+        if (rootView != null) rootView.post(() -> rootView.setVisibility(View.VISIBLE));
+    }
+
+    private void setupNonSRSMode() {
+        stateViewModel.setViewPagerScrollEnabled(false);
+        meaningContainer.setVisibility(View.INVISIBLE);
+        integratedPartContainer.setVisibility(View.GONE);
+        blankPart.setVisibility(View.VISIBLE);
+        blankText.setVisibility(View.VISIBLE);
+        sentenceContainer.setVisibility(View.VISIBLE);
+        indicatorBar.setVisibility(View.GONE);
+        hideAllButtonBars();
 
         final int touchSlop = ViewConfiguration.get(requireContext()).getScaledTouchSlop();
         blankPart.setOnTouchListener(new View.OnTouchListener() {

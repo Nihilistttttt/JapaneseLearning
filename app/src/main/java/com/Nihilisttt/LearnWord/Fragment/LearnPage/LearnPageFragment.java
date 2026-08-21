@@ -11,6 +11,7 @@ import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
@@ -84,6 +85,8 @@ public class LearnPageFragment extends Fragment {
         // 初始化按钮
         Button preButton = rootView.findViewById(R.id.pre_word);
         Button nextButton = rootView.findViewById(R.id.next_word);
+        Button btnSrsWrong = rootView.findViewById(R.id.btn_srs_wrong);
+        Button btnSrsNext = rootView.findViewById(R.id.btn_srs_next);
 
         // 初始化ViewModel（使用Activity作用域）
         viewModel = new ViewModelProvider(requireActivity(),
@@ -111,6 +114,75 @@ public class LearnPageFragment extends Fragment {
             viewModel.navigateNext();
             viewPager2.setCurrentItem(0, false);
             ViewPager2Navigation.getInstance().clearPendingNavigation();
+        });
+
+        viewModel.getCurrentStage().observe(getViewLifecycleOwner(), stage -> {
+            boolean srs = stage != null;
+            preButton.setVisibility(srs ? View.GONE : View.VISIBLE);
+            nextButton.setVisibility(srs ? View.GONE : View.VISIBLE);
+        });
+
+        viewModel.getSrsButtonMode().observe(getViewLifecycleOwner(), mode -> {
+            if (mode == null) mode = LearnPageViewModel.SrsButtonMode.HIDDEN;
+            ConstraintLayout.LayoutParams paramsNext = (ConstraintLayout.LayoutParams) btnSrsNext.getLayoutParams();
+            switch (mode) {
+                case HIDDEN:
+                    btnSrsWrong.setVisibility(View.GONE);
+                    btnSrsNext.setVisibility(View.GONE);
+                    break;
+                case CHOICE:
+                    btnSrsWrong.setText("不认识");
+                    btnSrsNext.setText("认识");
+                    btnSrsWrong.setVisibility(View.VISIBLE);
+                    btnSrsNext.setVisibility(View.VISIBLE);
+                    paramsNext.startToStart = R.id.guideline2;
+                    paramsNext.startToEnd = -1;
+                    btnSrsNext.setLayoutParams(paramsNext);
+                    break;
+                case SUBMIT:
+                    btnSrsWrong.setText("记错了");
+                    btnSrsNext.setText("下一词");
+                    btnSrsWrong.setVisibility(View.VISIBLE);
+                    btnSrsNext.setVisibility(View.VISIBLE);
+                    paramsNext.startToStart = R.id.guideline2;
+                    paramsNext.startToEnd = -1;
+                    btnSrsNext.setLayoutParams(paramsNext);
+                    break;
+                case SUBMIT_PASS_ONLY:
+                case SUBMIT_FAIL_ONLY:
+                    btnSrsNext.setText("下一词");
+                    btnSrsWrong.setVisibility(View.GONE);
+                    btnSrsNext.setVisibility(View.VISIBLE);
+                    paramsNext.startToStart = ConstraintLayout.LayoutParams.PARENT_ID;
+                    paramsNext.startToEnd = -1;
+                    btnSrsNext.setLayoutParams(paramsNext);
+                    break;
+            }
+        });
+
+        btnSrsWrong.setOnClickListener(v -> {
+            LearnPageViewModel.SrsButtonMode mode = viewModel.getSrsButtonMode().getValue();
+            if (mode == LearnPageViewModel.SrsButtonMode.CHOICE) {
+                viewModel.previewFail();
+                viewModel.requestReveal(LearnPageViewModel.SrsButtonMode.SUBMIT_PASS_ONLY);
+            } else {
+                viewModel.submitFail();
+            }
+        });
+        btnSrsNext.setOnClickListener(v -> {
+            LearnPageViewModel.SrsButtonMode mode = viewModel.getSrsButtonMode().getValue();
+            if (mode == LearnPageViewModel.SrsButtonMode.CHOICE) {
+                viewModel.previewPass();
+                viewModel.requestReveal(LearnPageViewModel.SrsButtonMode.SUBMIT);
+            } else if (mode == LearnPageViewModel.SrsButtonMode.SUBMIT) {
+                viewModel.advanceToNext();
+            } else if (mode == LearnPageViewModel.SrsButtonMode.SUBMIT_FAIL_ONLY) {
+                viewModel.submitFail();
+            } else if (mode == LearnPageViewModel.SrsButtonMode.SUBMIT_PASS_ONLY) {
+                viewModel.advanceToNext();
+            } else {
+                viewModel.submitPass();
+            }
         });
     }
 

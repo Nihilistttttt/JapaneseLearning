@@ -6,10 +6,12 @@ import android.view.View;
 import android.view.ViewConfiguration;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.Nihilisttt.LearnWord.Adapter.LearnPageAdapter;
+import com.Nihilisttt.LearnWord.Page.ViewModel.LearnPageViewModel;
 import com.Nihilisttt.LearnWord.ViewPager2.ViewPager2ScrollController;
 import com.Nihilisttt.LearnWord.ViewPager2.NestedScrollableHostBetween3LayersManager;
 import com.Nihilisttt.LearnWord.databinding.ActivityLearnPageBinding;
@@ -17,6 +19,7 @@ import com.Nihilisttt.LearnWord.databinding.ActivityLearnPageBinding;
 public class LearnPage extends AppCompatActivity {
     private ViewPager2 viewPager2;
     private ViewPager2ScrollController scrollController;
+    private LearnPageViewModel viewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,6 +30,16 @@ public class LearnPage extends AppCompatActivity {
         viewPager2 = binding.learnPageVp2Container;
         scrollController = new ViewPager2ScrollController(viewPager2, touchSlop, 3.0f,
                 ViewPager2ScrollController.ScrollDirection.VERTICAL);
+
+        viewModel = new ViewModelProvider(this,
+                ViewModelProvider.AndroidViewModelFactory.getInstance(getApplication()))
+                .get(LearnPageViewModel.class);
+
+        String bookId = getIntent().getStringExtra("bookId");
+        if (bookId != null && !bookId.isEmpty()) {
+            viewModel.setBookId(bookId);
+        }
+
         setupViewPager();
     }
 

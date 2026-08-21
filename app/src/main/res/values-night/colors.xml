@@ -25,6 +25,10 @@
     <color name="md_on_error">#FF690005</color>
     <color name="md_error_container">#FF93000A</color>
 
+    <color name="md_success">#FF6FFF9E</color>
+    <color name="md_on_success">#FF003919</color>
+    <color name="md_success_container">#FF003919</color>
+
     <color name="md_part_of_speech">#FFA7C8FF</color>
     <color name="md_definition_text">#FFE0E0E0</color>
     <color name="md_translation_text">#FFB0B0B0</color>

@@ -24,9 +24,41 @@
         android:layout_marginTop="8dp"
         android:layout_marginEnd="16dp"
         android:orientation="vertical"
-
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/learn_page_tool_bar" />
+
+    <LinearLayout
+        android:id="@+id/indicator_bar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="4dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/word_container">
+
+        <View
+            android:id="@+id/indicator_1"
+            android:layout_width="40dp"
+            android:layout_height="4dp"
+            android:layout_marginEnd="4dp"
+            android:background="@color/md_surface_variant" />
+
+        <View
+            android:id="@+id/indicator_2"
+            android:layout_width="40dp"
+            android:layout_height="4dp"
+            android:layout_marginEnd="4dp"
+            android:background="@color/md_surface_variant" />
+
+        <View
+            android:id="@+id/indicator_3"
+            android:layout_width="40dp"
+            android:layout_height="4dp"
+            android:background="@color/md_surface_variant" />
+    </LinearLayout>
 
     <LinearLayout
         android:id="@+id/info_row"
@@ -39,7 +71,7 @@
         android:orientation="horizontal"
         android:gravity="center_horizontal"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/word_container" />
+        app:layout_constraintTop_toBottomOf="@id/indicator_bar" />
 
     <LinearLayout
         android:id="@+id/meaning_container"
@@ -68,7 +100,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/meaning_container" />
 
-
     <androidx.cardview.widget.CardView
         android:id="@+id/integrated_part_container"
         android:layout_width="match_parent"
@@ -82,9 +113,85 @@
         app:cardElevation="1dp"
         app:cardBackgroundColor="@color/md_card_background"
         app:contentPadding="8dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/bottom_button_bar"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/sentence_container" />
+
+    <TextView
+        android:id="@+id/stage_hint_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/md_on_surface_variant"
+        android:textSize="14sp"
+        android:layout_marginTop="12dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/sentence_container" />
+
+    <LinearLayout
+        android:id="@+id/multiple_choice_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="12dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/sentence_container">
+
+        <TextView
+            android:id="@+id/choice_option_0"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="14dp"
+            android:layout_marginBottom="8dp"
+            android:textSize="16sp"
+            android:textColor="@color/md_on_surface"
+            android:background="@drawable/card_choice_option"
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true" />
+
+        <TextView
+            android:id="@+id/choice_option_1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="14dp"
+            android:layout_marginBottom="8dp"
+            android:textSize="16sp"
+            android:textColor="@color/md_on_surface"
+            android:background="@drawable/card_choice_option"
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true" />
+
+        <TextView
+            android:id="@+id/choice_option_2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="14dp"
+            android:layout_marginBottom="8dp"
+            android:textSize="16sp"
+            android:textColor="@color/md_on_surface"
+            android:background="@drawable/card_choice_option"
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true" />
+
+        <TextView
+            android:id="@+id/choice_option_3"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="14dp"
+            android:textSize="16sp"
+            android:textColor="@color/md_on_surface"
+            android:background="@drawable/card_choice_option"
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true" />
+    </LinearLayout>
 
     <TextView
         android:id="@+id/blank_text"
@@ -92,10 +199,10 @@
         android:layout_height="wrap_content"
         android:text="@string/click_blank_part"
         android:textColor="@color/md_on_surface_variant"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/bottom_button_bar"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/sentence_container"
         android:visibility="visible"
         app:layout_constraintVertical_bias="0.9" />
 
@@ -104,10 +211,37 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:orientation="horizontal"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/bottom_button_bar"
         android:visibility="visible"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/sentence_container" />
+
+    <FrameLayout
+        android:id="@+id/bottom_button_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <LinearLayout
+            android:id="@+id/new_mode_button_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:visibility="gone"
+            android:padding="8dp"
+            android:background="@color/md_surface">
+
+            <Button
+                android:id="@+id/btn_see_answer"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:text="看答案"
+                android:textAllCaps="false"
+                android:textSize="16sp"
+                android:background="@drawable/button_neutral"
+                android:textColor="@color/md_on_surface" />
+        </LinearLayout>
+    </FrameLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

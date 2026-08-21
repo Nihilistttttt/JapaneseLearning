@@ -31,4 +31,13 @@ public interface BasicWordDao {
 
     @Query("SELECT * FROM BasicWord WHERE REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(kanjiComponents,'[',''),']',''),'\"',''),',',''),' ','') LIKE '%' || :query || '%' OR REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(kanaComponents,'[',''),']',''),'\"',''),',',''),' ','') LIKE '%' || :query || '%' ORDER BY wordFrequency DESC LIMIT :limit")
     List<BasicWordEntity> searchBasicWordsSync(String query, int limit);
+
+    @Query("SELECT wordId FROM BasicWord WHERE jlptLevel = :level ORDER BY wordFrequency DESC")
+    List<String> getWordIdsByJlptLevelSync(int level);
+
+    @Query("SELECT COUNT(*) FROM BasicWord WHERE jlptLevel = :level")
+    int getWordCountByJlptLevelSync(int level);
+
+    @Query("SELECT DISTINCT jlptLevel FROM BasicWord WHERE jlptLevel > 0 ORDER BY jlptLevel ASC")
+    List<Integer> getAvailableJlptLevelsSync();
 }
