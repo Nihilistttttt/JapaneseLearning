@@ -72,6 +72,7 @@ public class MainLearnPageFragment extends Fragment {
     private boolean isChoiceAnswered = false;
     private boolean hasWrongChoice = false;
     private String currentCorrectWordText = "";
+    private List<LearnPageViewModel.ChoiceOption> currentChoiceOptions = null;
     private View rootView;
 
     @Nullable
@@ -177,14 +178,18 @@ public class MainLearnPageFragment extends Fragment {
         viewModel.getMultipleChoiceOptions().observe(getViewLifecycleOwner(), options -> {
             if (options != null && viewModel.isSRSMode()) {
                 setupMultipleChoice(options);
-            } else if (multipleChoiceContainer != null) {
-                multipleChoiceContainer.setVisibility(View.GONE);
+            } else {
+                currentChoiceOptions = null;
+                if (multipleChoiceContainer != null) {
+                    multipleChoiceContainer.setVisibility(View.GONE);
+                }
             }
         });
 
         viewModel.getCorrectWordText().observe(getViewLifecycleOwner(), text -> {
             currentCorrectWordText = text != null ? text : "";
         });
+
 
         viewModel.getRevealRequested().observe(getViewLifecycleOwner(), requested -> {
             if (requested != null && requested) {
@@ -239,7 +244,7 @@ public class MainLearnPageFragment extends Fragment {
         }
     }
 
-    private void setupMultipleChoice(List<String> options) {
+    private void setupMultipleChoice(List<LearnPageViewModel.ChoiceOption> options) {
         if (options == null || options.isEmpty()) {
             multipleChoiceContainer.setVisibility(View.GONE);
             newModeButtonBar.setVisibility(View.GONE);
@@ -247,11 +252,12 @@ public class MainLearnPageFragment extends Fragment {
             return;
         }
 
+        currentChoiceOptions = options;
         multipleChoiceContainer.setVisibility(View.VISIBLE);
         int count = Math.min(options.size(), 4);
         for (int i = 0; i < 4; i++) {
             if (i < count) {
-                choiceOptions[i].setText(options.get(i));
+                choiceOptions[i].setText(options.get(i).meaningText);
                 choiceOptions[i].setVisibility(View.VISIBLE);
                 choiceOptions[i].setBackgroundResource(R.drawable.card_choice_option);
                 choiceOptions[i].setClickable(true);
@@ -290,7 +296,9 @@ public class MainLearnPageFragment extends Fragment {
             for (int i = 0; i < 4; i++) {
                 if (i != index) {
                     choiceOptions[i].setBackgroundResource(R.drawable.card_choice_wrong);
-                    choiceOptions[i].setText(currentCorrectWordText);
+                    if (currentChoiceOptions != null && i < currentChoiceOptions.size()) {
+                        choiceOptions[i].setText(currentChoiceOptions.get(i).wordText);
+                    }
                 }
             }
             if (!hasWrongChoice) {
@@ -300,7 +308,9 @@ public class MainLearnPageFragment extends Fragment {
         } else {
             hasWrongChoice = true;
             choiceOptions[index].setBackgroundResource(R.drawable.card_choice_wrong);
-            choiceOptions[index].setText(currentCorrectWordText);
+            if (currentChoiceOptions != null && index < currentChoiceOptions.size()) {
+                choiceOptions[index].setText(currentChoiceOptions.get(index).wordText);
+            }
             choiceOptions[index].setClickable(false);
         }
     }
@@ -310,11 +320,15 @@ public class MainLearnPageFragment extends Fragment {
         isChoiceAnswered = true;
 
         Integer correctIdx = viewModel.getCorrectOptionIndex().getValue();
+        int correct = correctIdx != null ? correctIdx : -1;
         if (correctIdx != null && correctIdx < 4) {
             choiceOptions[correctIdx].setBackgroundResource(R.drawable.card_choice_correct);
         }
         for (int i = 0; i < 4; i++) {
             choiceOptions[i].setClickable(false);
+            if (i != correct && currentChoiceOptions != null && i < currentChoiceOptions.size()) {
+                choiceOptions[i].setText(currentChoiceOptions.get(i).wordText);
+            }
         }
 
         wasCorrect = false;

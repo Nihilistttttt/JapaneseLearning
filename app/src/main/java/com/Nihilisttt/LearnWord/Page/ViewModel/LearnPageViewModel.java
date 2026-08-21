@@ -71,9 +71,18 @@ public class LearnPageViewModel extends AndroidViewModel {
     private final MutableLiveData<Integer> currentCorrectCount = new MutableLiveData<>(0);
     private final MutableLiveData<Integer> sessionTotal = new MutableLiveData<>(0);
     private final MutableLiveData<Integer> sessionProgress = new MutableLiveData<>(0);
-    private final MutableLiveData<List<String>> multipleChoiceOptions = new MutableLiveData<>();
+    private final MutableLiveData<List<ChoiceOption>> multipleChoiceOptions = new MutableLiveData<>();
     private final MutableLiveData<Integer> correctOptionIndex = new MutableLiveData<>(0);
     private final MutableLiveData<String> correctWordText = new MutableLiveData<>();
+
+    public static class ChoiceOption {
+        public final String meaningText;
+        public final String wordText;
+        public ChoiceOption(String meaningText, String wordText) {
+            this.meaningText = meaningText;
+            this.wordText = wordText;
+        }
+    }
 
     public enum SrsButtonMode { HIDDEN, CHOICE, SUBMIT, SUBMIT_PASS_ONLY, SUBMIT_FAIL_ONLY }
     private final MutableLiveData<SrsButtonMode> srsButtonMode = new MutableLiveData<>(SrsButtonMode.HIDDEN);
@@ -212,7 +221,7 @@ public class LearnPageViewModel extends AndroidViewModel {
     public LiveData<Integer> getCurrentCorrectCount() { return currentCorrectCount; }
     public LiveData<Integer> getSessionTotal() { return sessionTotal; }
     public LiveData<Integer> getSessionProgress() { return sessionProgress; }
-    public LiveData<List<String>> getMultipleChoiceOptions() { return multipleChoiceOptions; }
+    public LiveData<List<ChoiceOption>> getMultipleChoiceOptions() { return multipleChoiceOptions; }
     public LiveData<Integer> getCorrectOptionIndex() { return correctOptionIndex; }
     public LiveData<String> getCorrectWordText() { return correctWordText; }
     public LiveData<SrsButtonMode> getSrsButtonMode() { return srsButtonMode; }
@@ -431,15 +440,26 @@ public class LearnPageViewModel extends AndroidViewModel {
             correctWordText.postValue(wordDisplayText);
 
             List<String> distractorIds = bookRepository.getDistractorWordIds(wordId, 3);
-            List<String> options = new ArrayList<>();
-            options.add(correctText);
+            List<ChoiceOption> options = new ArrayList<>();
+            List<String> usedMeanings = new ArrayList<>();
+            options.add(new ChoiceOption(correctText, wordDisplayText));
+            usedMeanings.add(correctText);
 
             for (String distId : distractorIds) {
                 WordMeaningEntity distMeaning = repository.getFirstMeaningByWordIdSync(distId);
                 if (distMeaning != null && distMeaning.getTranslationDefinition() != null
                         && !distMeaning.getTranslationDefinition().isEmpty()
-                        && !options.contains(distMeaning.getTranslationDefinition())) {
-                    options.add(distMeaning.getTranslationDefinition());
+                        && !usedMeanings.contains(distMeaning.getTranslationDefinition())) {
+                    String distWordText = "";
+                    BasicWordEntity distBasicWord = repository.getBasicWordEntityByIdSync(distId);
+                    if (distBasicWord != null) {
+                        distWordText = parseComponents(distBasicWord.getKanjiComponents());
+                        if (distWordText.isEmpty()) {
+                            distWordText = parseComponents(distBasicWord.getKanaComponents());
+                        }
+                    }
+                    options.add(new ChoiceOption(distMeaning.getTranslationDefinition(), distWordText));
+                    usedMeanings.add(distMeaning.getTranslationDefinition());
                 }
             }
 
@@ -449,8 +469,17 @@ public class LearnPageViewModel extends AndroidViewModel {
                     if (options.size() >= 4) break;
                     if (rm.getTranslationDefinition() != null
                             && !rm.getTranslationDefinition().isEmpty()
-                            && !options.contains(rm.getTranslationDefinition())) {
-                        options.add(rm.getTranslationDefinition());
+                            && !usedMeanings.contains(rm.getTranslationDefinition())) {
+                        String rmWordText = "";
+                        BasicWordEntity rmBasicWord = repository.getBasicWordEntityByIdSync(rm.getWordId());
+                        if (rmBasicWord != null) {
+                            rmWordText = parseComponents(rmBasicWord.getKanjiComponents());
+                            if (rmWordText.isEmpty()) {
+                                rmWordText = parseComponents(rmBasicWord.getKanaComponents());
+                            }
+                        }
+                        options.add(new ChoiceOption(rm.getTranslationDefinition(), rmWordText));
+                        usedMeanings.add(rm.getTranslationDefinition());
                     }
                 }
             }
@@ -461,7 +490,13 @@ public class LearnPageViewModel extends AndroidViewModel {
             }
 
             Collections.shuffle(options, random);
-            int correctIdx = options.indexOf(correctText);
+            int correctIdx = 0;
+            for (int i = 0; i < options.size(); i++) {
+                if (options.get(i).meaningText.equals(correctText)) {
+                    correctIdx = i;
+                    break;
+                }
+            }
 
             multipleChoiceOptions.postValue(options);
             correctOptionIndex.postValue(correctIdx);

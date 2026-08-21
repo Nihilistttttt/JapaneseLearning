@@ -5,6 +5,72 @@ LearnWord 项目更新记录
 
 ========================
 
+【更新39】四选一选项数据模型重构 + 选项文字覆盖bug修复 + Tab外观圆角化
+日期：2026-08-21
+涉及文件：
+  ViewModel: LearnPageViewModel.java (ChoiceOption内部类, multipleChoiceOptions类型改List<ChoiceOption>,
+             generateMultipleChoiceOptions为每个干扰项查BasicWord获取汉字文本)
+  Fragment: MainLearnPageFragment.java (setupMultipleChoice签名改List<ChoiceOption>,
+            onChoiceClicked选错/选对/看答案的wordText显示逻辑, currentChoiceOptions字段)
+  Drawable: tab_indicator.xml (直角矩形indicator, 3dp高)
+            tab_background.xml (12dp圆角背景 + md_surface_variant色)
+  View: IntegratedPartView.java, WordDetailBottomSheet.java (TabLayout设置圆角背景+直角indicator)
+
+问题:
+  1. 四选一选错后三个选项都显示正确词的汉字
+     - 根因: onChoiceClicked中选错后执行choiceOptions[index].setText(currentCorrectWordText)
+     - 把被点击的选项文字覆盖成正确答案的汉字, 而非该干扰项对应的单词
+  2. 选项数据模型只有List<String>(释义文本), 无法在选错后显示该干扰项对应的单词
+  3. Tab标签栏(関連語/活用形/漢字/其他)外有黑色矩形背景框, 视觉粗糙
+
+解决方案:
+  1. ChoiceOption数据模型:
+     - 新增LearnPageViewModel.ChoiceOption静态内部类, 含meaningText(释义)+wordText(对应单词文本)
+     - multipleChoiceOptions从LiveData<List<String>>改为LiveData<List<ChoiceOption>>
+     - generateMultipleChoiceOptions为每个干扰项查BasicWordEntity获取kanjiComponents/kanaComponents
+     - parseComponents()解析JSON数组拼接为单词文本
+  2. 选项显示逻辑(用户确认的设计):
+     - 初始: 显示meaningText(干扰项的释义), 用户根据释义选对应单词
+     - 选错: 被点击的选项切换为该干扰项的wordText(对应的单词), 让用户知道这个释义对应哪个词
+     - 选对: 其他选项切换为各自的wordText(干扰项对应的单词), 对比学习
+     - 看答案: 非正确选项切换为各自的wordText, 正确选项高亮
+  3. Fragment端适配:
+     - currentChoiceOptions字段缓存当前List<ChoiceOption>, 供onChoiceClicked访问
+     - setupMultipleChoice签名从List<String>改为List<ChoiceOption>, 初始setText(meaningText)
+     - observer的null分支清空currentChoiceOptions避免脏数据
+  4. Tab外观圆角化:
+     - tab_background.xml: 12dp圆角矩形 + md_surface_variant背景色
+     - tab_indicator.xml: 直角矩形indicator, 3dp高, md_primary色
+     - IntegratedPartView和WordDetailBottomSheet两处TabLayout设置tabIndicator+tabBackground
+
+踩坑:
+  1. 语法错误: 最后一次edit恢复observer时误把observe写成".> options ->"
+     - 应为".observe(getViewLifecycleOwner(), options ->"
+     - 构建时编译报错发现, 修复后构建通过
+  2. 旧bug本质: 选项只有String无法携带对应单词信息
+     - 必须引入ChoiceOption同时携带释义和单词文本, 才能在选错后显示对应单词
+
+效果:
+  - 四选一初始显示释义, 选错后显示该干扰项的单词, 选对后显示所有干扰项的单词
+  - 用户能对比释义和对应单词, 学习价值提升
+  - Tab标签栏圆角背景, 视觉更精致
+
+意义:
+  - 四选一是NEW阶段的核心交互, 选项显示逻辑直接影响学习效果
+  - 初始显示释义让用户"根据释义选单词"是正常的学习逻辑(而非根据单词选释义)
+  - 选错后显示对应单词, 让用户知道这个释义对应的是哪个词, 有学习价值
+  - 选对后显示所有干扰项的单词, 对比学习强化记忆
+  - Tab圆角是UI精致度的细节, 影响用户对App质量的整体感知
+
+新理解:
+  - 四选一选项的数据模型需要同时携带释义和对应单词文本, 单一String不够
+  - ChoiceOption用public final字段(不可变)比getter更简洁, 适合纯数据载体
+  - Fragment缓存ViewModel的LiveData值(currentChoiceOptions)是常见模式,
+    但要注意在数据失效时清空, 避免脏数据导致越界或显示错误
+  - TabLayout的tabIndicator和tabBackground用XML drawable自定义, 比代码设置更清晰
+
+========================
+
 【更新38】应用图标替换（默认机器人→"日本語"三字图标）
 日期：2026-08-21
 涉及文件：

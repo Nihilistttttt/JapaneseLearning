@@ -419,6 +419,8 @@ public class WordDetailBottomSheet extends BottomSheetDialogFragment {
         TabLayout tabLayout = new TabLayout(context);
         tabLayout.setTabGravity(TabLayout.GRAVITY_START);
         tabLayout.setTabMode(TabLayout.MODE_SCROLLABLE);
+        tabLayout.setSelectedTabIndicator(R.drawable.tab_indicator);
+        tabLayout.setBackgroundResource(R.drawable.tab_background);
 
         NestedScrollableHostBetween2Layers host = new NestedScrollableHostBetween2Layers(context);
         host.setLayoutParams(new LinearLayout.LayoutParams(

@@ -120,6 +120,8 @@ public class IntegratedPartView extends LinearLayout {
         tabLayout = new TabLayout(getContext());
         tabLayout.setTabGravity(TabLayout.GRAVITY_START);
         tabLayout.setTabMode(TabLayout.MODE_SCROLLABLE);
+        tabLayout.setSelectedTabIndicator(R.drawable.tab_indicator);
+        tabLayout.setBackgroundResource(R.drawable.tab_background);
 
         host = new NestedScrollableHostBetween2Layers(getContext());
         host.setLayoutParams(new LinearLayout.LayoutParams(
