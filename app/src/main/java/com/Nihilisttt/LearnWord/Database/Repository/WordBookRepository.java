@@ -96,7 +96,14 @@ public class WordBookRepository {
 
     public List<WordReviewEntity> getDueReviews(String bookId, int limit) {
         long now = System.currentTimeMillis();
-        return reviewDao.getDueReviewsSync(bookId, now, limit);
+        long dayStart = SRSConfig.getDayStartTime(now);
+        return reviewDao.getDueReviewsSync(bookId, now, dayStart, limit);
+    }
+
+    public List<WordReviewEntity> getDueReviewsAllBooks(int limit) {
+        long now = System.currentTimeMillis();
+        long dayStart = SRSConfig.getDayStartTime(now);
+        return reviewDao.getDueReviewsSyncAllBooks(now, dayStart, limit);
     }
 
     public WordReviewEntity getReviewSync(String wordId, String bookId) {
@@ -119,6 +126,17 @@ public class WordBookRepository {
                 EbbinghausAlgorithm.pass(review, now);
                 reviewDao.updateReview(review);
                 updateBookProgress(bookId);
+            }
+        });
+    }
+
+    public void fuzzyPass(String wordId, String bookId) {
+        WordDatabase.databaseExecutor.execute(() -> {
+            long now = System.currentTimeMillis();
+            WordReviewEntity review = reviewDao.getReviewSync(wordId, bookId);
+            if (review != null) {
+                EbbinghausAlgorithm.fuzzyPass(review, now);
+                reviewDao.updateReview(review);
             }
         });
     }
@@ -203,5 +221,32 @@ public class WordBookRepository {
 
     public int getDistractorCount() {
         return distractorDao.getCountSync();
+    }
+
+    public void createTestReviews(String bookId, int count) {
+        WordDatabase.databaseExecutor.execute(() -> {
+            long now = System.currentTimeMillis();
+            long twoDaysAgo = now - 2L * 24 * 3600 * 1000;
+            long oneHourAgo = now - 3600 * 1000;
+
+            List<String> wordIds = itemDao.getNewWordIdsSync(bookId, count + 50);
+            if (wordIds == null || wordIds.isEmpty()) return;
+
+            int inserted = 0;
+            for (String wordId : wordIds) {
+                if (inserted >= count) break;
+                WordReviewEntity existing = reviewDao.getReviewByWordIdSync(wordId);
+                if (existing != null) continue;
+
+                WordReviewEntity review = new WordReviewEntity(
+                        0, wordId, bookId,
+                        SRSConfig.STATUS_COMPLETED, 1, oneHourAgo, 0,
+                        twoDaysAgo, twoDaysAgo
+                );
+                reviewDao.insertReview(review);
+                inserted++;
+            }
+            updateBookProgress(bookId);
+        });
     }
 }

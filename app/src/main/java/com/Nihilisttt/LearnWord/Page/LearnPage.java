@@ -12,6 +12,7 @@ import androidx.viewpager2.widget.ViewPager2;
 
 import com.Nihilisttt.LearnWord.Adapter.LearnPageAdapter;
 import com.Nihilisttt.LearnWord.Page.ViewModel.LearnPageViewModel;
+import com.Nihilisttt.LearnWord.UtilityClass.BookSelectionManager;
 import com.Nihilisttt.LearnWord.ViewPager2.ViewPager2ScrollController;
 import com.Nihilisttt.LearnWord.ViewPager2.NestedScrollableHostBetween3LayersManager;
 import com.Nihilisttt.LearnWord.databinding.ActivityLearnPageBinding;
@@ -35,9 +36,21 @@ public class LearnPage extends AppCompatActivity {
                 ViewModelProvider.AndroidViewModelFactory.getInstance(getApplication()))
                 .get(LearnPageViewModel.class);
 
-        String bookId = getIntent().getStringExtra("bookId");
-        if (bookId != null && !bookId.isEmpty()) {
-            viewModel.setBookId(bookId);
+        String mode = getIntent().getStringExtra("mode");
+        if ("review".equals(mode)) {
+            String bookId = getIntent().getStringExtra("bookId");
+            if (bookId == null || bookId.isEmpty()) {
+                bookId = BookSelectionManager.getSelectedBookId(this);
+            }
+            viewModel.setReviewMode(true, bookId);
+        } else {
+            String bookId = getIntent().getStringExtra("bookId");
+            if (bookId == null || bookId.isEmpty()) {
+                bookId = BookSelectionManager.getSelectedBookId(this);
+            }
+            if (bookId != null && !bookId.isEmpty()) {
+                viewModel.setBookId(bookId);
+            }
         }
 
         setupViewPager();

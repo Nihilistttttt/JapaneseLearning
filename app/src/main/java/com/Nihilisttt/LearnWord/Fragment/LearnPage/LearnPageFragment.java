@@ -8,6 +8,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -87,6 +88,10 @@ public class LearnPageFragment extends Fragment {
         Button nextButton = rootView.findViewById(R.id.next_word);
         Button btnSrsWrong = rootView.findViewById(R.id.btn_srs_wrong);
         Button btnSrsNext = rootView.findViewById(R.id.btn_srs_next);
+        LinearLayout reviewButtonBar = rootView.findViewById(R.id.review_button_bar);
+        Button btnReviewForget = rootView.findViewById(R.id.btn_review_forget);
+        Button btnReviewFuzzy = rootView.findViewById(R.id.btn_review_fuzzy);
+        Button btnReviewRecognize = rootView.findViewById(R.id.btn_review_recognize);
 
         // 初始化ViewModel（使用Activity作用域）
         viewModel = new ViewModelProvider(requireActivity(),
@@ -120,6 +125,54 @@ public class LearnPageFragment extends Fragment {
             boolean srs = stage != null;
             preButton.setVisibility(srs ? View.GONE : View.VISIBLE);
             nextButton.setVisibility(srs ? View.GONE : View.VISIBLE);
+        });
+
+        viewModel.getReviewStage().observe(getViewLifecycleOwner(), stage -> {
+            if (!viewModel.isReviewMode()) {
+                reviewButtonBar.setVisibility(View.GONE);
+                return;
+            }
+            if (stage == null) {
+                reviewButtonBar.setVisibility(View.GONE);
+                return;
+            }
+            preButton.setVisibility(View.GONE);
+            nextButton.setVisibility(View.GONE);
+            boolean showReviewBar = stage == LearnPageViewModel.ReviewStage.SHOW_WORD;
+            reviewButtonBar.setVisibility(showReviewBar ? View.VISIBLE : View.GONE);
+            if (showReviewBar) {
+                btnSrsWrong.setVisibility(View.GONE);
+                btnSrsNext.setVisibility(View.GONE);
+            } else {
+                boolean showTwoButtons = stage == LearnPageViewModel.ReviewStage.REVEAL_RECOGNIZE
+                        || stage == LearnPageViewModel.ReviewStage.REVEAL_FUZZY;
+                ConstraintLayout.LayoutParams paramsNext = (ConstraintLayout.LayoutParams) btnSrsNext.getLayoutParams();
+                if (showTwoButtons) {
+                    btnSrsWrong.setText("记错了");
+                    btnSrsWrong.setVisibility(View.VISIBLE);
+                    btnSrsNext.setText("下一词");
+                    btnSrsNext.setVisibility(View.VISIBLE);
+                    paramsNext.startToStart = R.id.guideline2;
+                    paramsNext.startToEnd = -1;
+                } else {
+                    btnSrsWrong.setVisibility(View.GONE);
+                    btnSrsNext.setText("下一词");
+                    btnSrsNext.setVisibility(View.VISIBLE);
+                    paramsNext.startToStart = ConstraintLayout.LayoutParams.PARENT_ID;
+                    paramsNext.startToEnd = -1;
+                }
+                btnSrsNext.setLayoutParams(paramsNext);
+            }
+        });
+
+        viewModel.getReviewSessionComplete().observe(getViewLifecycleOwner(), complete -> {
+            if (complete != null && complete && viewModel.isReviewMode()) {
+                preButton.setVisibility(View.GONE);
+                nextButton.setVisibility(View.GONE);
+                btnSrsWrong.setVisibility(View.GONE);
+                btnSrsNext.setVisibility(View.GONE);
+                reviewButtonBar.setVisibility(View.GONE);
+            }
         });
 
         viewModel.getSrsButtonMode().observe(getViewLifecycleOwner(), mode -> {
@@ -161,6 +214,10 @@ public class LearnPageFragment extends Fragment {
         });
 
         btnSrsWrong.setOnClickListener(v -> {
+            if (viewModel.isReviewMode() && !viewModel.isRelearningCurrentWord()) {
+                viewModel.reviewMarkWrong();
+                return;
+            }
             LearnPageViewModel.SrsButtonMode mode = viewModel.getSrsButtonMode().getValue();
             if (mode == LearnPageViewModel.SrsButtonMode.CHOICE) {
                 viewModel.previewFail();
@@ -170,6 +227,10 @@ public class LearnPageFragment extends Fragment {
             }
         });
         btnSrsNext.setOnClickListener(v -> {
+            if (viewModel.isReviewMode() && !viewModel.isRelearningCurrentWord()) {
+                viewModel.reviewAdvance();
+                return;
+            }
             LearnPageViewModel.SrsButtonMode mode = viewModel.getSrsButtonMode().getValue();
             if (mode == LearnPageViewModel.SrsButtonMode.CHOICE) {
                 viewModel.previewPass();
@@ -184,6 +245,10 @@ public class LearnPageFragment extends Fragment {
                 viewModel.submitPass();
             }
         });
+
+        btnReviewForget.setOnClickListener(v -> viewModel.reviewForget());
+        btnReviewFuzzy.setOnClickListener(v -> viewModel.reviewFuzzy());
+        btnReviewRecognize.setOnClickListener(v -> viewModel.reviewRecognize());
     }
 
     private void setupRepeatButton(Button button, Runnable action) {

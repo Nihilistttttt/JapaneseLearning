@@ -71,6 +71,7 @@ public class MainLearnPageFragment extends Fragment {
     private boolean wasCorrect = false;
     private boolean isChoiceAnswered = false;
     private boolean hasWrongChoice = false;
+    private boolean sessionComplete = false;
     private String currentCorrectWordText = "";
     private List<LearnPageViewModel.ChoiceOption> currentChoiceOptions = null;
     private View rootView;
@@ -118,6 +119,8 @@ public class MainLearnPageFragment extends Fragment {
         rootView = view;
         toolBar.setStateViewModel(stateViewModel);
         toolBar.observeFontSize(getViewLifecycleOwner());
+        toolBar.setDebugSkipButtonListener(v -> viewModel.debugForcePass());
+        toolBar.setDebugSkipButtonVisible(viewModel.isSRSMode());
         setupObservers();
     }
 
@@ -153,8 +156,18 @@ public class MainLearnPageFragment extends Fragment {
 
         viewModel.getSessionComplete().observe(getViewLifecycleOwner(), complete -> {
             if (complete != null && complete) {
-                hideAllButtonBars();
+                showSessionComplete();
+            } else {
+                sessionComplete = false;
             }
+        });
+
+        viewModel.getSessionProgress().observe(getViewLifecycleOwner(), progress -> {
+            if (!sessionComplete) updateProgressText();
+        });
+
+        viewModel.getSessionTotal().observe(getViewLifecycleOwner(), total -> {
+            if (!sessionComplete) updateProgressText();
         });
 
         viewModel.getSrsButtonMode().observe(getViewLifecycleOwner(), mode -> {
@@ -164,13 +177,24 @@ public class MainLearnPageFragment extends Fragment {
         });
 
         viewModel.getEntryLoaded().observe(getViewLifecycleOwner(), version -> {
-            if (version != null && viewModel.isSRSMode()) {
+            if (version == null) return;
+            if (viewModel.isReviewMode() && !viewModel.isRelearningCurrentWord()) {
+                answerRevealed = false;
+                isChoiceAnswered = false;
+                hasWrongChoice = false;
+                setupReviewUI();
+                return;
+            }
+            if (viewModel.isSRSMode()) {
                 StudyStage stage = viewModel.getCurrentStage().getValue();
                 if (stage != null) {
                     answerRevealed = false;
                     isChoiceAnswered = false;
                     hasWrongChoice = false;
+                    btnSeeAnswer.setText("看答案");
                     setupStageUI(stage);
+                    LearnPageViewModel.CombinedWordInfo info = viewModel.getCombinedWordInfo().getValue();
+                    if (info != null) renderWord(info);
                 }
             }
         });
@@ -204,11 +228,55 @@ public class MainLearnPageFragment extends Fragment {
             }
         });
 
+        viewModel.getReviewStage().observe(getViewLifecycleOwner(), stage -> {
+            if (stage == null || !viewModel.isReviewMode()) return;
+            boolean revealed = stage != LearnPageViewModel.ReviewStage.SHOW_WORD;
+            if (revealed) {
+                meaningContainer.setVisibility(View.VISIBLE);
+                sentenceContainer.setVisibility(View.VISIBLE);
+                integratedPartContainer.setVisibility(View.VISIBLE);
+                stageHintText.setVisibility(View.GONE);
+            } else {
+                meaningContainer.setVisibility(View.GONE);
+                sentenceContainer.setVisibility(View.GONE);
+                integratedPartContainer.setVisibility(View.GONE);
+                stageHintText.setText("瞬间想起词义，选认识，思考后想起词义，选模糊");
+                stageHintText.setVisibility(View.VISIBLE);
+            }
+        });
+
+        viewModel.getReviewSessionComplete().observe(getViewLifecycleOwner(), complete -> {
+            if (complete != null && complete && viewModel.isReviewMode()) {
+                showReviewSessionComplete();
+            } else {
+                sessionComplete = false;
+            }
+        });
+
+        viewModel.getReviewSessionProgress().observe(getViewLifecycleOwner(), progress -> {
+            if (viewModel.isReviewMode() && !sessionComplete) updateReviewProgressText();
+        });
+
+        viewModel.getReviewSessionTotal().observe(getViewLifecycleOwner(), total -> {
+            if (viewModel.isReviewMode() && !sessionComplete) updateReviewProgressText();
+        });
+
         setupButtonListeners();
     }
 
     private void setupButtonListeners() {
-        btnSeeAnswer.setOnClickListener(v -> onSeeAnswerClicked());
+        btnSeeAnswer.setOnClickListener(v -> {
+            if (sessionComplete) {
+                sessionComplete = false;
+                if (viewModel.isReviewMode()) {
+                    viewModel.startNewReviewSession();
+                } else {
+                    viewModel.startNewSession();
+                }
+            } else {
+                onSeeAnswerClicked();
+            }
+        });
 
         for (int i = 0; i < 4; i++) {
             final int index = i;
@@ -367,6 +435,76 @@ public class MainLearnPageFragment extends Fragment {
         newModeButtonBar.setVisibility(View.GONE);
     }
 
+    private void updateProgressText() {
+        Integer progress = viewModel.getSessionProgress().getValue();
+        Integer total = viewModel.getSessionTotal().getValue();
+        if (progress != null && total != null && total > 0) {
+            toolBar.setCountText(progress + "/" + total);
+        }
+    }
+
+    private void showSessionComplete() {
+        sessionComplete = true;
+        hideContentForLoading();
+
+        Integer total = viewModel.getSessionTotal().getValue();
+        if (total != null && total > 0) {
+            int newCount = viewModel.getSessionNewCount();
+            int reviewCount = viewModel.getSessionReviewCount();
+            int mastered = viewModel.getSessionMasteredCount();
+            stageHintText.setText("本组学习完成！\n新学 " + newCount + "  复习 " + reviewCount + "  掌握 " + mastered + "/" + total);
+            stageHintText.setVisibility(View.VISIBLE);
+            btnSeeAnswer.setText("继续学习下一组");
+            newModeButtonBar.setVisibility(View.VISIBLE);
+        } else {
+            stageHintText.setText("今日学习已全部完成！");
+            stageHintText.setVisibility(View.VISIBLE);
+        }
+        toolBar.setCountText("");
+    }
+
+    private void setupReviewUI() {
+        hideContentForLoading();
+        wordContainer.setVisibility(View.VISIBLE);
+        stageHintText.setText("瞬间想起词义，选认识，思考后想起词义，选模糊");
+        stageHintText.setVisibility(View.VISIBLE);
+        indicatorBar.setVisibility(View.GONE);
+        multipleChoiceContainer.setVisibility(View.GONE);
+        meaningContainer.setVisibility(View.GONE);
+        sentenceContainer.setVisibility(View.GONE);
+        integratedPartContainer.setVisibility(View.GONE);
+        blankText.setVisibility(View.GONE);
+        blankPart.setVisibility(View.GONE);
+        hideAllButtonBars();
+    }
+
+    private void showReviewSessionComplete() {
+        sessionComplete = true;
+        hideContentForLoading();
+
+        Integer total = viewModel.getReviewSessionTotal().getValue();
+        Integer completed = viewModel.getReviewSessionProgress().getValue();
+        if (total != null && total > 0) {
+            int done = completed != null ? completed : 0;
+            stageHintText.setText("本组复习完成！\n已复习 " + done + "/" + total + " 个单词");
+            stageHintText.setVisibility(View.VISIBLE);
+            btnSeeAnswer.setText("继续复习下一组");
+            newModeButtonBar.setVisibility(View.VISIBLE);
+        } else {
+            stageHintText.setText("暂无到期复习单词");
+            stageHintText.setVisibility(View.VISIBLE);
+        }
+        toolBar.setCountText("");
+    }
+
+    private void updateReviewProgressText() {
+        Integer progress = viewModel.getReviewSessionProgress().getValue();
+        Integer total = viewModel.getReviewSessionTotal().getValue();
+        if (progress != null && total != null && total > 0) {
+            toolBar.setCountText(progress + "/" + total);
+        }
+    }
+
     private void renderWord(LearnPageViewModel.CombinedWordInfo combinedWordInfo) {
 
         Integer wordLevel = stateViewModel.getWordFontLevel().getValue();
@@ -479,7 +617,28 @@ public class MainLearnPageFragment extends Fragment {
             }
         }
 
-        if (!viewModel.isSRSMode()) {
+        if (viewModel.isReviewMode() && !viewModel.isRelearningCurrentWord()) {
+            LearnPageViewModel.ReviewStage stage = viewModel.getReviewStage().getValue();
+            boolean revealed = stage != null && stage != LearnPageViewModel.ReviewStage.SHOW_WORD;
+            indicatorBar.setVisibility(View.GONE);
+            multipleChoiceContainer.setVisibility(View.GONE);
+            blankText.setVisibility(View.GONE);
+            blankPart.setVisibility(View.GONE);
+            if (revealed) {
+                meaningContainer.setVisibility(View.VISIBLE);
+                sentenceContainer.setVisibility(View.VISIBLE);
+                integratedPartContainer.setVisibility(View.VISIBLE);
+                stageHintText.setVisibility(View.GONE);
+            } else {
+                meaningContainer.setVisibility(View.GONE);
+                sentenceContainer.setVisibility(View.GONE);
+                integratedPartContainer.setVisibility(View.GONE);
+                stageHintText.setText("瞬间想起词义，选认识，思考后想起词义，选模糊");
+                stageHintText.setVisibility(View.VISIBLE);
+            }
+        }
+
+        if (!viewModel.isSRSMode() && !viewModel.isReviewMode()) {
             setupNonSRSMode();
         }
     }

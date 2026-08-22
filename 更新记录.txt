@@ -5,7 +5,109 @@ LearnWord 项目更新记录
 
 ========================
 
-【更新40】切换单词闪烁修复（generation计数器 + 选项状态重置 + 指示条更新修复）
+【更新41】REVIEW复习页面完整实现 + 重新学习模式（随机穿插队列）
+日期：2026-08-22
+涉及文件：
+  ViewModel: LearnPageViewModel.java (ReviewStage枚举, relearnWords/inRelearnMode,
+             initReviewSession, loadReviewWord, reviewRecognize/Fuzzy/Forget/MarkWrong/Advance,
+             advanceToNext复习分支, submitFail/submitPass复习分支, insertRelearnEntry,
+             computeRelearnStage, setReviewMode)
+  Fragment: MainLearnPageFragment.java (setupReviewUI, reviewStage/reviewSessionComplete observer,
+            renderWord review block, entryLoaded observer+手动renderWord, setupStageUI复用)
+            LearnPageFragment.java (review_button_bar三按钮, reviewStage observer,
+            btnSrsWrong/btnSrsNext检查isRelearningCurrentWord)
+  布局: fragment_learn_page.xml (review_button_bar + btn_review_recognize/fuzzy/forget)
+  数据层: EbbinghausAlgorithm.fuzzyPass, WordBookRepository.fuzzyPass/createTestReviews,
+          WordReviewDao.getDueReviewsSyncAllBooks
+  入口: FirstPage (复习按钮传mode=review, createTestReviewsIfNeeded轮询5本JLPT词书),
+        LearnPage (读mode/bookId)
+  工具: BookSelectionManager (SharedPreferences词书选择记忆)
+  Page: WordBookSelectPage (select_only模式), FirstPage (显示当前词书+切换按钮)
+
+一、REVIEW复习页面基础功能
+  需求: 复习到期单词，一组一组（每组20个），页面和Learn页面一致但去掉四选一
+  - ReviewStage枚举: SHOW_WORD(只显示词) / REVEAL_RECOGNIZE / REVEAL_FUZZY / REVEAL_FAIL
+  - 三按钮: 认识/模糊/忘记了 + 提示"瞬间想起词义，选认识，思考后想起词义，选模糊"
+  - 认识 → 两按钮(下一词/记错了) → 下一词=pass → 计数+1
+  - 模糊 → 两按钮(下一词/记错了) → 下一词=fuzzyPass → 不计数（之后还会出现）
+  - 忘记了 → 一按钮(下一词) → 下一词=fail → 不计数 → 重新学习
+  - 只有"认识"才计数+1，完成显示"已复习X/Y"
+
+二、重新学习模式（核心设计）
+  需求: 忘记/记错的词在复习页面内重新走四选一→复习→最终完整流程，最终通过才算复习结束
+  - relearnWords Set: 记录需要重新学习的词ID
+  - inRelearnMode flag: 当前是否在重新学习模式
+  - loadReviewWord(): 检查relearnWords，若是→设isSRSMode=true复用SRS的UI和按钮
+    根据wordCorrectCount确定阶段(0→NEW四选一, 1→REVIEW, 2→FINAL)
+  - reviewAdvance() REVEAL_FAIL: bookRepository.fail + relearnWords.add + wordCorrectCount=0
+    + insertRelearnEntry随机插入队列
+  - advanceToNext()复习分支:
+    passPreviewed && count>=3 → pass+计数+下一复习词
+    passPreviewed && count<3 → insertRelearnEntry(随机插入) + 下一队列条目
+    !passPreviewed → count=0 + insertRelearnEntry + 下一队列条目
+  - submitFail()复习分支: count=0 + insertRelearnEntry + 下一队列条目
+  - insertRelearnEntry(): 在当前索引+1到队列末尾之间随机选位置插入
+
+三、重新学习词随机穿插队列（非连续）
+  需求: 重新学习的词不应连续走完3个阶段，应随机穿插其他复习词
+  - 每次只处理1个阶段，通过/失败后随机插入队列后面
+  - 下次从队列取出时根据wordCorrectCount确定阶段
+  - 中间会穿插其他复习词，体验与正常SRS一致
+
+四、调试测试数据 + 词书选择记忆
+  - WordBookRepository.createTestReviews(): 为指定词书创建20条临期待复习记录
+  - FirstPage.createTestReviewsIfNeeded(): 轮询所有5本JLPT词书就绪后各创建20条
+    (PresetBookInitializer后台插入21万词需要时间，需轮询等待)
+  - BookSelectionManager: SharedPreferences记忆用户选择的词书
+  - FirstPage: 显示当前词书+切换按钮，学习/复习按钮适配
+  - WordBookSelectPage: select_only模式只选词书不跳转
+  - LearnPage: 从intent或SharedPreferences读bookId
+  - setReviewMode(boolean, String bookId): 按词书过滤到期单词
+
+五、Fragment端重新学习模式处理
+  - entryLoaded observer: 检查!isRelearningCurrentWord()才setupReviewUI()
+    否则走SRS的setupStageUI(stage) + 手动renderWord(info)
+  - renderWord() review block: 检查!isRelearningCurrentWord()
+  - btnSrsWrong/btnSrsNext: 检查!isRelearningCurrentWord()才调reviewMarkWrong/reviewAdvance
+    否则走SRS逻辑(previewPass/Fail + advanceToNext/submitFail)
+  - reviewStage设null让review按钮隐藏，SRS按钮由srsButtonMode控制
+
+踩坑:
+  1. NEW→REVIEW阶段过渡时页面空白
+     - 根因: 同一词从NEW进入REVIEW时，setupStageUI(REVIEW)→hideContentForLoading()隐藏所有内容
+       但currentWordId未变(同一词)→combinedWordInfo不重新触发→renderWord()不被调用→空白
+     - 修复: entryLoaded observer中setupStageUI(stage)后手动调renderWord(info)重新渲染
+  2. insertRelearnEntry索引越界(IndexOutOfBoundsException: Index: 4, Size: 3)
+     - 根因: random.nextInt(range + 1)使pos最大为size+1，但ArrayList.add()要求index<=size
+     - 修复: random.nextInt(range)使pos最大为size
+  3. 重新学习模式isSRSMode/isReviewMode双重标志
+     - relearn模式时isSRSMode=true(复用SRS方法)且isReviewMode=true(复习模式)
+     - Fragment需检查!isRelearningCurrentWord()区分"纯复习"和"重新学习"
+     - reviewStage=null让review按钮隐藏，srsButtonMode控制SRS按钮
+  4. PresetBookInitializer后台线程插入21万词需要时间
+     - createTestReviewsIfNeeded轮询所有5本JLPT词书就绪后才创建测试复习记录
+     - 不能直接查词书，可能词书还没插入完
+
+意义:
+  - 复习是间隔重复学习的核心环节，没有复习页面SRS系统不完整
+  - 重新学习模式让忘记的词在复习页面内重新走完整学习流程，而非简单标记失败
+  - 随机穿插队列避免连续重复同一词，体验更好，符合间隔重复原理
+  - 只有"认识"才计数+1，"模糊"不计数但词会再出现，"忘记"触发重新学习
+  - 调试测试数据让开发者能快速测试复习功能，无需等待真实复习到期
+  - 词书选择记忆让用户不需要每次重新选词书
+
+新理解:
+  - 复习模式和SRS模式可以共用UI(isSRSMode=true复用SRS的按钮和阶段UI)
+    通过inRelearnMode标志区分"纯复习"和"重新学习"
+  - 重新学习的词随机插入队列比连续走3个阶段更符合学习原理:
+    每次只处理1个阶段，中间穿插其他词，避免短期记忆作弊
+  - combinedWordInfo在同一词不重新触发是LiveData的switchMap特性:
+    源不变化→不重新订阅→observer不触发，需手动调renderWord()
+  - ArrayList.add(index, element)要求index <= size，random.nextInt(n)返回0到n-1
+  - PresetBookInitializer在Application.onCreate后台线程运行，插入21万词耗时
+    需轮询等待就绪后才能创建依赖词书的测试数据
+
+========================
 日期：2026-08-21
 涉及文件：
   ViewModel: LearnPageViewModel.java (wordGeneration AtomicInteger + sourceGenerations[14],

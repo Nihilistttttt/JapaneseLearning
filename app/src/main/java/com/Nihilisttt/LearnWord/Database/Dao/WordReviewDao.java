@@ -21,11 +21,17 @@ public interface WordReviewDao {
     @Query("SELECT * FROM WordReview WHERE wordId = :wordId AND bookId = :bookId")
     WordReviewEntity getReviewSync(String wordId, String bookId);
 
+    @Query("SELECT * FROM WordReview WHERE wordId = :wordId AND status != -1 LIMIT 1")
+    WordReviewEntity getReviewByWordIdSync(String wordId);
+
     @Query("SELECT * FROM WordReview WHERE bookId = :bookId AND status = 0 ORDER BY createTime ASC LIMIT :limit")
     List<WordReviewEntity> getStudyingWordsSync(String bookId, int limit);
 
-    @Query("SELECT * FROM WordReview WHERE bookId = :bookId AND status = 1 AND nextReviewTime <= :now AND nextReviewTime > 0 ORDER BY nextReviewTime ASC LIMIT :limit")
-    List<WordReviewEntity> getDueReviewsSync(String bookId, long now, int limit);
+    @Query("SELECT * FROM WordReview WHERE bookId = :bookId AND status = 1 AND nextReviewTime <= :now AND nextReviewTime > 0 AND updateTime < :dayStart ORDER BY nextReviewTime ASC LIMIT :limit")
+    List<WordReviewEntity> getDueReviewsSync(String bookId, long now, long dayStart, int limit);
+
+    @Query("SELECT * FROM WordReview WHERE status = 1 AND nextReviewTime <= :now AND nextReviewTime > 0 AND updateTime < :dayStart ORDER BY nextReviewTime ASC LIMIT :limit")
+    List<WordReviewEntity> getDueReviewsSyncAllBooks(long now, long dayStart, int limit);
 
     @Query("SELECT COUNT(*) FROM WordReview WHERE bookId = :bookId AND status = 0")
     int getStudyingCountSync(String bookId);

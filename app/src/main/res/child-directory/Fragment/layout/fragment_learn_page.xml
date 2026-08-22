@@ -91,4 +91,55 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="@+id/guideline2"
         app:layout_constraintTop_toTopOf="@+id/guideline" />
+
+    <LinearLayout
+        android:id="@+id/review_button_bar"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/guideline">
+
+        <Button
+            android:id="@+id/btn_review_forget"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="4dp"
+            android:layout_weight="1"
+            android:background="@drawable/button_error"
+            android:text="忘记了"
+            android:textAllCaps="false"
+            android:textColor="@color/md_on_error"
+            android:textSize="16sp" />
+
+        <Button
+            android:id="@+id/btn_review_fuzzy"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
+            android:layout_weight="1"
+            android:background="@drawable/button_neutral"
+            android:text="模糊"
+            android:textAllCaps="false"
+            android:textColor="@color/md_on_surface"
+            android:textSize="16sp" />
+
+        <Button
+            android:id="@+id/btn_review_recognize"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="8dp"
+            android:layout_weight="1"
+            android:background="@drawable/button_success"
+            android:text="认识"
+            android:textAllCaps="false"
+            android:textColor="@color/md_on_success"
+            android:textSize="16sp" />
+    </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

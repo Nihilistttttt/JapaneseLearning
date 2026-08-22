@@ -39,9 +39,11 @@ import com.Nihilisttt.LearnWord.JavaBean.WordSentence;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -56,11 +58,23 @@ public class LearnPageViewModel extends AndroidViewModel {
 
     private String bookId = null;
     private boolean isSRSMode = false;
+    private boolean isReviewMode = false;
     private final List<StudyQueueEntry> studyQueue = new ArrayList<>();
     private int currentQueueIndex = 0;
     private final Map<String, Integer> wordCorrectCount = new HashMap<>();
     private final Random random = new Random();
     private static final int SESSION_WORD_COUNT = 20;
+    private final List<String> sessionWords = new ArrayList<>();
+    private int sessionNewCount = 0;
+    private int sessionReviewCount = 0;
+
+    private final List<String> reviewSessionWords = new ArrayList<>();
+    private final Map<String, String> reviewWordBookIds = new HashMap<>();
+    private int reviewSessionIndex = 0;
+    private int reviewCompletedCount = 0;
+    private String reviewBookId = null;
+    private final Set<String> relearnWords = new HashSet<>();
+    private boolean inRelearnMode = false;
 
     private final MutableLiveData<String> currentWordId = new MutableLiveData<>();
     private final MutableLiveData<String> toastMessage = new MutableLiveData<>();
@@ -76,6 +90,12 @@ public class LearnPageViewModel extends AndroidViewModel {
     private final MutableLiveData<Integer> correctOptionIndex = new MutableLiveData<>(0);
     private final MutableLiveData<String> correctWordText = new MutableLiveData<>();
 
+    private final MutableLiveData<ReviewStage> reviewStage = new MutableLiveData<>();
+    private final MutableLiveData<Integer> reviewSessionTotal = new MutableLiveData<>(0);
+    private final MutableLiveData<Integer> reviewSessionProgress = new MutableLiveData<>(0);
+    private final MutableLiveData<Boolean> reviewSessionComplete = new MutableLiveData<>(false);
+    private final MutableLiveData<Boolean> reviewAnswerRevealed = new MutableLiveData<>(false);
+
     public static class ChoiceOption {
         public final String meaningText;
         public final String wordText;
@@ -86,6 +106,13 @@ public class LearnPageViewModel extends AndroidViewModel {
     }
 
     public enum SrsButtonMode { HIDDEN, CHOICE, SUBMIT, SUBMIT_PASS_ONLY, SUBMIT_FAIL_ONLY }
+
+    public enum ReviewStage {
+        SHOW_WORD,
+        REVEAL_RECOGNIZE,
+        REVEAL_FUZZY,
+        REVEAL_FAIL
+    }
     private final MutableLiveData<SrsButtonMode> srsButtonMode = new MutableLiveData<>(SrsButtonMode.HIDDEN);
     private final MutableLiveData<Boolean> revealRequested = new MutableLiveData<>(false);
     private boolean passPreviewed = false;
@@ -235,7 +262,14 @@ public class LearnPageViewModel extends AndroidViewModel {
     public void consumeRevealRequest() { revealRequested.setValue(false); }
     public LiveData<Integer> getEntryLoaded() { return entryLoaded; }
     public boolean isSRSMode() { return isSRSMode; }
+    public boolean isReviewMode() { return isReviewMode; }
+    public boolean isRelearningCurrentWord() { return inRelearnMode; }
     public String getBookId() { return bookId; }
+    public LiveData<ReviewStage> getReviewStage() { return reviewStage; }
+    public LiveData<Integer> getReviewSessionTotal() { return reviewSessionTotal; }
+    public LiveData<Integer> getReviewSessionProgress() { return reviewSessionProgress; }
+    public LiveData<Boolean> getReviewSessionComplete() { return reviewSessionComplete; }
+    public LiveData<Boolean> getReviewAnswerRevealed() { return reviewAnswerRevealed; }
     // endregion
 
     // region 导航控制
@@ -251,7 +285,7 @@ public class LearnPageViewModel extends AndroidViewModel {
     }
 
     public void navigatePrevious() {
-        if (isSRSMode) {
+        if (isSRSMode || isReviewMode) {
             toastMessage.setValue("学习模式不支持返回上一个");
             return;
         }
@@ -262,6 +296,9 @@ public class LearnPageViewModel extends AndroidViewModel {
     public void navigateNext() {
         if (isSRSMode) {
             loadNextFromQueue();
+            return;
+        }
+        if (isReviewMode) {
             return;
         }
         String currentId = currentWordId.getValue();
@@ -302,13 +339,29 @@ public class LearnPageViewModel extends AndroidViewModel {
         }
     }
 
+    public void startNewSession() {
+        if (!isSRSMode || bookId == null) return;
+        initDailySession();
+    }
+
+    public int getSessionNewCount() { return sessionNewCount; }
+    public int getSessionReviewCount() { return sessionReviewCount; }
+    public int getSessionMasteredCount() {
+        int mastered = 0;
+        for (String wordId : sessionWords) {
+            if (wordCorrectCount.getOrDefault(wordId, 0) >= 3) mastered++;
+        }
+        return mastered;
+    }
+
     private void initDailySession() {
         WordDatabase.databaseExecutor.execute(() -> {
             studyQueue.clear();
             currentQueueIndex = 0;
             wordCorrectCount.clear();
-
-            List<String> sessionWords = new ArrayList<>();
+            sessionWords.clear();
+            sessionNewCount = 0;
+            sessionReviewCount = 0;
 
             List<WordReviewEntity> dueReviews = bookRepository.getDueReviews(bookId, 50);
             for (WordReviewEntity review : dueReviews) {
@@ -316,6 +369,7 @@ public class LearnPageViewModel extends AndroidViewModel {
                     sessionWords.add(review.getWordId());
                 }
             }
+            sessionReviewCount = sessionWords.size();
 
             int newRemaining = SESSION_WORD_COUNT - sessionWords.size();
             if (newRemaining > 0) {
@@ -325,9 +379,11 @@ public class LearnPageViewModel extends AndroidViewModel {
                         sessionWords.add(wordId);
                     }
                 }
+                sessionNewCount = sessionWords.size() - sessionReviewCount;
             }
 
             if (sessionWords.isEmpty()) {
+                sessionTotal.postValue(0);
                 sessionComplete.postValue(true);
                 toastMessage.postValue("今日学习已完成");
                 return;
@@ -335,9 +391,9 @@ public class LearnPageViewModel extends AndroidViewModel {
 
             buildInterleavedQueue(sessionWords);
 
-            dailyNewCount.postValue(sessionWords.size());
-            dailyReviewCount.postValue(dueReviews.size());
-            sessionTotal.postValue(studyQueue.size());
+            dailyNewCount.postValue(sessionNewCount);
+            dailyReviewCount.postValue(sessionReviewCount);
+            sessionTotal.postValue(sessionWords.size());
             sessionComplete.postValue(false);
 
             loadCurrentEntry();
@@ -379,6 +435,14 @@ public class LearnPageViewModel extends AndroidViewModel {
         return StudyStage.FINAL;
     }
 
+    private void postSessionProgress() {
+        int mastered = 0;
+        for (String wid : sessionWords) {
+            if (wordCorrectCount.getOrDefault(wid, 0) >= 3) mastered++;
+        }
+        sessionProgress.postValue(mastered);
+    }
+
     private void loadCurrentEntry() {
         while (currentQueueIndex < studyQueue.size()) {
             StudyQueueEntry entry = studyQueue.get(currentQueueIndex);
@@ -394,7 +458,8 @@ public class LearnPageViewModel extends AndroidViewModel {
             Log.d("SRS", "loadCurrentEntry: word=" + wordId + " stage=" + stage + " count=" + wordCorrectCount.getOrDefault(wordId, 0) + " index=" + currentQueueIndex + "/" + studyQueue.size());
             currentStage.postValue(stage);
             currentCorrectCount.postValue(wordCorrectCount.getOrDefault(wordId, 0));
-            sessionProgress.postValue(currentQueueIndex + 1);
+
+            postSessionProgress();
             queueRemaining.postValue(studyQueue.size() - currentQueueIndex);
 
             if (stage == StudyStage.NEW) {
@@ -537,6 +602,7 @@ public class LearnPageViewModel extends AndroidViewModel {
         int count = oldCount + 1;
         wordCorrectCount.put(currentId, count);
         currentCorrectCount.postValue(count);
+        postSessionProgress();
         passPreviewed = true;
         Log.d("SRS", "previewPass: word=" + currentId + " count " + oldCount + "->" + count);
     }
@@ -549,9 +615,21 @@ public class LearnPageViewModel extends AndroidViewModel {
         int count = oldCount - 1;
         if (count < 0) count = 0;
         wordCorrectCount.put(currentId, count);
+        postSessionProgress();
         currentCorrectCount.postValue(count);
         failPreviewed = true;
         Log.d("SRS", "previewFail: word=" + currentId + " count " + oldCount + "->" + count);
+    }
+
+    public void debugForcePass() {
+        if (!isSRSMode || bookId == null) return;
+        String currentId = currentWordId.getValue();
+        if (currentId == null) return;
+        wordCorrectCount.put(currentId, 3);
+        currentCorrectCount.postValue(3);
+        postSessionProgress();
+        passPreviewed = true;
+        advanceToNext();
     }
 
     public void advanceToNext() {
@@ -559,10 +637,36 @@ public class LearnPageViewModel extends AndroidViewModel {
         String currentId = currentWordId.getValue();
         if (currentId == null) return;
 
+        int currentCount = wordCorrectCount.getOrDefault(currentId, 0);
+
+        if (isReviewMode) {
+            if (passPreviewed && currentCount >= 3) {
+                String bid = reviewWordBookIds.get(currentId);
+                if (bid != null) bookRepository.pass(currentId, bid);
+                relearnWords.remove(currentId);
+                reviewCompletedCount++;
+                reviewSessionProgress.postValue(reviewCompletedCount);
+            } else if (passPreviewed) {
+                insertRelearnEntry(currentId);
+            } else {
+                wordCorrectCount.put(currentId, 0);
+                currentCorrectCount.postValue(0);
+                insertRelearnEntry(currentId);
+            }
+            passPreviewed = false;
+            failPreviewed = false;
+            inRelearnMode = false;
+            isSRSMode = false;
+            bookId = null;
+            srsButtonMode.setValue(SrsButtonMode.HIDDEN);
+            reviewSessionIndex++;
+            loadReviewWord();
+            return;
+        }
+
         StudyQueueEntry entry = studyQueue.get(currentQueueIndex);
         entry.setCompleted(true);
 
-        int currentCount = wordCorrectCount.getOrDefault(currentId, 0);
         Log.d("SRS", "advanceToNext: word=" + currentId + " count=" + currentCount + " passPreviewed=" + passPreviewed + " failPreviewed=" + failPreviewed + " index=" + currentQueueIndex + "/" + studyQueue.size());
 
         if (passPreviewed && currentCount >= 3) {
@@ -583,6 +687,23 @@ public class LearnPageViewModel extends AndroidViewModel {
         loadNextFromQueue();
     }
 
+    private StudyStage computeRelearnStage(int correctCount) {
+        if (correctCount == 0) return StudyStage.NEW;
+        if (correctCount == 1) return StudyStage.REVIEW;
+        if (correctCount == 2) return StudyStage.FINAL;
+        return null;
+    }
+
+    private void insertRelearnEntry(String wordId) {
+        int range = reviewSessionWords.size() - reviewSessionIndex;
+        if (range <= 0) {
+            reviewSessionWords.add(wordId);
+        } else {
+            int pos = reviewSessionIndex + 1 + random.nextInt(range);
+            reviewSessionWords.add(pos, wordId);
+        }
+    }
+
     private boolean hasPendingEntryForWord(String wordId) {
         for (int i = currentQueueIndex + 1; i < studyQueue.size(); i++) {
             StudyQueueEntry e = studyQueue.get(i);
@@ -597,6 +718,10 @@ public class LearnPageViewModel extends AndroidViewModel {
         if (!isSRSMode || bookId == null) return;
         String currentId = currentWordId.getValue();
         if (currentId == null) return;
+
+        if (isReviewMode) {
+            return;
+        }
 
         StudyQueueEntry entry = studyQueue.get(currentQueueIndex);
         entry.setCompleted(true);
@@ -620,6 +745,21 @@ public class LearnPageViewModel extends AndroidViewModel {
         if (!isSRSMode || bookId == null) return;
         String currentId = currentWordId.getValue();
         if (currentId == null) return;
+
+        if (isReviewMode) {
+            wordCorrectCount.put(currentId, 0);
+            currentCorrectCount.postValue(0);
+            insertRelearnEntry(currentId);
+            passPreviewed = false;
+            failPreviewed = false;
+            inRelearnMode = false;
+            isSRSMode = false;
+            bookId = null;
+            srsButtonMode.setValue(SrsButtonMode.HIDDEN);
+            reviewSessionIndex++;
+            loadReviewWord();
+            return;
+        }
 
         StudyQueueEntry entry = studyQueue.get(currentQueueIndex);
         entry.setCompleted(true);
@@ -663,6 +803,158 @@ public class LearnPageViewModel extends AndroidViewModel {
     }
 
     public void startNewWordIfNeeded() {
+    }
+
+    public void setReviewMode(boolean reviewMode, String bookId) {
+        this.isReviewMode = reviewMode;
+        this.reviewBookId = bookId;
+        if (reviewMode) {
+            initReviewSession();
+        }
+    }
+
+    public void startNewReviewSession() {
+        if (!isReviewMode) return;
+        initReviewSession();
+    }
+
+    private void initReviewSession() {
+        WordDatabase.databaseExecutor.execute(() -> {
+            reviewSessionWords.clear();
+            reviewWordBookIds.clear();
+            reviewSessionIndex = 0;
+            reviewCompletedCount = 0;
+            relearnWords.clear();
+            inRelearnMode = false;
+
+            List<WordReviewEntity> dueReviews;
+            if (reviewBookId != null && !reviewBookId.isEmpty()) {
+                dueReviews = bookRepository.getDueReviews(reviewBookId, SESSION_WORD_COUNT);
+            } else {
+                dueReviews = bookRepository.getDueReviewsAllBooks(SESSION_WORD_COUNT);
+            }
+            for (WordReviewEntity review : dueReviews) {
+                if (!reviewSessionWords.contains(review.getWordId())) {
+                    reviewSessionWords.add(review.getWordId());
+                    reviewWordBookIds.put(review.getWordId(), review.getBookId());
+                }
+            }
+
+            if (reviewSessionWords.isEmpty()) {
+                reviewSessionTotal.postValue(0);
+                reviewSessionProgress.postValue(0);
+                reviewSessionComplete.postValue(true);
+                toastMessage.postValue("暂无到期复习单词");
+                return;
+            }
+
+            reviewSessionTotal.postValue(reviewSessionWords.size());
+            reviewSessionProgress.postValue(0);
+            reviewSessionComplete.postValue(false);
+            loadReviewWord();
+        });
+    }
+
+    private void loadReviewWord() {
+        if (reviewSessionIndex >= reviewSessionWords.size()) {
+            reviewSessionComplete.postValue(true);
+            toastMessage.postValue("本组复习完成");
+            return;
+        }
+
+        String wordId = reviewSessionWords.get(reviewSessionIndex);
+        wordGeneration.incrementAndGet();
+        currentWordId.postValue(wordId);
+        saveCurrentId(wordId);
+
+        if (relearnWords.contains(wordId)) {
+            inRelearnMode = true;
+            isSRSMode = true;
+            bookId = reviewWordBookIds.get(wordId);
+            int count = wordCorrectCount.getOrDefault(wordId, 0);
+            StudyStage stage = computeRelearnStage(count);
+            if (stage == null) {
+                relearnWords.remove(wordId);
+                inRelearnMode = false;
+                isSRSMode = false;
+                bookId = null;
+                reviewSessionIndex++;
+                loadReviewWord();
+                return;
+            }
+            currentCorrectCount.postValue(count);
+            currentStage.postValue(stage);
+            reviewStage.postValue(null);
+            srsButtonMode.postValue(SrsButtonMode.HIDDEN);
+            if (stage == StudyStage.NEW) {
+                generateMultipleChoiceOptions(wordId);
+            } else {
+                multipleChoiceOptions.postValue(null);
+            }
+        } else {
+            inRelearnMode = false;
+            isSRSMode = false;
+            reviewStage.postValue(ReviewStage.SHOW_WORD);
+            reviewAnswerRevealed.postValue(false);
+            srsButtonMode.postValue(SrsButtonMode.HIDDEN);
+        }
+
+        entryVersion++;
+        entryLoaded.postValue(entryVersion);
+    }
+
+    public void reviewRecognize() {
+        if (!isReviewMode) return;
+        reviewStage.setValue(ReviewStage.REVEAL_RECOGNIZE);
+        reviewAnswerRevealed.setValue(true);
+    }
+
+    public void reviewFuzzy() {
+        if (!isReviewMode) return;
+        reviewStage.setValue(ReviewStage.REVEAL_FUZZY);
+        reviewAnswerRevealed.setValue(true);
+    }
+
+    public void reviewForget() {
+        if (!isReviewMode) return;
+        reviewStage.setValue(ReviewStage.REVEAL_FAIL);
+        reviewAnswerRevealed.setValue(true);
+    }
+
+    public void reviewMarkWrong() {
+        if (!isReviewMode) return;
+        ReviewStage current = reviewStage.getValue();
+        if (current == ReviewStage.REVEAL_RECOGNIZE || current == ReviewStage.REVEAL_FUZZY) {
+            reviewStage.setValue(ReviewStage.REVEAL_FAIL);
+        }
+    }
+
+    public void reviewAdvance() {
+        if (!isReviewMode) return;
+        String currentId = currentWordId.getValue();
+        if (currentId == null) return;
+
+        ReviewStage stage = reviewStage.getValue();
+        String bid = reviewWordBookIds.get(currentId);
+
+        if (stage == ReviewStage.REVEAL_RECOGNIZE) {
+            if (bid != null) bookRepository.pass(currentId, bid);
+            reviewCompletedCount++;
+            reviewSessionProgress.postValue(reviewCompletedCount);
+        } else if (stage == ReviewStage.REVEAL_FUZZY) {
+            if (bid != null) bookRepository.fuzzyPass(currentId, bid);
+        } else if (stage == ReviewStage.REVEAL_FAIL) {
+            if (bid != null) bookRepository.fail(currentId, bid);
+            relearnWords.add(currentId);
+            wordCorrectCount.put(currentId, 0);
+            insertRelearnEntry(currentId);
+        }
+
+        reviewSessionIndex++;
+        reviewStage.postValue(ReviewStage.SHOW_WORD);
+        reviewAnswerRevealed.postValue(false);
+        srsButtonMode.postValue(SrsButtonMode.HIDDEN);
+        loadReviewWord();
     }
     // endregion
 

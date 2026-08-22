@@ -14,6 +14,15 @@ public class EbbinghausAlgorithm {
         return review;
     }
 
+    public static WordReviewEntity fuzzyPass(WordReviewEntity review, long now) {
+        int cycle = review.getStudyCycle();
+        long interval = SRSConfig.getInterval(cycle);
+        review.setStatus(SRSConfig.STATUS_COMPLETED);
+        review.setNextReviewTime(now + interval);
+        review.setUpdateTime(now);
+        return review;
+    }
+
     public static WordReviewEntity fail(WordReviewEntity review, long now) {
         review.setStatus(SRSConfig.STATUS_STUDYING);
         review.setStudyCycle(0);
